@@ -17,13 +17,11 @@ export default function RootLayout({
     <html>
       <body className={`ease-linear `}>
         <MyProviders>
-          <div className="w-full h-full absolute left-0 top-0 dark:bg-black bg-white">
-            <div className="w-full h-[60px] absolute left-0 top-0">
+          <div className="w-full h-full absolute left-0 top-0 dark:bg-black bg-gray-100 p-8">
+            <div className="w-full h-[60px] top-0 absolute">
               <Head />
             </div>
-            <div className="w-full h-[calc(100%-60px] top-[60px] absolute">
-              {children}
-            </div>
+            <div className="w-full relative mt-[60px]">{children}</div>
           </div>
         </MyProviders>
       </body>
