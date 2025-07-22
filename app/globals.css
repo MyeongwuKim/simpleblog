@@ -3,3 +3,17 @@
 @source "../.flowbite-react/class-list.json";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+ @layer components{
+    .text-box{
+        @apply overflow-ellipsis overflow-hidden whitespace-nowrap break-words
+    }
+    .floatBox{
+      @apply  transition delay-150 duration-300 ease-in-out hover:-translate-y-2
+    }
+ }
+ @theme {
+    --color-text3:#868e96;
+    --color-text2:#495057;
+ }
+ 

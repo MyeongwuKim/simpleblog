@@ -10,7 +10,7 @@ export default function Head() {
     console.log(theme);
   }, [theme]);
   return (
-    <div id="HeadView" className="w-full h-full">
+    <div id="HeadView" className="w-full h-full flex flex-col items-center">
       <TabButtons />
     </div>
   );

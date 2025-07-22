@@ -17,8 +17,8 @@ export default function RootLayout({
     <html>
       <body className={`ease-linear `}>
         <MyProviders>
-          <div className="w-full h-full absolute left-0 top-0 dark:bg-black bg-gray-100 p-8">
-            <div className="w-full h-[60px] top-0 absolute">
+          <div className="w-full h-full overflow-auto absolute left-0 top-0 dark:bg-black bg-gray-100 p-8">
+            <div className="w-full h-[60px] top-0 left-0 px-8 absolute">
               <Head />
             </div>
             <div className="w-full relative mt-[60px]">{children}</div>

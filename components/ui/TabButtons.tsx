@@ -38,37 +38,41 @@ export default function TabButtons()
     },[pathname])
 
     return (
-        <div className="w-auto absolute">
-        <Tabs theme={{
-          tablist:{
-            base:"w-auto",
-            tabitem:{
-            base:"text-xl relative",
-              variant:{
-                pills:{
-                    active:{
-                        off:"text-[#868e96] hover:text-[#868e96]",
-                        on:"text-[#212529] font-bold bg-transparent rounded-none ",
-                    }
-                }
-              }
-
-            }
-        }}} variant="pills"   
-        onActiveTabChange={(tab)=> {
-          setTabId(tab)
-          router.push(tabList[tab].pathname);
-        }}>
-        {
-          tabList.map((v,i)=> <TabItem active={v.pathname == pathname} title={v.title} icon={v.icon}/>)
-        }
-      </Tabs>
+      <div className="w-auto absolute">
+        <Tabs
+          theme={{
+            tablist: {
+              base: "w-auto",
+              tabitem: {
+                base: "text-xl relative",
+                variant: {
+                  pills: {
+                    active: {
+                      off: "text-[#868e96] hover:text-[#868e96]",
+                      on: "text-[#212529] font-bold bg-transparent rounded-none ",
+                    },
+                  },
+                },
+              },
+            },
+          }}
+          variant="pills"
+          onActiveTabChange={(tab) => {
+            setTabId(tab);
+            router.push(tabList[tab].pathname);
+          }}
+        >
+          {tabList.map((v, i) => (
+            <TabItem active={v.pathname == pathname} title={v.title} icon={v.icon} />
+          ))}
+        </Tabs>
         <div
-            style={{
-              left:`${tabId * 33 + 2}%`
-            }}
-             id="Tab_UnderLine" className={`ease-in-out duration-200 absolute top-[60px] border-b-2 w-[33.3%]`}/>
-        </div>
-        
-      );
+          style={{
+            left: `${tabId * 33 + 2}%`,
+          }}
+          id="Tab_UnderLine"
+          className={`ease-in-out duration-200 absolute top-[60px] border-b-2 w-[33.3%]`}
+        />
+      </div>
+    );
 }
