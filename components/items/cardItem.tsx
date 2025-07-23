@@ -10,7 +10,8 @@ export function CardItem() {
     <Card
     theme={
       {"root":{
-        children:"flex h-full flex-col justify-center gap-2 p-2"
+        base:"border-0",
+        children:"flex h-full flex-col justify-center gap-2 p-2 bg-background1"
       }}
     }
     className="w-full h-full"
@@ -18,7 +19,7 @@ export function CardItem() {
         <Image  objectFit="cover" fill src="/testImage.png" alt="image 1" />
       </div>}
     >
-    <div id="CardItemWrapper" className="flex flex-col flex-auto gap-2">
+    <div id="CardItemWrapper" className="flex flex-col flex-auto gap-1">
       <h4 className="text-[1rem] text-box
     font-bold tracking-tight text-gray-900 dark:text-white">
         안녕하세요 여기는 제목입니다 제목입니다!

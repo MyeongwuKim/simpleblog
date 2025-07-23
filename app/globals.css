@@ -12,8 +12,29 @@
       @apply  transition delay-150 duration-300 ease-in-out hover:-translate-y-2
     }
  }
- @theme {
-    --color-text3:#868e96;
-    --color-text2:#495057;
- }
+
  
+ @theme {
+  --color-background-base: #fff;
+  --color-background1: #fff;
+  --color-background2: #f5f5f5;
+  --color-background3: #ebebeb;
+  --color-background4: #e0e0e0;
+  --color-text1: #212529;
+  --color-text2: #495057;
+  --color-text3: #868e96;
+  --color-text4: #ced4da;
+
+
+}
+
+ .dark{
+  --color-background1: #1e1e1e;
+  --color-background2: #3c3c3c;
+  --color-background3: #494949;
+  --color-background4: #565656;
+  --color-text1: #ECECEC;
+  --color-text2: #D9D9D9;
+  --color-text3: #ACACAC;
+  --color-text4: #595959;
+ }

@@ -48,8 +48,8 @@ export default function TabButtons()
                 variant: {
                   pills: {
                     active: {
-                      off: "text-[#868e96] hover:text-[#868e96]",
-                      on: "text-[#212529] font-bold bg-transparent rounded-none ",
+                      off: "text-text3 cursor-pointer hover:text-text3 dark:hover:text-text3 dark:hover:bg-transparent",
+                      on: "text-text1  font-bold bg-transparent rounded-none ",
                     },
                   },
                 },
