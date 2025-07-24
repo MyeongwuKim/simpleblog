@@ -20,12 +20,11 @@
   --color-background2: #f5f5f5;
   --color-background3: #ebebeb;
   --color-background4: #e0e0e0;
+  --color-bg-page2:#FFFFFF;
   --color-text1: #212529;
   --color-text2: #495057;
   --color-text3: #868e96;
   --color-text4: #ced4da;
-
-
 }
 
  .dark{
@@ -33,8 +32,45 @@
   --color-background2: #3c3c3c;
   --color-background3: #494949;
   --color-background4: #565656;
+  --color-bg-page2:#121212;
   --color-text1: #ECECEC;
   --color-text2: #D9D9D9;
   --color-text3: #ACACAC;
   --color-text4: #595959;
  }
+
+ 
+[contentEditable="true"] > pp:first-child:empty:before {
+  font-weight: 900;
+  font-size: 1.25rem;
+  height: 30px;
+  display: block;
+  color: rgb(107 114 128);
+  content: attr(data-placeholder);
+  outline: none; /* 포커스 아웃라인 제거 */
+}
+
+#placeHolderSpan {
+  font-weight: 900;
+  font-size: 1.25rem;
+  height: 30px;
+  display: inline;
+  color: rgb(107 114 128);
+}
+
+[contentEditable="true"] > p:first-child:empty:after {
+  content: "\200B";
+}
+
+.paragraph > span:empty:after {
+  content: "\200B";
+  display: inline;
+}
+
+a {
+  color: rgb(14 165 233);
+}
+
+.cm-editor.cm-focused {
+  outline: none !important;
+}

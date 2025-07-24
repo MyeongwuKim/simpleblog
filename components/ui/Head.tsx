@@ -7,10 +7,12 @@ import { DefButton } from "../buttons/DefButton";
 import ToggleButton from "../buttons/toggleButton";
 import { CiSun } from "react-icons/ci";
 import { IoMoonOutline } from "react-icons/io5";
+import { useRouter } from "next/navigation";
 
 export default function Head() {
   const { setTheme, theme } = useTheme();
   const [myTheme, setMyTheme] = useState<string>();
+  const route = useRouter();
   useEffect(() => {
     setTheme(myTheme!);
   }, [myTheme]);
@@ -30,7 +32,15 @@ export default function Head() {
           />
         </div>
         <div className="relative w-[120px] h-[35px] text-text4">
-          <DefButton color="dark" outline={true} content="글쓰기" iconEle={<TfiWrite className="w-6 h-6" />} />
+          <DefButton
+            onClickEvt={() => {
+              route.push("write");
+            }}
+            color="dark"
+            outline={true}
+            content="글쓰기"
+            iconEle={<TfiWrite className="w-6 h-6" />}
+          />
         </div>
       </div>
     </div>
