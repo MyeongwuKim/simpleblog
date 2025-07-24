@@ -29,10 +29,7 @@ const Editor: React.FC<Props> = ({
   return (
     <div className="h-[calc(100%-60px)] relative w-full bg-bg-page2 dark:shadow-black shadow-md">
       <div className="flex flex-col flex-auto relative  h-[calc(100%-0px)]">
-        <div
-          id="editor_title"
-          className="shadow-md dark:shadow-black flex-auto select-none relative  max-h-[30%]"
-        >
+        <div id="editor_title" className="flex-auto select-none relative min-h-[100px] max-h-[30%]">
           <textarea
             spellCheck={false}
             tabIndex={1}
@@ -43,14 +40,15 @@ const Editor: React.FC<Props> = ({
             value={postTitle}
             onChange={onTitleChange}
             placeholder="제목"
-            className={`placeholder-gray-300 p-4 placeholder:font-semibold relative w-full max-h-[100%] overflow-auto
-          font-bold text-2xl border-none resize-none bg-[rgba(0,0,0,0)] outline-none
+            className={`placeholder-text3 p-4 placeholder:font-semibold relative w-full max-h-[100%] overflow-auto
+          font-bold text-4xl border-none resize-none bg-[rgba(0,0,0,0)] outline-none text-text1
              focus:ring-0`}
           />
         </div>
+        <div id="title-bar" className="left-[16px] bg-text2 w-[4rem] h-[6px] rounded-xl relative"></div>
         <div className="w-full h-[60px]">
-          <ToolBar editorView={editorView!} theme={'light'} />
-            </div>
+          <ToolBar editorView={editorView!} theme={"light"} />
+        </div>
         <div
           onClick={() => {
             editorView?.focus();
@@ -61,12 +59,11 @@ const Editor: React.FC<Props> = ({
             <div id="editor-wrapper" className="relative" ref={refContainer}>
               <div
                 id="editor-placeholder"
-                className="h-full flex items-center left-1 absolute z-[99] font-semibold text-[20px] text-gray-300"
+                className="h-full flex items-center left-1 absolute z-[99] font-medium text-[20px] text-text3"
               >
                 <span
                   className={`${
-                    editorView?.contentDOM.innerText.trim().length > 0 ||
-                    editorView?.contentDOM.children.length > 1
+                    editorView?.contentDOM.innerText.trim().length > 0 || editorView?.contentDOM.children.length > 1
                       ? "hidden"
                       : "inline-block"
                   }`}
