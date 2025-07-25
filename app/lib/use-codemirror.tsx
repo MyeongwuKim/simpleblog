@@ -1,5 +1,3 @@
-
-
 import { EditorState, Compartment } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { defaultKeymap } from "@codemirror/commands";
@@ -47,6 +45,10 @@ const useCodeMirror = <T extends Element>(
     const baseTheme = EditorView.baseTheme({
       ".cm-scroller": {
         "font-family": "font-sans",
+      },
+
+      ".cm-content": {
+        "caret-color": "caret-caret",
       },
     });
 

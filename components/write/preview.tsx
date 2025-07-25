@@ -1,12 +1,11 @@
 import React, { createElement, Fragment, useEffect, useRef } from "react";
 import ReactMD from "./reactMD";
 
-
 interface Props {
   doc: string;
   title?: string;
   previewLoadingState: any;
-  setCotentPreview: (element:any) => void;
+  setCotentPreview: (element: any) => void;
 }
 
 const Preview: React.FC<Props> = (props) => {
@@ -45,11 +44,12 @@ const Preview: React.FC<Props> = (props) => {
   return (
     <div
       ref={previewRef}
-      className=" w-full overflow-auto flex flex-col h-[calc(100%-0px)]"
+      className=" w-full overflow-auto flex flex-col h-[calc(100%-0px)] pt-8 px-8"
     >
       <div
         ref={titleRef}
-        className="font-bold text-2xl p-4 select-none relative h-auto break-words whitespace-pre-line"
+        style={{ lineHeight: "1.5" }}
+        className="font-bold text-4xl select-none relative h-auto break-words whitespace-pre-line"
       />
       <div
         id="previewContent"

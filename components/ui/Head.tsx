@@ -28,15 +28,17 @@ export default function Head() {
             }}
             isCheck={theme == "light"}
             checkIcon={<CiSun className="w-[2rem] h-[2rem] relative" />}
-            unCheckIcon={<IoMoonOutline className="w-[2rem] h-[2rem] relative" />}
+            unCheckIcon={
+              <IoMoonOutline className="w-[2rem] h-[2rem] relative" />
+            }
           />
         </div>
-        <div className="relative w-[120px] h-[35px] text-text4">
+        <div className="relative w-auto h-[45px] text-text4">
           <DefButton
             onClickEvt={() => {
               route.push("write");
             }}
-            color="dark"
+            style={{ outline: true, color: "dark" }}
             outline={true}
             content="글쓰기"
             iconEle={<TfiWrite className="w-6 h-6" />}

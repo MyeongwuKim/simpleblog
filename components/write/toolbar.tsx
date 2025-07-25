@@ -5,14 +5,12 @@ import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { SearchCursor } from "@codemirror/search";
 
-
 interface IToolBar {
   theme: string | undefined;
   editorView: EditorView;
 }
 
 const ToolBar: NextPage<IToolBar> = (props) => {
-
   const { editorView } = props;
   const { watch, register, setValue } = useForm();
   const imageFile = watch("image");
@@ -235,15 +233,20 @@ const ToolBar: NextPage<IToolBar> = (props) => {
 
   return (
     <div className="w-full h-full relative">
-      <div className="bg-bg-page2 pl-8 flex gap-3 items-center relative h-auto font-semibold  [&>button]:select-none">
+      <div
+        className="bg-bg-page2 flex  items-center relative h-auto font-semibold
+      [&>button]:text-text3 [&>button]:hover:bg-bg-page1 [&>button]:w-[3rem] [&>button]:h-[3rem]
+      [&>label]:hover:bg-bg-page1  [&>label]:text-text3 [&>label]:w-[3rem] [&>label]:h-[3rem]
+      [&>button]:select-none"
+      >
         <button
-          className="w-12 h-12 sm:w-6 sm:h-6 relative hover:dark:bg-zinc-800 hover:bg-slate-200"
+          className="w-[3rem] h-[3rem] relative"
           onClick={() => onOneSymbolEvt("#")}
         >
           H1
         </button>
         <button
-          className="w-12 h-12 sm:w-6 sm:h-6relative hover:dark:bg-zinc-800 hover:bg-slate-200"
+          className="w-12 h-12 relative"
           onClick={() => onOneSymbolEvt("##")}
         >
           H2
@@ -343,16 +346,13 @@ const ToolBar: NextPage<IToolBar> = (props) => {
             <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"></path>
           </svg>
         </button>
-        <button
-          className="w-12 h-12 sm:w-6 sm:h-6 relative hover:dark:bg-zinc-800 hover:bg-slate-200"
-          onClick={() => onOneSymbolEvt(">")}
-        >
+        <button className="" onClick={() => onOneSymbolEvt(">")}>
           <svg
             stroke="currentColor"
             fill="currentColor"
             strokeWidth="0"
             viewBox="0 0 24 24"
-            className="w-8  h-6"
+            className="w-8  h-6 m-auto"
             xmlns="http://www.w3.org/2000/svg"
           >
             <path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"></path>
@@ -367,7 +367,7 @@ const ToolBar: NextPage<IToolBar> = (props) => {
             fill="currentColor"
             strokeWidth="0"
             viewBox="0 0 24 24"
-            className="m-auto w-12 h-8 sm:w-6 sm:h-4"
+            className="m-auto w-12 h-8 "
             xmlns="http://www.w3.org/2000/svg"
           >
             <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"></path>

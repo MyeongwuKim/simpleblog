@@ -16,44 +16,49 @@ const Editor: React.FC<Props> = ({
   defaultTitleValue,
   handleTitleChange,
 }) => {
-  const titleArea = useRef<any>('');
-  const [postTitle,setPostTitle] = useState('');
+  const titleArea = useRef<any>("");
+  const [postTitle, setPostTitle] = useState("");
   const onTitleChange = (e: any) => {
     const { current } = titleArea;
     setPostTitle(current.value);
     handleTitleChange(current.value);
     current!.style.height = "auto";
+    console.log(current!.scrollHeight);
     current!.style.height = current!.scrollHeight + "px";
   };
 
   return (
-    <div className="h-[calc(100%-60px)] relative w-full bg-bg-page2 dark:shadow-black shadow-md">
-      <div className="flex flex-col flex-auto relative  h-[calc(100%-0px)]">
-        <div id="editor_title" className="flex-auto select-none relative min-h-[100px] max-h-[30%]">
+    <div className="h-[calc(100%-60px)] pt-8 px-8 relative w-full bg-bg-page2 dark:shadow-black shadow-md">
+      <div className="flex flex-col flex-auto relative  h-[calc(100%-0px)] gap-2">
+        <div className="w-full h-auto">
           <textarea
+            style={{ lineHeight: "1.5" }}
             spellCheck={false}
             tabIndex={1}
-            rows={1}
             ref={(element) => {
               titleArea.current = element;
             }}
+            rows={1}
             value={postTitle}
             onChange={onTitleChange}
             placeholder="제목"
-            className={`placeholder-text3 p-4 placeholder:font-semibold relative w-full max-h-[100%] overflow-auto
-          font-bold text-4xl border-none resize-none bg-[rgba(0,0,0,0)] outline-none text-text1
+            className={`placeholder-text3 placeholder:font-semibold relative w-full max-h-[100%] overflow-auto
+          font-bold text-4xl border-none min-h-[66px] resize-none bg-[rgba(0,0,0,0)] outline-none text-text1
              focus:ring-0`}
           />
+          <div
+            id="title-bar"
+            className=" bg-text2 w-[4rem] h-[6px] rounded-xl relative mt-4"
+          ></div>
         </div>
-        <div id="title-bar" className="left-[16px] bg-text2 w-[4rem] h-[6px] rounded-xl relative"></div>
-        <div className="w-full h-[60px]">
+        <div className="w-full min-h-[60px]">
           <ToolBar editorView={editorView!} theme={"light"} />
         </div>
         <div
           onClick={() => {
             editorView?.focus();
           }}
-          className="cursor-text m-4  h-full overflow-auto"
+          className="cursor-text  h-full overflow-auto"
         >
           <div>
             <div id="editor-wrapper" className="relative" ref={refContainer}>
@@ -63,7 +68,8 @@ const Editor: React.FC<Props> = ({
               >
                 <span
                   className={`${
-                    editorView?.contentDOM.innerText.trim().length > 0 || editorView?.contentDOM.children.length > 1
+                    editorView?.contentDOM.innerText.trim().length > 0 ||
+                    editorView?.contentDOM.children.length > 1
                       ? "hidden"
                       : "inline-block"
                   }`}

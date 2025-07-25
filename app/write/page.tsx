@@ -1,10 +1,10 @@
-'use client'
+"use client";
 import Editor from "@/components/write/editor";
 import { RefObject, useCallback, useEffect, useState } from "react";
 import useCodeMirror from "../lib/use-codemirror";
 import ToolBar from "@/components/write/toolbar";
 import dynamic from "next/dynamic";
-
+import { DefButton } from "@/components/buttons/DefButton";
 
 const DynamicComponent = dynamic(
   () =>
@@ -14,13 +14,13 @@ const DynamicComponent = dynamic(
   {
     ssr: false,
     loading: () => {
-      return <div>로딩중</div>
+      return <div>로딩중</div>;
     },
   }
 );
 export default function Write() {
   const [title, setTitle] = useState<string>("");
-  const [doc, setDoc] = useState<string>('');
+  const [doc, setDoc] = useState<string>("");
   const [previewShow, setPreviewShow] = useState<boolean>(false);
   const [preview, setPreview] = useState<string>("");
   const [previewLoading, setPreviewLoading] = useState<boolean>(true);
@@ -37,7 +37,7 @@ export default function Write() {
     setTitle(title);
   }, []);
 
-  const setCotentPreview = useCallback((element:any) => {
+  const setCotentPreview = useCallback((element: any) => {
     let previewContent = "";
     if (element?.children) {
       for (let i = 0; i < element.children.length; i++) {
@@ -52,50 +52,59 @@ export default function Write() {
 
   return (
     <div id="write" className="w-full h-full">
-        <div className="relative w-full flex flex-row gap-8 h-full">
-          <div id="editorContainer" className="flex w-full flex-col h-full">
-            <Editor
-              defaultTitleValue={''}
-              editorView={editorView!}
-              refContainer={refContainer as RefObject<HTMLDivElement>}
-              handleTitleChange={handleTitleChange}
-            />
-            <div
-              id="editor_footer"
-              className="h-[60px] relative flex items-center justify-between
-              px-4 
-              w-full shadow-[0px_0px_8px_rgba(0,0,0,0.1)] bg-bg-page2 "
-            >
-             
-              <div className="absolute bottom-20 right-6 hidden sm:block">
-                {/* <LabelBtn
-                  contents={"미리보기"}
-                  onClick={() => {
-                    setPreviewShow(true);
-                  }}
-                /> */}
-              </div>
-            </div>
-          </div>
+      <div className="relative w-full flex flex-row gap-8 h-full ">
+        <div id="editorContainer" className="flex w-full flex-col h-full">
+          <Editor
+            defaultTitleValue={""}
+            editorView={editorView!}
+            refContainer={refContainer as RefObject<HTMLDivElement>}
+            handleTitleChange={handleTitleChange}
+          />
           <div
-            id="previewWrapper"
-            className={`sm:z-[99] sm:top-0 sm:left-0 w-full h-full
-            sm:flex justify-center items-center `}
+            id="editor_footer"
+            className="h-[60px] relative flex items-center justify-between
+              px-4 
+              w-full shadow-[0px_0px_8px_rgba(0,0,0,0.1)] bg-bg-page1"
           >
-            <div
-              id="previewContainer"
-              className={`w-full h-full bg-transparent`}
-            >
-              <DynamicComponent
-                setCotentPreview={setCotentPreview}
-                doc={doc}
-                previewLoadingState={setPreviewLoading}
-                title={title}
+            <div className="h-[45px] w-auto">
+              <DefButton
+                style={{ color: "black", textColor: "text-text1" }}
+                outline={false}
+                content="나가기"
+                onClickEvt={() => {}}
+              />
+            </div>
+            <div className="h-[45px] w-auto flex gap-4">
+              <DefButton
+                style={{ color: "black", textColor: "text-cyan-300" }}
+                outline={false}
+                content="임시저장"
+                onClickEvt={() => {}}
+              />
+              <DefButton
+                style={{ color: "cyan" }}
+                outline={true}
+                content="작성하기"
+                onClickEvt={() => {}}
               />
             </div>
           </div>
+        </div>
+        <div
+          id="previewWrapper"
+          className={`sm:z-[99] sm:top-0 sm:left-0 w-full h-full
+            sm:flex justify-center items-center `}
+        >
+          <div id="previewContainer" className={`w-full h-full bg-transparent`}>
+            <DynamicComponent
+              setCotentPreview={setCotentPreview}
+              doc={doc}
+              previewLoadingState={setPreviewLoading}
+              title={title}
+            />
+          </div>
+        </div>
       </div>
-
     </div>
   );
-};
+}
