@@ -1,5 +1,5 @@
-import Diaryitem from "@/components/items/dirayItem";
-import { ProfileItem } from "@/components/items/profileItem";
+import Diaryitem from "@/components/ui/items/dirayItem";
+import { ProfileItem } from "@/components/ui/items/profileItem";
 import { TfiWrite } from "react-icons/tfi";
 
 export default function Profile() {

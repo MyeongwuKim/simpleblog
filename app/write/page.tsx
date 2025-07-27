@@ -2,9 +2,8 @@
 import Editor from "@/components/write/editor";
 import { RefObject, useCallback, useEffect, useState } from "react";
 import useCodeMirror from "../lib/use-codemirror";
-import ToolBar from "@/components/write/toolbar";
 import dynamic from "next/dynamic";
-import DefButton from "@/components/buttons/defButton";
+import DefButton from "@/components/ui/buttons/defButton";
 
 const DynamicComponent = dynamic(
   () =>
