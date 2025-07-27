@@ -4,6 +4,23 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@keyframes leftMove {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-8px); /* 오른쪽으로 50px 이동 */
+  }
+}
+@keyframes rightMove {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(8px); /* 오른쪽으로 50px 이동 */
+  }
+}
+
 @layer components {
   .text-box {
     @apply overflow-ellipsis overflow-hidden whitespace-nowrap break-words;
@@ -11,14 +28,30 @@
   .floatBox {
     @apply transition delay-150 duration-300 ease-in-out hover:-translate-y-2;
   }
+  .left-moveBox {
+    &:hover {
+      & > div:first-child {
+        animation: var(--animate-leftmove);
+      }
+    }
+  }
+  .right-moveBox {
+    &:hover {
+      & > div:first-child {
+        animation: var(--animate-rightmove);
+      }
+    }
+  }
 }
 
 @theme {
-  --color-background-base: #fff;
+  --animate-leftmove: leftMove 0.4s linear infinite alternate;
+  --animate-rightmove: rightMove 0.4s linear infinite alternate;
   --color-background1: #fff;
   --color-background2: #f5f5f5;
   --color-background3: #ebebeb;
   --color-background4: #e0e0e0;
+  --color-background5: #f8f9fa;
   --color-bg-page1: #f8f9fa;
   --color-bg-page2: #ffffff;
   --color-bg-page3: #f0f0f0;
@@ -26,7 +59,9 @@
   --color-text2: #495057;
   --color-text3: #868e96;
   --color-text4: #ced4da;
+  --color-text5: #0cb0d4;
   --color-caret: black;
+  --color-border1: #dee2e6;
 }
 
 .dark {
@@ -34,6 +69,7 @@
   --color-background2: #3c3c3c;
   --color-background3: #494949;
   --color-background4: #565656;
+  --color-background5: #252525;
   --color-bg-page1: #2e2e2e;
   --color-bg-page2: #121212;
   --color-bg-page3: #3b3b3b;
@@ -41,7 +77,9 @@
   --color-text2: #d9d9d9;
   --color-text3: #acacac;
   --color-text4: #595959;
+  --color-text5: #4be7fb;
   --color-caret: white;
+  --color-border1: #4d4d4d;
 }
 
 [contentEditable="true"] > pp:first-child:empty:before {

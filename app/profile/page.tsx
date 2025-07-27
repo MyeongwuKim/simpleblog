@@ -1,14 +1,16 @@
+import Diaryitem from "@/components/items/dirayItem";
 import { ProfileItem } from "@/components/items/profileItem";
 import { TfiWrite } from "react-icons/tfi";
 
 export default function Profile() {
   return (
-    <div className="w-full h-full">
-      <div className="w-full  flex flex-col items-center justify-center">
-        <div className="w-[640px]">
+    <div className="w-[768px] ml-auto mr-auto  h-full relative">
+      <div className="w-full  flex flex-col items-center justify-center mb-8">
+        <div className="w-full h-[320px]">
           <ProfileItem />
         </div>
       </div>
+      <Diaryitem />
     </div>
   );
 }

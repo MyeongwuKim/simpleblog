@@ -4,7 +4,7 @@ import { RefObject, useCallback, useEffect, useState } from "react";
 import useCodeMirror from "../lib/use-codemirror";
 import ToolBar from "@/components/write/toolbar";
 import dynamic from "next/dynamic";
-import { DefButton } from "@/components/buttons/DefButton";
+import DefButton from "@/components/buttons/defButton";
 
 const DynamicComponent = dynamic(
   () =>
@@ -51,7 +51,7 @@ export default function Write() {
   }, []);
 
   return (
-    <div id="write" className="w-full h-full">
+    <div id="write" className="w-full h-full bg-gray-100 dark:bg-[#0c0c0c]">
       <div className="relative w-full flex flex-row gap-8 h-full ">
         <div id="editorContainer" className="flex w-full flex-col h-full">
           <Editor
@@ -68,22 +68,27 @@ export default function Write() {
           >
             <div className="h-[45px] w-auto">
               <DefButton
-                style={{ color: "black", textColor: "text-text1" }}
-                outline={false}
+                style={{
+                  color: "black",
+                  textColor: "text-text1",
+                  noBg: true,
+                }}
                 content="나가기"
                 onClickEvt={() => {}}
               />
             </div>
             <div className="h-[45px] w-auto flex gap-4">
               <DefButton
-                style={{ color: "black", textColor: "text-cyan-300" }}
-                outline={false}
+                style={{
+                  color: "black",
+                  textColor: "text-cyan-500",
+                  noBg: true,
+                }}
                 content="임시저장"
                 onClickEvt={() => {}}
               />
               <DefButton
-                style={{ color: "cyan" }}
-                outline={true}
+                style={{ color: "cyan", noBg: false }}
                 content="작성하기"
                 onClickEvt={() => {}}
               />

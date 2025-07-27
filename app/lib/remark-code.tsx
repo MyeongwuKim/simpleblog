@@ -1,9 +1,8 @@
-import React, { Children, useEffect, useState } from "react";
-
 import { CodeProps } from "react-markdown/lib/ast-to-react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { materialDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import runmode, { getLanguage } from "./runmode";
+import { useEffect, useState } from "react";
 
 type Tokens = {
   text: string;
