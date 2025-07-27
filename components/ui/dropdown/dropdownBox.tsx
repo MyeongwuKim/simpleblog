@@ -3,7 +3,6 @@
 import { Dropdown, DropdownDivider, DropdownItem } from "flowbite-react";
 import Image from "next/image";
 import { ComponentProps, FC } from "react";
-import { HiCog, HiCurrencyDollar, HiLogout, HiViewGrid } from "react-icons/hi";
 import { IoIosArrowDown } from "react-icons/io";
 
 type DropdownType = {

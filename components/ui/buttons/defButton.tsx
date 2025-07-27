@@ -1,3 +1,4 @@
+"use client";
 import { Button, ButtonColors } from "flowbite-react";
 import { DynamicStringEnumKeysOf } from "flowbite-react/types";
 import React, { JSX } from "react";
@@ -17,10 +18,12 @@ export default function DefButton({
   content,
   iconEle,
   style,
+  type = "button",
   onClickEvt,
 }: DefBtnProps) {
   return (
     <Button
+      type={type}
       theme={{
         color: {
           cyan: `bg-cyan-300  hover:bg-cyan-400 

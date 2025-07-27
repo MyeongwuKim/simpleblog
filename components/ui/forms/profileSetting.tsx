@@ -7,7 +7,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store"; // Store에서 정의한 타입 임포트
 import { Dispatch as StateDispatch, SetStateAction, useState } from "react";
 
-import { InputField } from "../form/inputField";
+import { InputField } from "../input/inputField";
 import { FaGithub, FaInstagram } from "react-icons/fa6";
 import { Dispatch } from "@reduxjs/toolkit";
 

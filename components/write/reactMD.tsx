@@ -8,12 +8,29 @@ import remarkBreaks from "remark-breaks";
 import React, { JSX, useEffect } from "react";
 import Image from "next/image";
 import RemarkCode from "@/app/lib/remark-code";
+import { defaultSchema } from "rehype-sanitize";
+import rehypeSanitize from "rehype-sanitize";
+import { usePathname } from "next/navigation";
 
 interface IReactMD {
   doc: string;
 }
 
 const ReactMD: NextPage<IReactMD> = ({ doc }) => {
+  const pathname = usePathname();
+  const customSanitizedSchema = {
+    ...defaultSchema, // 올바르게 가져온 defaultSchema 사용
+    tagNames:
+      pathname == "/comments"
+        ? ["br"]
+        : defaultSchema.tagNames.filter(
+            (tag) =>
+              // 여기서 허용하고 싶지 않은 태그들을 제외합니다.
+              // 예: script, iframe, object, embed 등
+              !["script", "iframe", "object", "embed", ""].includes(tag)
+          ),
+  };
+
   return (
     <>
       <ReactMarkDown
@@ -102,7 +119,7 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
           },
           code: RemarkCode,
         }}
-        rehypePlugins={[rehypeRaw]}
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, customSanitizedSchema]]}
         remarkPlugins={[remarkGfm, remarkBreaks]}
       >
         {doc}

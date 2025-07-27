@@ -1,5 +1,6 @@
 "use client";
-import ReactMD from "../write/reactMD";
+
+import ReactMD from "@/components/write/reactMD";
 
 export default function Diaryitem() {
   return (

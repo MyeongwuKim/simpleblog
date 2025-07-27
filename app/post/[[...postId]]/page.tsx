@@ -1,11 +1,7 @@
 "use client";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  increment,
-  decrement,
-  incrementByAmount,
-} from "@/redux/reducer/changeView";
-import TagItem from "@/components/items/tagItem";
+
+import TagItem from "@/components/ui/items/tagItem";
 import ReactMD from "@/components/write/reactMD";
 import { FaArrowAltCircleLeft, FaArrowAltCircleRight } from "react-icons/fa";
 

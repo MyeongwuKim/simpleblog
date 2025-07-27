@@ -1,15 +1,15 @@
 "use client";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import TabButtons from "./TabButtons";
+import TabButtons from "../ui/buttons/TabButtons";
 import { TfiWrite } from "react-icons/tfi";
 
-import ToggleButton from "../buttons/toggleButton";
+import ToggleButton from "../ui/buttons/toggleButton";
 import { IoSunny, IoMoon } from "react-icons/io5";
 import { usePathname, useRouter } from "next/navigation";
-import { DropdownProfile } from "./dropdownBox";
+import { DropdownProfile } from "../ui/dropdown/dropdownBox";
 import { HiCog, HiLogout } from "react-icons/hi";
-import DefButton from "../buttons/defButton";
+import DefButton from "../ui/buttons/defButton";
 
 const showList = ["/", "/profile", "/comments"];
 

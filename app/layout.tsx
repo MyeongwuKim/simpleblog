@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import MyProviders from "@/components/theme-Provider";
-import CommonBody from "@/components/ui/commonBody";
+import CommonBody from "@/components/layout/commonBody";
 import ToastPotal from "@/components/portal/toastPortal";
 
 export const metadata: Metadata = {
