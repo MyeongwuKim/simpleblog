@@ -127,82 +127,89 @@ const ToolBar: NextPage<IToolBar> = (props) => {
   };
 
   const onCodeEvt = () => {
-    editorView?.focus();
+    editorView.focus(); // 에디터에 포커스
 
-    let line = editorView?.state.doc.lineAt(
-      editorView?.state.selection.main.from
-    )!;
-    let startCaret = editorView!.state.selection.ranges[0].from - line.from;
-    let endCaret =
-      editorView!.state.selection.ranges[0].to -
-      editorView!.state.selection.ranges[0].from;
+    const selection = editorView.state.selection.main;
+    const selectedText = editorView.state.doc.sliceString(selection.from, selection.to);
 
-    let cutStr = line?.text.substring(startCaret, startCaret + endCaret);
-    let link =
-      "\n```js\n" +
-      `${cutStr!.length > 0 ? cutStr : "input code plz"}` +
-      "\n```";
-    let state = editorView?.state!;
-    let tr = state.update(state.replaceSelection(link));
-    editorView?.dispatch(tr);
+    const contentToInsert = selectedText.length > 0 ? selectedText : "input code plz";
 
-    let curLine = editorView?.state.doc.lineAt(
-      editorView?.state.selection.main.from
-    );
-    let prevLine = editorView?.state.doc.line(curLine!.number - 1)!;
+    const codeBlock = `\n\`\`\`js\n${contentToInsert}\n\`\`\`\n`;
 
-    editorView?.dispatch({
-      selection: EditorSelection.create(
-        [
-          EditorSelection.range(prevLine.from, prevLine.to),
-          EditorSelection.cursor(prevLine.from),
-        ],
-        1
-      ),
+    const transaction = editorView.state.update({
+      changes: {
+        from: selection.from,
+        to: selection.to,
+        insert: codeBlock,
+      },
     });
+
+    editorView.dispatch(transaction);
+
+    const newSelectionStart = selection.from + "\n```js\n".length;
+    if (selectedText.length === 0) {
+      editorView.dispatch(
+        editorView.state.update({
+          selection: { anchor: newSelectionStart, head: newSelectionStart + "input code plz".length },
+        })
+      );
+    }
   };
   const onTwoSymbolEvt = (evtName: string) => {
-    editorView?.focus();
+    editorView.focus();
 
-    let state = editorView?.state!;
-    //current selection line Info, if style is true, LineText state **BOLD**
-    let line = state.doc.lineAt(state.selection.main.from);
-    let startCaret = editorView!.state.selection.ranges[0].from - line.from;
-    let endCaret =
-      editorView!.state.selection.ranges[0].to -
-      editorView!.state.selection.ranges[0].from;
+    const state = editorView.state;
+    const selection = state.selection.main; // 현재 메인 선택 영역
 
-    let cutStr = line?.text.substring(startCaret, startCaret + endCaret);
+    // 1. 선택된 전체 텍스트 가져오기 (여러 줄 포함)
+    const selectedText = state.doc.sliceString(selection.from, selection.to);
 
-    let remove = false;
-    if (
-      cutStr.indexOf(evtName) > -1 &&
-      cutStr.indexOf(evtName, cutStr.indexOf(evtName) + 1) > -1
-    ) {
-      remove = true;
+    // 2. 선택된 텍스트가 이미 심볼로 감싸져 있는지 확인
+    // 시작과 끝에 evtName이 있는지 확인
+    const isWrapped =
+      selectedText.startsWith(evtName) && selectedText.endsWith(evtName) && selectedText.length >= evtName.length * 2; // 최소한 심볼 2개 길이 이상이어야 함
+
+    let newTextToInsert: string; // 삽입할 새로운 텍스트
+    let newSelectionOffset = 0; // 삽입 후 커서 위치 조정을 위한 오프셋
+
+    if (isWrapped) {
+      // 심볼 제거: 앞뒤 심볼 제거
+      newTextToInsert = selectedText.substring(evtName.length, selectedText.length - evtName.length);
+      newSelectionOffset = -evtName.length; // 커서가 심볼 길이만큼 앞으로 이동
+    } else {
+      // 심볼 추가: 선택된 텍스트를 심볼로 감싸기
+      const content = selectedText.length > 0 ? selectedText : "TEXT"; // 선택된 텍스트가 없으면 "TEXT" 기본값
+      newTextToInsert = `${evtName}${content}${evtName}`;
+      newSelectionOffset = evtName.length; // 커서가 심볼 길이만큼 뒤로 이동
     }
 
-    let symbolText = remove
-      ? cutStr.replaceAll(evtName, "")
-      : `${evtName}${cutStr.length > 0 ? cutStr : "TEXT"}${evtName}`;
+    // 3. 텍스트 변경 트랜잭션 생성
+    const transaction = state.update({
+      changes: {
+        from: selection.from, // 선택 영역 시작
+        to: selection.to, // 선택 영역 끝
+        insert: newTextToInsert, // 새로운 텍스트 삽입
+      },
+    });
 
-    let tr = state.update(state.replaceSelection(symbolText));
-    editorView?.dispatch(tr); // dispatch new doc state
+    editorView.dispatch(transaction); // 변경사항 디스패치
 
-    if (!remove) {
-      let newFrom = state.selection.main.from + evtName.length;
-      let newTo =
-        state.selection.main.from + symbolText.indexOf(evtName, evtName.length);
-      editorView?.dispatch({
-        selection: EditorSelection.create(
-          [
-            EditorSelection.range(newFrom, newTo),
-            EditorSelection.cursor(newTo),
-          ],
-          1
-        ),
+    // 4. 삽입/제거 후 커서 위치 조정
+    // 새로운 선택 영역의 시작과 끝 계산
+    const newAnchor = selection.from + newSelectionOffset;
+    const newHead = selection.to + newSelectionOffset; // 선택된 텍스트가 있었다면, 그 길이만큼 이동
+
+    // 선택된 텍스트가 없었고, "TEXT"를 삽입한 경우 "TEXT"를 선택하도록 조정
+    if (!isWrapped && selectedText.length === 0) {
+      editorView.dispatch({
+        selection: EditorSelection.create([EditorSelection.range(newAnchor, newAnchor + "TEXT".length)]),
+      });
+    } else {
+      editorView.dispatch({
+        selection: EditorSelection.create([EditorSelection.range(newAnchor, newHead)]),
       });
     }
+
   };
   const onOneSymbolEvt = (evtName: string) => {
     editorView?.focus();
