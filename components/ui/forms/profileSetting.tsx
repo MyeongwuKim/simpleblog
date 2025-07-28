@@ -3,8 +3,7 @@ import Image from "next/image";
 
 import LabelButton from "../buttons/labelButton";
 import DefButton from "../buttons/defButton";
-import { useSelector, useDispatch } from "react-redux";
-import { RootState, AppDispatch } from "@/redux/store"; // Store에서 정의한 타입 임포트
+
 import { Dispatch as StateDispatch, SetStateAction, useState } from "react";
 
 import { InputField } from "../input/inputField";

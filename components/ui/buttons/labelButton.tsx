@@ -15,22 +15,16 @@ const getTextColor = (color: string) => {
      dark:text-cyan-400 dark:hover:text-cyan-200`;
       break;
     default:
-      str = ` text-gray-600  hover:text-gray-400 
-     dark:text-gray-gray dark:hover:text-gray-200`;
+      str = `text-text3 hover:text-text2`;
   }
   return str;
 };
 
-export default function LabelButton({
-  content,
-  onClickEvt,
-  style,
-}: LblBtnProps) {
+export default function LabelButton({ content, onClickEvt, style }: LblBtnProps) {
   return (
     <button
       onClick={onClickEvt}
-      className={`${style?.textSize} cursor-pointer underline
-        text-${style?.color}-500  ${getTextColor(style?.color!)}`}
+      className={`${style?.textSize} cursor-pointer underline ${getTextColor(style?.color!)}`}
     >
       {content}
     </button>

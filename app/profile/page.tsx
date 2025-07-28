@@ -1,4 +1,4 @@
-import Diaryitem from "@/components/ui/items/dirayItem";
+import Diaryitem from "@/components/ui/items/diaryItem";
 import { ProfileItem } from "@/components/ui/items/profileItem";
 import { TfiWrite } from "react-icons/tfi";
 

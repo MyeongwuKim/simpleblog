@@ -1,4 +1,4 @@
-import { CardItem } from "@/components/items/cardItem";
+import { CardItem } from "@/components/ui/items/cardItem";
 
 export default function Home() {
   return (

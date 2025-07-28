@@ -10,6 +10,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { DropdownProfile } from "../ui/dropdown/dropdownBox";
 import { HiCog, HiLogout } from "react-icons/hi";
 import DefButton from "../ui/buttons/defButton";
+import { useAppDispatch } from "@/redux/store/hooks";
+import { add } from "@/redux/reducer/toastReducer";
 
 const showList = ["/", "/profile", "/comments"];
 
@@ -18,6 +20,7 @@ export default function Head() {
   const [myTheme, setMyTheme] = useState<string | undefined>(theme);
   const route = useRouter();
   const pathname = usePathname(); // 현재 경로명 (예: /blog/post-1)
+  //const dispatch = useAppDispatch();
 
   useEffect(() => {
     setTheme(myTheme!);
@@ -25,11 +28,7 @@ export default function Head() {
 
   return (
     <div id="HeadView" className="w-full h-full flex flex-col items-center">
-      <div
-        className={`w-auto h-full relative ${
-          showList.includes(pathname) ? "visible" : "hidden"
-        }`}
-      >
+      <div className={`w-auto h-full relative ${showList.includes(pathname) ? "visible" : "hidden"}`}>
         <TabButtons />
       </div>
 
@@ -48,6 +47,7 @@ export default function Head() {
         <div className="relative w-auto h-[45px] text-text4">
           <DefButton
             onClickEvt={() => {
+              //dispatch(add({ msg: "asdf", time: 2, isWarning: false }));
               route.push("/write");
             }}
             style={{ outline: true, color: "dark" }}

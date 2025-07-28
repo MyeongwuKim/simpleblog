@@ -1,6 +1,7 @@
 "use client";
 
 import ReactMD from "@/components/write/reactMD";
+import LabelButton from "../buttons/labelButton";
 
 export default function Diaryitem() {
   return (
@@ -32,7 +33,12 @@ export function PostHead() {
       <div className="w-full flex justify-between mb-2 [&_span]:text-lg [&_span]:text-text3">
         <span className="text-3xl">2025.12.12 작성</span>
         <div className="gap-2 flex">
-          <span>삭제</span>
+            <LabelButton 
+            content="삭제"
+            style={{color:'',textSize:'text-sm'}}
+            onClickEvt={()=>{
+
+            }}></LabelButton>
         </div>
       </div>
       <div></div>
