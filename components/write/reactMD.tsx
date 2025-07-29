@@ -1,3 +1,4 @@
+"use client";
 import { NextPage } from "next";
 
 import remarkGfm from "remark-gfm";
@@ -5,12 +6,12 @@ import remarkGfm from "remark-gfm";
 import ReactMarkDown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkBreaks from "remark-breaks";
-import React, { JSX, useEffect } from "react";
 import Image from "next/image";
 import RemarkCode from "@/app/lib/remark-code";
 import { defaultSchema } from "rehype-sanitize";
 import rehypeSanitize from "rehype-sanitize";
 import { usePathname } from "next/navigation";
+import React, { JSX } from "react";
 
 interface IReactMD {
   doc: string;
@@ -44,30 +45,21 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
           },
           h1({ node, children, ...props }) {
             return (
-              <h1
-                className="appendix font-sans mb-[1em] text-[32px] font-bold"
-                {...props}
-              >
+              <h1 className="appendix font-sans mb-[1em] text-[32px] font-bold" {...props}>
                 {children}
               </h1>
             );
           },
           h2({ node, children, ...props }) {
             return (
-              <h2
-                className="appendix font-sans mb-[1em] text-[24px] font-bold"
-                {...props}
-              >
+              <h2 className="appendix font-sans mb-[1em] text-[24px] font-bold" {...props}>
                 {children}
               </h2>
             );
           },
           h3({ node, children, ...props }) {
             return (
-              <h3
-                className="appendix font-sans mb-[1em] text-[20px] font-bold"
-                {...props}
-              >
+              <h3 className="appendix font-sans mb-[1em] text-[20px] font-bold" {...props}>
                 {children}
               </h3>
             );
@@ -81,11 +73,7 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
                 {children.map((child, i) => {
                   let reactElement = child as JSX.Element;
                   if (reactElement.props) {
-                    let div = React.createElement(
-                      "div",
-                      { key: i },
-                      reactElement.props?.children
-                    );
+                    let div = React.createElement("div", { key: i }, reactElement.props?.children);
 
                     return div;
                   } else return child;

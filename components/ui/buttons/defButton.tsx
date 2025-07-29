@@ -31,22 +31,14 @@ export default function DefButton({
         },
       }}
       onClick={onClickEvt}
-      className={`w-full h-full cursor-pointer text-[1.125rem] focus:ring-0
-        ${style?.textColor ? style?.textColor : "text-text1"} ${
-        style?.noBg ? "hover:bg-bg-page3" : ""
-      }`}
+      className={`w-full h-full cursor-pointer text-[1.125rem] focus:ring-0 font-semibold
+        ${style?.textColor ? style?.textColor : "text-button1"} ${style?.noBg ? "hover:bg-bg-page3" : ""}`}
       color={style?.color}
       outline={style?.outline}
     >
       <div className="flex gap-2 items-center">
         {iconEle ? iconEle : ""}
-        {content ? (
-          <span className={`${style?.textSize ? style?.textSize : ""}`}>
-            {content}
-          </span>
-        ) : (
-          ""
-        )}
+        {content ? <span className={`${style?.textSize ? style?.textSize : ""}`}>{content}</span> : ""}
       </div>
     </Button>
   );

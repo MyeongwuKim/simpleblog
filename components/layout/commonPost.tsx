@@ -57,7 +57,7 @@ export function PostBody() {
             <span>삭제</span>
           </div>
         </div>
-        <div>
+        <div className="flex flex-wrap gap-2">
           <TagItem text="야호asdasdasdasdasdasdasdasd sdasdasd"></TagItem>
         </div>
       </div>

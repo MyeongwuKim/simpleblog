@@ -1,6 +1,5 @@
-import Diaryitem from "@/components/ui/items/diaryItem";
+import IntroForm from "@/components/ui/forms/introForm";
 import { ProfileItem } from "@/components/ui/items/profileItem";
-import { TfiWrite } from "react-icons/tfi";
 
 export default function Profile() {
   return (
@@ -9,8 +8,9 @@ export default function Profile() {
         <div className="w-full h-[320px]">
           <ProfileItem />
         </div>
+        <div className="text-2xl py-10 font-bold text-text2">소개</div>
+        <IntroForm />
       </div>
-      <Diaryitem />
     </div>
   );
 }

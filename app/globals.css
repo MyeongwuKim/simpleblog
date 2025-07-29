@@ -62,6 +62,7 @@
   --color-text5: #0cb0d4;
   --color-caret: black;
   --color-border1: #dee2e6;
+  --color-button1: #fff;
 }
 
 .dark {
@@ -80,6 +81,7 @@
   --color-text5: #4be7fb;
   --color-caret: white;
   --color-border1: #4d4d4d;
+  --color-button1: #121212;
 }
 
 [contentEditable="true"] > pp:first-child:empty:before {

@@ -1,18 +1,25 @@
 "use client";
+import { Badge } from "flowbite-react";
 
 interface TagItemProps {
   text: string;
-  callback?: () => void;
+  clickEvt?: () => void;
+  style?: {
+    normal: string;
+    disabled: string;
+  };
+  disabled?: boolean;
 }
 
-const TagItem = ({ text, callback }: TagItemProps) => {
+const TagItem = ({ text, clickEvt, style, disabled }: TagItemProps) => {
   return (
-    <div
-      className="py-1.5 px-3 rounded-full text-base
-    w-auto relative inline-block bg-background5 text-text5 "
-    >
-      <span className={`relative`}>{text}</span>
-    </div>
+    <>
+      <Badge size="md" color={style?.normal ? "cyan" : style?.normal}>
+        <button className="cursor-pointer" onClick={clickEvt}>
+          {text}
+        </button>
+      </Badge>
+    </>
   );
 };
 

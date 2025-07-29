@@ -1,22 +1,14 @@
 "use client";
+import { Dropdown, DropdownItem } from "flowbite-react";
+import { DropdownType } from "./dropdownType";
+import { useState } from "react";
 
-import { Dropdown, DropdownDivider, DropdownItem } from "flowbite-react";
-import Image from "next/image";
-import { ComponentProps, FC } from "react";
-import { IoIosArrowDown } from "react-icons/io";
-
-type DropdownType = {
-  items: {
-    content: string;
-    icon?: FC<ComponentProps<"svg">>;
-  }[];
-  clickEvt?: (content: string) => void;
-};
-
-interface Profile extends DropdownType {
-  profileImg?: string;
+interface BoxProps extends DropdownType {
+  defaultBoxIndex: number;
+  boxSize?: string;
 }
-export function DropdownProfile({ items, clickEvt, profileImg }: Profile) {
+export function DropdownBox({ items, clickEvt, defaultBoxIndex }: BoxProps) {
+  const [boxIndex, setBoxIndex] = useState<number>(defaultBoxIndex);
   return (
     <Dropdown
       applyTheme={{
@@ -27,6 +19,7 @@ export function DropdownProfile({ items, clickEvt, profileImg }: Profile) {
         },
       }}
       theme={{
+        inlineWrapper: "w-[300px]",
         floating: {
           style: {
             auto: "bg-background1 dark:bg-background1",
@@ -36,31 +29,15 @@ export function DropdownProfile({ items, clickEvt, profileImg }: Profile) {
           },
         },
       }}
-      dismissOnClick={true}
-      renderTrigger={() => (
-        <div className="h-full flex relative items-center gap-2">
-          <div className="w-[45px] h-[45px]  rounded-full bg-background3 relative">
-            {profileImg ? (
-              <Image
-                objectFit="cover"
-                src="profileImg"
-                fill
-                alt="profile"
-                className="w-full h-full rounded-full relative"
-              />
-            ) : (
-              ""
-            )}
-          </div>
-          <IoIosArrowDown className="w-4 h-4 text-text1"></IoIosArrowDown>
-        </div>
-      )}
+      label={items[boxIndex].content}
+      inline
     >
       {items.map(({ content, icon }, i) => (
         <DropdownItem
           icon={icon}
           key={i}
           onClick={() => {
+            setBoxIndex(i);
             if (clickEvt) clickEvt(content);
           }}
         >

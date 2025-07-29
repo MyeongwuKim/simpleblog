@@ -3,15 +3,12 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import TabButtons from "../ui/buttons/TabButtons";
 import { TfiWrite } from "react-icons/tfi";
-
 import ToggleButton from "../ui/buttons/toggleButton";
 import { IoSunny, IoMoon } from "react-icons/io5";
 import { usePathname, useRouter } from "next/navigation";
-import { DropdownProfile } from "../ui/dropdown/dropdownBox";
 import { HiCog, HiLogout } from "react-icons/hi";
 import DefButton from "../ui/buttons/defButton";
-import { useAppDispatch } from "@/redux/store/hooks";
-import { add } from "@/redux/reducer/toastReducer";
+import { DropdownProfile } from "../ui/dropdown/dropdownProfile";
 
 const showList = ["/", "/profile", "/comments"];
 
@@ -50,7 +47,7 @@ export default function Head() {
               //dispatch(add({ msg: "asdf", time: 2, isWarning: false }));
               route.push("/write");
             }}
-            style={{ outline: true, color: "dark" }}
+            style={{ outline: true, color: "dark", textColor: "text-text1" }}
             content="글쓰기"
             iconEle={<TfiWrite className="w-6 h-6" />}
           />
