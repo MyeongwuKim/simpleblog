@@ -19,7 +19,7 @@ export function DropdownBox({ items, clickEvt, defaultBoxIndex }: BoxProps) {
         },
       }}
       theme={{
-        inlineWrapper: "w-[300px]",
+        inlineWrapper: "w-full",
         floating: {
           style: {
             auto: "bg-background1 dark:bg-background1",

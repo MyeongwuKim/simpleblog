@@ -24,12 +24,11 @@ export default function Head() {
   }, [myTheme]);
 
   return (
-    <div id="HeadView" className="w-full h-full flex flex-col items-center">
+    <div id="HeadView" className="w-full h-full flex items-center flex-col justify-center">
       <div className={`w-auto h-full relative ${showList.includes(pathname) ? "visible" : "hidden"}`}>
         <TabButtons />
       </div>
-
-      <div className="h-full flex items-center gap-3 absolute right-16">
+      <div className="w-auto  flex items-center gap-3  absolute right-[32px]">
         <div className="relative w-[35px] h-[35px]">
           <ToggleButton
             clickCallback={(isChecked) => {
@@ -41,23 +40,21 @@ export default function Head() {
             unCheckIcon={<IoMoon className="w-[2rem] h-[2rem] relative" />}
           />
         </div>
-        <div className="relative w-auto h-[45px] text-text4">
-          <DefButton
-            onClickEvt={() => {
-              //dispatch(add({ msg: "asdf", time: 2, isWarning: false }));
-              route.push("/write");
-            }}
-            style={{ outline: true, color: "dark", textColor: "text-text1" }}
-            content="글쓰기"
-            iconEle={<TfiWrite className="w-6 h-6" />}
-          />
-        </div>
+
         <div className="w-auto h-[45px]">
           <DropdownProfile
             clickEvt={(content: string) => {
-              if (content == "설정") route.push("/setting");
+              switch (content) {
+                case "설정":
+                  route.push("/setting");
+                  break;
+                case "글쓰기":
+                  route.push("/write");
+                  break;
+              }
             }}
             items={[
+              { content: "글쓰기", icon: TfiWrite },
               { content: "설정", icon: HiCog },
               { content: "로그아웃", icon: HiLogout },
             ]}

@@ -63,6 +63,9 @@
   --color-caret: black;
   --color-border1: #dee2e6;
   --color-button1: #fff;
+  --breakpoint-sm: 768px;
+  --breakpoint-md: 1056px;
+  --breakpoint-lg: 1440px;
 }
 
 .dark {
