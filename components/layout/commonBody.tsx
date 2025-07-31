@@ -44,7 +44,7 @@ function Postfilter() {
         <div className="flex overflow-x-auto gap-2">
           {[1, 2, 3, 4, 5].map((v, i) => (
             <div key={i} className="flex-none">
-              <TagItem text="테스틍숑123123123123" />
+              <TagItem mode="check" isChecked={false} text="전체(45)" />
             </div>
           ))}
         </div>
