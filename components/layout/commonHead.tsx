@@ -7,8 +7,9 @@ import ToggleButton from "../ui/buttons/toggleButton";
 import { IoSunny, IoMoon } from "react-icons/io5";
 import { usePathname, useRouter } from "next/navigation";
 import { HiCog, HiLogout } from "react-icons/hi";
-import DefButton from "../ui/buttons/defButton";
 import { DropdownProfile } from "../ui/dropdown/dropdownProfile";
+import { FaBookBookmark } from "react-icons/fa6";
+import LabelButton from "../ui/buttons/labelButton";
 
 const showList = ["/", "/profile", "/comments"];
 
@@ -27,6 +28,14 @@ export default function Head() {
     <div id="HeadView" className="w-full h-full flex items-center flex-col justify-center">
       <div className={`w-auto h-full relative ${showList.includes(pathname) ? "visible" : "hidden"}`}>
         <TabButtons />
+      </div>
+      <div className="absolute left-[32px] ">
+        <button onClick={() => route.push("/")} className="text-text1 cursor-pointer">
+          <div className="flex items-center gap-2">
+            <FaBookBookmark className="w-6 h-6" />
+            <span className="text-xl font-semibold">북마크블로그</span>
+          </div>
+        </button>
       </div>
       <div className="w-auto  flex items-center gap-3  absolute right-[32px]">
         <div className="relative w-[35px] h-[35px]">

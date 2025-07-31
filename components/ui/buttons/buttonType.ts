@@ -1,6 +1,8 @@
+import React from "react";
+
 export type BtnType = {
-  content?: string;
+  content?: string | React.ReactNode;
   iconEle?: React.ReactNode;
-  onClickEvt: () => void;
+  onClickEvt?: () => void;
   type?: "submit" | "reset" | "button";
 };

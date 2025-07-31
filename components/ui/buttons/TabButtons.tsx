@@ -43,7 +43,7 @@ export default function TabButtons() {
           tablist: {
             base: "w-auto",
             tabitem: {
-              base: "text-xl relative",
+              base: "md:text-xl lg:text-xl  relative text-base",
               variant: {
                 pills: {
                   active: {
@@ -62,11 +62,7 @@ export default function TabButtons() {
         }}
       >
         {tabList.map((v, i) => (
-          <TabItem
-            active={v.pathname == pathname}
-            title={v.title}
-            icon={v.icon}
-          />
+          <TabItem active={v.pathname == pathname} title={v.title} icon={v.icon} />
         ))}
       </Tabs>
       <div

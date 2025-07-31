@@ -25,22 +25,12 @@ function SettingMain() {
     <div className="w-full h-full flex flex-row flex-auto">
       <div className="flex flex-col items-center border-r-[1px] border-border1 pr-8">
         <div className="w-[128px] h-[192px] rounded-md relative mb-4">
-          <Image
-            className="w-full h-full relative"
-            objectFit="cover"
-            fill
-            src="/testImage.png"
-            alt="image 1"
-          />
+          <Image className="w-full h-full relative" objectFit="cover" fill src="/testImage.png" alt="image 1" />
         </div>
-        <div className="w-[130px] h-[40px] mb-4">
-          <DefButton
-            style={{ color: "cyan", noBg: false }}
-            content="업로드"
-            onClickEvt={() => {}}
-          />
+        <div className="w-[140px] h-[40px] mb-4">
+          <DefButton style={{ color: "cyan", noBg: false }} content="업로드" onClickEvt={() => {}} />
         </div>
-        <div className="w-[130px] h-[40px]">
+        <div className="w-[140px] h-[40px]">
           <DefButton
             style={{
               color: "black",
@@ -54,20 +44,15 @@ function SettingMain() {
       </div>
       <div className="px-8 flex flex-auto flex-col gap-2">
         <div className="h-[58px]">
-          {isModify ? (
-            <InputField size="lg" type="text" />
-          ) : (
-            <h1 className="text-text1 text-3xl ">김명우웁니다1</h1>
-          )}
+          {isModify ? <InputField size="lg" type="text" /> : <h1 className="text-text1 text-3xl ">김명우웁니다1</h1>}
         </div>
         <div className="min-h-[58px]">
           {isModify ? (
             <InputField size="md" type="text" />
           ) : (
             <p className="text-text2">
-              asdasdasdasdasdasdasdasdasd asdasd asdasdasd asdasdasdasdasdasd
-              asdasdasdasdasdasdasdasdasd asdasd asdasdasd asdasdasdasdasdasd
-              asdasdasdasdasdasdasdasdasd asdasd asdasdasd asdasdasdasdasdasd
+              asdasdasdasdasdasdasdasdasd asdasd asdasdasd asdasdasdasdasdasd asdasdasdasdasdasdasdasdasd asdasd
+              asdasdasd asdasdasdasdasdasd asdasdasdasdasdasdasdasdasd asdasd asdasdasd asdasdasdasdasdasd
               asdasdasdasdasdasdasdasdasd asdasd asdasdasd asdasdasdasdasdasd
             </p>
           )}
@@ -75,7 +60,7 @@ function SettingMain() {
         <div className="flex items-center justify-between">
           <div className={`w-auto h-[40px] ${isModify ? "invisible" : ""}`}>
             <LabelButton
-              style={{ textSize: "text-md", color: "cyan" }}
+              style={{ textSize: "text-md", color: "cyan", underline: true }}
               content="수정"
               onClickEvt={() => {
                 setIsModify(true);
@@ -122,7 +107,7 @@ function SettingSub() {
 
             <div className="w-[40px]">
               <LabelButton
-                style={{ textSize: "text-md", color: "cyan" }}
+                style={{ textSize: "text-md", color: "cyan", underline: true }}
                 content="수정"
                 onClickEvt={() => {
                   setIsModify(true);

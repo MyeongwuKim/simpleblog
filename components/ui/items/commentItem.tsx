@@ -20,18 +20,14 @@ export default function CommentItem() {
         </div>
         <div className={`w-auto h-[40px] `}>
           <LabelButton
-            style={{ textSize: "text-md", color: "cyan" }}
+            style={{ textSize: "text-md", color: "cyan", underline: true }}
             content="삭제"
             onClickEvt={() => {}}
           />
         </div>
       </div>
       <div className="mt-8">
-        <ReactMD
-          doc={
-            "asdasdasd\n asd\n asd\nas\ndas\ndas\nd\n # ㅁㄴㅇㄹ ㅁㄴㅇㅁㄴㅇㅁㄴㅇㅁㄴㅇㅁㄴㅇ"
-          }
-        />
+        <ReactMD doc={"asdasdasd\n asd\n asd\nas\ndas\ndas\nd\n # ㅁㄴㅇㄹ ㅁㄴㅇㅁㄴㅇㅁㄴㅇㅁㄴㅇㅁㄴㅇ"} />
       </div>
       <div className="border-border1 border-b-[1px] mt-8"></div>
     </div>
