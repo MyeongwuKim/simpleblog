@@ -31,7 +31,6 @@ export default function Write() {
     initialDoc: doc,
     onChange: handleDocChange,
   });
-  useEffect(() => {}, [editorView]);
   const handleTitleChange = useCallback((title: string) => {
     setTitle(title);
   }, []);
@@ -86,7 +85,11 @@ export default function Write() {
                 content="임시저장"
                 onClickEvt={() => {}}
               />
-              <DefButton style={{ color: "cyan", noBg: false }} content="작성하기" onClickEvt={() => {}} />
+              <DefButton
+                style={{ color: "cyan", noBg: false }}
+                content="작성하기"
+                onClickEvt={() => {}}
+              />
             </div>
           </div>
         </div>

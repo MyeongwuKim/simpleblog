@@ -10,6 +10,7 @@ import { HiCog, HiLogout } from "react-icons/hi";
 import { DropdownProfile } from "../ui/dropdown/dropdownProfile";
 import { FaBookBookmark } from "react-icons/fa6";
 import LabelButton from "../ui/buttons/labelButton";
+import { usePopup } from "../providers/popupProvider";
 
 const showList = ["/", "/profile", "/comments"];
 
@@ -17,20 +18,30 @@ export default function Head() {
   const { setTheme, theme } = useTheme();
   const [myTheme, setMyTheme] = useState<string | undefined>(theme);
   const route = useRouter();
-  const pathname = usePathname(); // 현재 경로명 (예: /blog/post-1)
-  //const dispatch = useAppDispatch();
+  const pathname = usePathname();
+  const { openModal } = usePopup();
 
   useEffect(() => {
     setTheme(myTheme!);
   }, [myTheme]);
 
   return (
-    <div id="HeadView" className="w-full h-full flex items-center flex-col justify-center">
-      <div className={`w-auto h-full relative ${showList.includes(pathname) ? "visible" : "hidden"}`}>
+    <div
+      id="HeadView"
+      className="w-full h-full flex items-center flex-col justify-center"
+    >
+      <div
+        className={`w-auto h-full relative ${
+          showList.includes(pathname) ? "visible" : "hidden"
+        }`}
+      >
         <TabButtons />
       </div>
       <div className="absolute left-[32px] ">
-        <button onClick={() => route.push("/")} className="text-text1 cursor-pointer">
+        <button
+          onClick={() => route.push("/")}
+          className="text-text1 cursor-pointer"
+        >
           <div className="flex items-center gap-2">
             <FaBookBookmark className="w-6 h-6" />
             <span className="text-xl font-semibold">북마크블로그</span>
@@ -52,7 +63,10 @@ export default function Head() {
 
         <div className="w-auto h-[45px]">
           <DropdownProfile
-            clickEvt={(content: string) => {
+            clickEvt={async (content: string) => {
+              const result = await openModal("하이요!!", ["취소", "확인"]);
+              console.log(result);
+              return;
               switch (content) {
                 case "설정":
                   route.push("/setting");

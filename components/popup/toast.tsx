@@ -14,7 +14,13 @@ interface ToastProps {
 type stoargeType = { [id: string]: NodeJS.Timeout };
 let timerStorage: stoargeType = {};
 
-const Toast: NextPage<ToastProps> = ({ msg, isWarning, toastArrHandler, id, time }) => {
+const Toast: NextPage<ToastProps> = ({
+  msg,
+  isWarning,
+  toastArrHandler,
+  id,
+  time,
+}) => {
   const [fixedTime, setFixedTime] = useState<number>(time);
 
   useEffect(() => {
@@ -36,14 +42,18 @@ const Toast: NextPage<ToastProps> = ({ msg, isWarning, toastArrHandler, id, time
         toastArrHandler();
       }
       currentTime -= 0.1;
-      timeBar.style.width = (rate * Number(currentTime.toFixed(2))).toString() + "px";
+      timeBar.style.width =
+        (rate * Number(currentTime.toFixed(2))).toString() + "px";
     }, 100);
 
     timerStorage[id] = _timer;
   };
 
   return (
-    <div id={`_toastContainer${id}`} className="w-full  md:w-[400px] sm:w-[300px] ti:w-[260px]  min-h-[46px] h-auto ">
+    <div
+      id={`_toastContainer${id}`}
+      className="w-full  md:w-[400px] sm:w-[300px] ti:w-[260px]  min-h-[46px] h-auto "
+    >
       <div
         id={`_toastView${id}`}
         onClick={() => {
@@ -54,8 +64,8 @@ const Toast: NextPage<ToastProps> = ({ msg, isWarning, toastArrHandler, id, time
           isWarning == null
             ? ""
             : isWarning
-            ? "text-red-700  bg-background2 dark:text-red-400"
-            : "text-green-700 bg-background2 dark:text-green-400"
+            ? "text-red-700  bg-background1 dark:text-red-400"
+            : "text-green-700 bg-background1 dark:text-green-400"
         }
        z-[99] w-full h-full  rounded-lg shadow-xl`}
       >
@@ -67,7 +77,9 @@ const Toast: NextPage<ToastProps> = ({ msg, isWarning, toastArrHandler, id, time
         />
         <div className="flex items-center w-full p-4 gap-2 mt-2">
           <HiOutlineExclamationCircle className="w-8 h-8 m-auto" />
-          <div className="font-semibold md:text-lg ti:text-sm sm:text-base break-words w-full h-auto">{msg}</div>
+          <div className="font-semibold md:text-lg ti:text-sm sm:text-base break-words w-full h-auto">
+            {msg}
+          </div>
         </div>
       </div>
     </div>

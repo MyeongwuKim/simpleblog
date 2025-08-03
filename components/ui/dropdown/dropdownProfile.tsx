@@ -5,7 +5,6 @@ import Image from "next/image";
 import { IoIosArrowDown } from "react-icons/io";
 import { DropdownType } from "./dropdownType";
 
-
 interface ProfileProps extends DropdownType {
   profileImg?: string;
 }
@@ -25,7 +24,7 @@ export function DropdownProfile({ items, clickEvt, profileImg }: ProfileProps) {
             auto: "bg-background1 dark:bg-background1",
           },
           item: {
-            base: "flex w-full cursor-pointer items-center justify-start px-4 py-2 text-sm hover:bg-bg-page1",
+            base: "flex w-full cursor-pointer focus:outline-none items-center justify-start px-4 py-2 text-sm hover:bg-bg-page1",
           },
         },
       }}

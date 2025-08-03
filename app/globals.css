@@ -114,8 +114,10 @@
   display: inline;
 }
 
-a {
-
+.empty-placeholder:empty:before {
+  content: attr(aria-placeholder);
+  pointer-events: none;
+  display: block; /* For Firefox */
 }
 
 .cm-editor.cm-focused {

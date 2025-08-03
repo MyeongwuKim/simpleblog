@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import MyProviders from "@/components/theme-Provider";
+
 import CommonBody from "@/components/layout/commonBody";
-import ToastPotal from "@/components/portal/toastPortal";
+import MyProvider from "@/components/myprovider";
 
 export const metadata: Metadata = {
   title: "포스트",
@@ -16,12 +16,9 @@ export default function RootLayout({
   return (
     <html>
       <body className={`ease-linear `}>
-        <MyProviders>
+        <MyProvider>
           <CommonBody>{children}</CommonBody>
-          <div id="toast" className="fixed z-[98] top-0">
-            <ToastPotal />
-          </div>
-        </MyProviders>
+        </MyProvider>
       </body>
     </html>
   );

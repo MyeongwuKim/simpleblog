@@ -2,6 +2,7 @@ import { EditorView } from "@codemirror/view";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import ToolBar from "./toolbar";
+import TagInput from "../ui/input/tagInput";
 
 interface Props {
   refContainer: React.RefObject<HTMLDivElement> | null;
@@ -48,8 +49,11 @@ const Editor: React.FC<Props> = ({
           />
           <div
             id="title-bar"
-            className=" bg-text2 w-[4rem] h-[6px] rounded-xl relative mt-4"
+            className=" bg-text2 w-[4rem] h-[6px] mb-4 rounded-xl relative mt-4"
           ></div>
+        </div>
+        <div className="">
+          <TagInput />
         </div>
         <div className="w-full min-h-[60px]">
           <ToolBar editorView={editorView!} theme={"light"} />
