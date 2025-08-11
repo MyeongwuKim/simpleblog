@@ -12,10 +12,9 @@ model Post {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   title     String
   content   String
-  tagsId    String[] @db.ObjectId
-  tags      Tag[]    @relation(fields: [tagsId], references: [id])
-  imagesId  String[] @db.ObjectId
-  images    Image[]  @relation(fields: [imagesId], references: [id])
+  tagIds    String[] @db.ObjectId
+  tag       Tag[]    @relation(fields: [tagIds], references: [id])
+  imageIds  String[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -23,8 +22,8 @@ model Post {
 model Tag {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   body      String   @unique
-  posts     Post[]   @relation(fields: [postsId], references: [id])
-  postsId   String[] @db.ObjectId
+  posts     Post[]   @relation(fields: [postIds], references: [id])
+  postIds   String[] @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -42,11 +41,4 @@ model Comment {
   name      String
   content   String
   createdAt DateTime @default(now())
-}
-
-model Image {
-  id      String   @id @default(auto()) @map("_id") @db.ObjectId
-  posts   Post[]   @relation(fields: [postsId], references: [id])
-  postsId String[] @db.ObjectId
-  url     String
 }

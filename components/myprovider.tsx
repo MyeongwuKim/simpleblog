@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"; // 1. devtools import
 import getQueryClient from "@/app/hooks/useQueryClient";
 import { ReactQueryStreamedHydration } from "@tanstack/react-query-next-experimental";
-import { PopupProvider } from "./providers/popupProvider";
+import { UIProvider } from "./providers/uiProvider";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +27,7 @@ export function MyProvider({ children }: { children: React.ReactNode }) {
       <ReactQueryStreamedHydration>
         <ReduxProvider store={store()}>
           <ThemeProvider attribute="class">
-            <PopupProvider>{children}</PopupProvider>
+            <UIProvider>{children}</UIProvider>
           </ThemeProvider>
         </ReduxProvider>
       </ReactQueryStreamedHydration>

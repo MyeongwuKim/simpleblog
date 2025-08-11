@@ -20,16 +20,21 @@ interface IReactMD {
 const ReactMD: NextPage<IReactMD> = ({ doc }) => {
   const pathname = usePathname();
   const customSanitizedSchema = {
-    ...defaultSchema, // 올바르게 가져온 defaultSchema 사용
+    ...defaultSchema,
     tagNames:
       pathname == "/comments"
         ? ["br"]
         : defaultSchema.tagNames.filter(
-            (tag) =>
-              // 여기서 허용하고 싶지 않은 태그들을 제외합니다.
-              // 예: script, iframe, object, embed 등
-              !["script", "iframe", "object", "embed", ""].includes(tag)
+            (tag) => !["script", "iframe", "object", "embed", ""].includes(tag)
           ),
+    attributes: {
+      ...defaultSchema.attributes,
+      img: ["src", "alt", "title", "width", "height", "sizes", "srcset"],
+    },
+    protocols: {
+      ...defaultSchema.protocols,
+      src: ["http", "https", "data", "blob"],
+    },
   };
 
   return (
@@ -45,21 +50,30 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
           },
           h1({ node, children, ...props }) {
             return (
-              <h1 className="appendix font-sans mb-[1em] text-[32px] font-bold" {...props}>
+              <h1
+                className="appendix font-sans mb-[1em] text-[32px] font-bold"
+                {...props}
+              >
                 {children}
               </h1>
             );
           },
           h2({ node, children, ...props }) {
             return (
-              <h2 className="appendix font-sans mb-[1em] text-[24px] font-bold" {...props}>
+              <h2
+                className="appendix font-sans mb-[1em] text-[24px] font-bold"
+                {...props}
+              >
                 {children}
               </h2>
             );
           },
           h3({ node, children, ...props }) {
             return (
-              <h3 className="appendix font-sans mb-[1em] text-[20px] font-bold" {...props}>
+              <h3
+                className="appendix font-sans mb-[1em] text-[20px] font-bold"
+                {...props}
+              >
                 {children}
               </h3>
             );
@@ -73,7 +87,11 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
                 {children.map((child, i) => {
                   let reactElement = child as JSX.Element;
                   if (reactElement.props) {
-                    let div = React.createElement("div", { key: i }, reactElement.props?.children);
+                    let div = React.createElement(
+                      "div",
+                      { key: i },
+                      reactElement.props?.children
+                    );
 
                     return div;
                   } else return child;
@@ -97,9 +115,7 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
                 src={props.src}
                 alt="public"
                 style={{ width: "100%", height: "auto" }}
-              >
-                {children}
-              </Image>
+              />
             );
           },
           ol({ node, children, ...props }) {

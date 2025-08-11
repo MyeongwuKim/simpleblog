@@ -63,6 +63,17 @@ export const timeStamp = () => {
   return timeStamp;
 };
 
+/**클라우드플레어 이미지 주소(이미지 아이디, 형식 필요)*/
+export const getDeliveryDomain = (
+  id: string,
+  suffix: "public" | "avatar" | "thumbnail"
+) => {
+  const uploadPrefix = "https://imagedelivery.net/0VaIqAONZ2vq2gejAGX7Sw/";
+  const uploadSuffix = `/${suffix}`;
+
+  return uploadPrefix + id + uploadSuffix;
+};
+
 export const getThumbnailURL = (type: string, fileId: string): string => {
   let url = "";
   if (type == "video")
@@ -75,4 +86,20 @@ export const getThumbnailURL = (type: string, fileId: string): string => {
 
 export const getImage = (type: string, fileId: string): string => {
   return `https://imagedelivery.net/0VaIqAONZ2vq2gejAGX7Sw/${fileId}/${type}`;
+};
+
+export const getFormatImagesId = (content: string): string[] => {
+  const imagesIdArr: string[] = [];
+
+  // 1. imagedelivery.net 뒤에 오는 계정 id (예: 0VaIqAONZ2vq2gejAGX7Sw)
+  // 2. 그 뒤에 오는 UUID 형태의 이미지 id를 캡처
+  // 3. 끝에 /public 으로 끝나는 패턴
+  const regex =
+    /!\[[^\]]*\]\(https:\/\/imagedelivery\.net\/[^\/]+\/([0-9a-fA-F-]{36,})\/public\)/g;
+
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    imagesIdArr.push(match[1]);
+  }
+  return imagesIdArr;
 };

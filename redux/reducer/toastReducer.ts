@@ -20,8 +20,8 @@ const initialState: { toastItem: ToastProps[]; modalObj: ModalProps } = {
   modalObj: { btnInfo: [], msg: "", title: "", isOpen: false },
 };
 
-export const popupSlice = createSlice({
-  name: "popup",
+export const toastSlice = createSlice({
+  name: "toast",
   initialState,
   reducers: {
     addToast: (state, action: PayloadAction<Omit<ToastProps, "id">>) => {
@@ -37,21 +37,8 @@ export const popupSlice = createSlice({
         (toast) => toast.id !== action.payload
       );
     },
-    openReduxModal: (
-      state,
-      action: PayloadAction<Omit<ModalProps, "isOpen">>
-    ) => {
-      state.modalObj = {
-        isOpen: true,
-        ...action.payload,
-      };
-    },
-    closeReduxModal: (state) => {
-      state.modalObj = { btnInfo: [], msg: "", title: "", isOpen: false };
-    },
   },
 });
 
-export const { addToast, removeToast, openReduxModal, closeReduxModal } =
-  popupSlice.actions;
-export default popupSlice.reducer;
+export const { addToast, removeToast } = toastSlice.actions;
+export default toastSlice.reducer;

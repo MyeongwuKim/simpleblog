@@ -1,12 +1,14 @@
 "use client";
 import { configureStore, Action, ThunkAction } from "@reduxjs/toolkit";
-import { popupSlice } from "../reducer/popupReducer";
 import { createWrapper } from "next-redux-wrapper";
+import { toastSlice } from "../reducer/toastReducer";
+import { modalSlice } from "../reducer/modalReducer";
 
 export const store = () =>
   configureStore({
     reducer: {
-      popupReducer: popupSlice.reducer,
+      toastReducer: toastSlice.reducer,
+      modalReducer: modalSlice.reducer,
     },
     // Redux DevTools를 개발 환경에서만 활성화합니다.
     devTools: true,

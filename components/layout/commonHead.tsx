@@ -9,8 +9,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { HiCog, HiLogout } from "react-icons/hi";
 import { DropdownProfile } from "../ui/dropdown/dropdownProfile";
 import { FaBookBookmark } from "react-icons/fa6";
-import LabelButton from "../ui/buttons/labelButton";
-import { usePopup } from "../providers/popupProvider";
 
 const showList = ["/", "/profile", "/comments"];
 
@@ -19,7 +17,6 @@ export default function Head() {
   const [myTheme, setMyTheme] = useState<string | undefined>(theme);
   const route = useRouter();
   const pathname = usePathname();
-  const { openModal } = usePopup();
 
   useEffect(() => {
     setTheme(myTheme!);
@@ -64,9 +61,6 @@ export default function Head() {
         <div className="w-auto h-[45px]">
           <DropdownProfile
             clickEvt={async (content: string) => {
-              const result = await openModal("하이요!!", ["취소", "확인"]);
-              console.log(result);
-              return;
               switch (content) {
                 case "설정":
                   route.push("/setting");

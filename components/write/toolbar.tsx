@@ -4,6 +4,9 @@ import { EditorView } from "@codemirror/view";
 import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { SearchCursor } from "@codemirror/search";
+import { getDeliveryDomain, timeStamp } from "@/app/hooks/useUtil";
+import { useUI } from "../providers/uiProvider";
+import { useWrite } from "@/app/write/page";
 
 interface IToolBar {
   theme: string | undefined;
@@ -12,89 +15,80 @@ interface IToolBar {
 
 const ToolBar: NextPage<IToolBar> = (props) => {
   const { editorView } = props;
+  const { dispatch, state: reducerState } = useWrite();
+  const { openToast } = useUI();
   const { watch, register, setValue } = useForm();
   const imageFile = watch("image");
 
-  // //이미지 송신, 완료하면 url 변경
-  // const onUploadImgEvt = useCallback(
-  //   async (file: any) => {
-  //     editorView?.focus();
-  //     const imgURL = URL.createObjectURL(file);
-  //     let line = editorView?.state.doc.lineAt(
-  //       editorView?.state.selection.main.from
-  //     )!;
-  //     let startCaret = editorView!.state.selection.ranges[0].from - line.from;
-  //     let endCaret =
-  //       editorView!.state.selection.ranges[0].to -
-  //       editorView!.state.selection.ranges[0].from;
+  //이미지 송신, 완료하면 url 변경
+  const onUploadImgEvt = useCallback(
+    async (file: any) => {
+      editorView?.focus();
+      const imgURL = URL.createObjectURL(file);
 
-  //     let cutStr = line?.text.substring(startCaret, startCaret + endCaret);
+      let line = editorView?.state.doc.lineAt(
+        editorView?.state.selection.main.from
+      )!;
+      let startCaret = editorView!.state.selection.ranges[0].from - line.from;
+      let endCaret =
+        editorView!.state.selection.ranges[0].to -
+        editorView!.state.selection.ranges[0].from;
 
-  //     let link = `![${cutStr!.length > 0 ? cutStr : "업로드중"}](${imgURL})`;
-  //     let state = editorView?.state!;
-  //     let tr = state.update(state.replaceSelection(link));
+      let cutStr = line?.text.substring(startCaret, startCaret + endCaret);
 
-  //     editorView?.dispatch(tr);
+      let link = `![${cutStr!.length > 0 ? cutStr : "업로드중"}](${imgURL})`;
 
-  //     try {
-  //       const { uploadURL } = await (
-  //         await fetch(`/api/files`, { method: "POST" })
-  //       ).json();
+      let state = editorView?.state!;
+      let tr = state.update(state.replaceSelection(link));
 
-  //       const form = new FormData();
-  //       let today = new Date();
+      editorView?.dispatch(tr);
 
-  //       let userId = data.accessToken.id;
+      try {
+        const { uploadURL } = await (
+          await fetch(`/api/upload`, { method: "POST" })
+        ).json();
 
-  //       form.append(
-  //         "file",
-  //         file as any,
-  //         `${process.env.NODE_ENV}_${userId.toString()}_post_${timeStamp()}`
-  //       );
-  //       const {
-  //         result: { id },
-  //       } = await (
-  //         await fetch(uploadURL, {
-  //           method: "POST",
-  //           body: form,
-  //         })
-  //       ).json();
+        const form = new FormData();
 
-  //       let cursor = new SearchCursor(editorView.state.doc, link);
-  //       cursor.next();
+        form.append(
+          "file",
+          file as any,
+          `${process.env.NODE_ENV}_simpleblog_${timeStamp()}`
+        );
+        const {
+          result: { id },
+        } = await (
+          await fetch(uploadURL, {
+            method: "POST",
+            body: form,
+          })
+        ).json();
 
-  //       editorView?.dispatch({
-  //         changes: {
-  //           from: cursor.value.from,
-  //           to: cursor.value.to,
-  //           insert: `![](${getDeliveryDomain(id, "public")})`,
-  //         },
-  //       });
-  //     } catch {
-  //       createToast("이미지 업로드중 실패하였습니다", true);
-  //     }
+        let cursor = new SearchCursor(editorView.state.doc, link);
+        cursor.next();
 
-  //     // editorView?.dispatch({
-  //     //   selection: EditorSelection.create(
-  //     //     [
-  //     //       EditorSelection.range(newFrom, newTo),
-  //     //       EditorSelection.cursor(newTo),
-  //     //     ],
-  //     //     1
-  //     //   ),
-  //     // });
-  //   },
-  //   [editorView, data]
-  // );
+        editorView?.dispatch({
+          changes: {
+            from: cursor.value.from,
+            to: cursor.value.to,
+            insert: `![](${getDeliveryDomain(id, "public")})`,
+          },
+        });
+      } catch {
+        openToast(true, "이미지 업로드중 실패하였습니다", 1);
+      }
+    },
+    [editorView]
+  );
 
-  // useEffect(() => {
-  //   if (imageFile && imageFile.length > 0) {
-  //     const file: any = imageFile[0];
-  //     onUploadImgEvt(file);
-  //     setValue("image", "");
-  //     //URL.revokeObjectURL(url);
-  //   }
-  // }, [imageFile, onUploadImgEvt]);
+  useEffect(() => {
+    if (imageFile && imageFile.length > 0) {
+      const file: any = imageFile[0];
+      onUploadImgEvt(file);
+      setValue("image", "");
+      //URL.revokeObjectURL(url);
+    }
+  }, [imageFile, onUploadImgEvt]);
 
   const onLinkEvt = () => {
     editorView?.focus();
@@ -130,9 +124,13 @@ const ToolBar: NextPage<IToolBar> = (props) => {
     editorView.focus(); // 에디터에 포커스
 
     const selection = editorView.state.selection.main;
-    const selectedText = editorView.state.doc.sliceString(selection.from, selection.to);
+    const selectedText = editorView.state.doc.sliceString(
+      selection.from,
+      selection.to
+    );
 
-    const contentToInsert = selectedText.length > 0 ? selectedText : "input code plz";
+    const contentToInsert =
+      selectedText.length > 0 ? selectedText : "input code plz";
 
     const codeBlock = `\n\`\`\`js\n${contentToInsert}\n\`\`\`\n`;
 
@@ -150,7 +148,10 @@ const ToolBar: NextPage<IToolBar> = (props) => {
     if (selectedText.length === 0) {
       editorView.dispatch(
         editorView.state.update({
-          selection: { anchor: newSelectionStart, head: newSelectionStart + "input code plz".length },
+          selection: {
+            anchor: newSelectionStart,
+            head: newSelectionStart + "input code plz".length,
+          },
         })
       );
     }
@@ -167,14 +168,19 @@ const ToolBar: NextPage<IToolBar> = (props) => {
     // 2. 선택된 텍스트가 이미 심볼로 감싸져 있는지 확인
     // 시작과 끝에 evtName이 있는지 확인
     const isWrapped =
-      selectedText.startsWith(evtName) && selectedText.endsWith(evtName) && selectedText.length >= evtName.length * 2; // 최소한 심볼 2개 길이 이상이어야 함
+      selectedText.startsWith(evtName) &&
+      selectedText.endsWith(evtName) &&
+      selectedText.length >= evtName.length * 2; // 최소한 심볼 2개 길이 이상이어야 함
 
     let newTextToInsert: string; // 삽입할 새로운 텍스트
     let newSelectionOffset = 0; // 삽입 후 커서 위치 조정을 위한 오프셋
 
     if (isWrapped) {
       // 심볼 제거: 앞뒤 심볼 제거
-      newTextToInsert = selectedText.substring(evtName.length, selectedText.length - evtName.length);
+      newTextToInsert = selectedText.substring(
+        evtName.length,
+        selectedText.length - evtName.length
+      );
       newSelectionOffset = -evtName.length; // 커서가 심볼 길이만큼 앞으로 이동
     } else {
       // 심볼 추가: 선택된 텍스트를 심볼로 감싸기
@@ -202,14 +208,17 @@ const ToolBar: NextPage<IToolBar> = (props) => {
     // 선택된 텍스트가 없었고, "TEXT"를 삽입한 경우 "TEXT"를 선택하도록 조정
     if (!isWrapped && selectedText.length === 0) {
       editorView.dispatch({
-        selection: EditorSelection.create([EditorSelection.range(newAnchor, newAnchor + "TEXT".length)]),
+        selection: EditorSelection.create([
+          EditorSelection.range(newAnchor, newAnchor + "TEXT".length),
+        ]),
       });
     } else {
       editorView.dispatch({
-        selection: EditorSelection.create([EditorSelection.range(newAnchor, newHead)]),
+        selection: EditorSelection.create([
+          EditorSelection.range(newAnchor, newHead),
+        ]),
       });
     }
-
   };
   const onOneSymbolEvt = (evtName: string) => {
     editorView?.focus();

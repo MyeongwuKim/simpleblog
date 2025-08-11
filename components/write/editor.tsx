@@ -3,11 +3,11 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import ToolBar from "./toolbar";
 import TagInput from "../ui/input/tagInput";
+import { useWrite } from "@/app/write/page";
 
 interface Props {
   refContainer: React.RefObject<HTMLDivElement> | null;
   editorView: EditorView;
-  handleTitleChange: (title: string) => void;
   defaultTitleValue: string;
 }
 
@@ -15,16 +15,21 @@ const Editor: React.FC<Props> = ({
   editorView,
   refContainer,
   defaultTitleValue,
-  handleTitleChange,
 }) => {
+  const { dispatch, state } = useWrite();
   const titleArea = useRef<any>("");
-  const [postTitle, setPostTitle] = useState("");
+
   const onTitleChange = (e: any) => {
     const { current } = titleArea;
-    setPostTitle(current.value);
-    handleTitleChange(current.value);
+
+    dispatch({
+      type: "SET_FORM",
+      payload: {
+        ...state,
+        title: current.value,
+      },
+    });
     current!.style.height = "auto";
-    console.log(current!.scrollHeight);
     current!.style.height = current!.scrollHeight + "px";
   };
 
@@ -40,7 +45,7 @@ const Editor: React.FC<Props> = ({
               titleArea.current = element;
             }}
             rows={1}
-            value={postTitle}
+            value={state.title}
             onChange={onTitleChange}
             placeholder="제목"
             className={`placeholder-text3 placeholder:font-semibold relative w-full max-h-[100%] overflow-auto
@@ -53,7 +58,16 @@ const Editor: React.FC<Props> = ({
           ></div>
         </div>
         <div className="">
-          <TagInput />
+          <TagInput
+            callback={(tag) =>
+              dispatch({
+                type: "SET_FORM",
+                payload: {
+                  tag,
+                },
+              })
+            }
+          />
         </div>
         <div className="w-full min-h-[60px]">
           <ToolBar editorView={editorView!} theme={"light"} />
