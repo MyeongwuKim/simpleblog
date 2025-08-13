@@ -1,11 +1,19 @@
 "use client";
 
+import {
+  formateDate,
+  formatSringDate,
+  getThumbnailURL,
+} from "@/app/hooks/useUtil";
+import { Post } from "@prisma/client";
 import { Card } from "flowbite-react";
 import Image from "next/image";
 import Link from "next/link";
-export function CardItem() {
+import { MdImageNotSupported } from "react-icons/md";
+
+export function CardItem({ createdAt, id, preview, thumbnail, title }: Post) {
   return (
-    <Link href={"/post/123"} className="w-full h-full relative flex flex-col">
+    <Link href={`/post/${id}`} className="w-full h-full relative flex flex-col">
       <Card
         theme={{
           root: {
@@ -16,9 +24,17 @@ export function CardItem() {
         }}
         className="w-full h-full"
         renderImage={() => (
-          <div className="relative w-full h-full">
-            ,
-            <Image objectFit="cover" fill src="/testImage.png" alt="image 1" />
+          <div className="relative w-full h-full flex justify-center items-center">
+            {thumbnail ? (
+              <Image
+                objectFit="cover"
+                fill
+                src={getThumbnailURL("image", thumbnail)}
+                alt="thumbnail"
+              />
+            ) : (
+              <MdImageNotSupported className="w-14 h-14" />
+            )}
           </div>
         )}
       >
@@ -27,15 +43,11 @@ export function CardItem() {
             className="text-[1rem] text-box
     font-bold tracking-tight text-gray-900 dark:text-white"
           >
-            안녕하세요 여기는 제목입니다 제목입니다!
+            {title};
           </h4>
-          <p className="line-clamp-3 text-text2 leading-[1.5em]">
-            여기는 컨텐츠입니다! 여기는 컨텐츠입니다! 여기는 컨텐츠입니다!
-            여기는 컨텐츠입니다! 여기는 컨텐츠입니다! 여기는 컨텐츠입니다!
-            여기는 컨텐츠입니다! 여기는 컨텐츠입니다!
-          </p>
+          <p className="line-clamp-3 text-text2 leading-[1.5em]">{preview};</p>
         </div>
-        <div className="text-text3">2052.12.12</div>
+        <div className="text-text3">{formateDate(createdAt, "NOR")}</div>
       </Card>
     </Link>
   );

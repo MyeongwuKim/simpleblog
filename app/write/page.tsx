@@ -29,16 +29,16 @@ const Dynamic_Preview = dynamic(
   }
 );
 
-type Action = { type: "SET_FORM"; payload: Partial<FormType> };
+type Action = { type: "SET_FORM"; payload: Partial<PostType> };
 
-const initialState: FormType = {
+const initialState: PostType = {
   title: "",
   tag: [],
   content: "",
   imageIds: [],
 };
 
-const reducer = (state: FormType, action: Action) => {
+const reducer = (state: PostType, action: Action) => {
   switch (action.type) {
     case "SET_FORM":
       return {
@@ -51,7 +51,7 @@ const reducer = (state: FormType, action: Action) => {
 };
 
 type ContextType = {
-  state: FormType;
+  state: PostType;
   dispatch: React.Dispatch<Action>;
 };
 
@@ -60,7 +60,7 @@ const WriteContext = createContext<ContextType | undefined>(undefined);
 export default function Write() {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  const writeMutate = useMutation<QueryResponse<null>, Error, FormType>({
+  const writeMutate = useMutation<QueryResponse<null>, Error, PostType>({
     mutationFn: async (data) => {
       const result = await (
         await fetch("/api/post", {
@@ -97,6 +97,21 @@ export default function Write() {
     }
     return result;
   }, [state]);
+
+  const extractThumbAndPreview = useCallback(
+    (length = 150) => {
+      const thumbnail = state.content.match(
+        /imagedelivery\.net\/[^\/]+\/([^\/]+)/
+      );
+      let preview = state.content
+        .replace(/[#_*`>+\-\[\]\(\)~|]/g, "")
+        .replace(/\n/g, " ")
+        .trim();
+
+      return [preview.slice(0, length), thumbnail ? thumbnail[1] : null];
+    },
+    [state.content]
+  );
 
   const handleDocChange = useCallback((content: string) => {
     dispatch({
@@ -171,8 +186,14 @@ export default function Write() {
                       openToast(true, msg, 1);
                       return;
                     }
+                    const [preview, thumbnail] = extractThumbAndPreview();
                     let imageIds = getFormatImagesId(state.content);
-                    writeMutate.mutate({ ...state, imageIds });
+                    writeMutate.mutate({
+                      ...state,
+                      imageIds,
+                      preview,
+                      thumbnail,
+                    });
                   }}
                 />
               </div>

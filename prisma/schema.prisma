@@ -12,6 +12,8 @@ model Post {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   title     String
   content   String
+  preview   String?
+  thumbnail String?
   tagIds    String[] @db.ObjectId
   tag       Tag[]    @relation(fields: [tagIds], references: [id])
   imageIds  String[]

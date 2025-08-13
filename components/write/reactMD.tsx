@@ -12,6 +12,8 @@ import { defaultSchema } from "rehype-sanitize";
 import rehypeSanitize from "rehype-sanitize";
 import { usePathname } from "next/navigation";
 import React, { JSX } from "react";
+import rehypeSlug from "rehype-slug";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
 
 interface IReactMD {
   doc: string;
@@ -30,12 +32,17 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
     attributes: {
       ...defaultSchema.attributes,
       img: ["src", "alt", "title", "width", "height", "sizes", "srcset"],
+      h1: ["className"],
+      h2: ["className"],
+      h3: ["className"],
     },
     protocols: {
       ...defaultSchema.protocols,
       src: ["http", "https", "data", "blob"],
     },
   };
+
+  const contentPlugins = [remarkGfm, remarkBreaks];
 
   return (
     <>
@@ -123,8 +130,13 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
           },
           code: RemarkCode,
         }}
-        rehypePlugins={[rehypeRaw, [rehypeSanitize, customSanitizedSchema]]}
-        remarkPlugins={[remarkGfm, remarkBreaks]}
+        rehypePlugins={[
+          rehypeRaw,
+          [rehypeSanitize, customSanitizedSchema],
+          rehypeSlug,
+          rehypeAutolinkHeadings,
+        ]}
+        remarkPlugins={contentPlugins}
       >
         {doc}
       </ReactMarkDown>

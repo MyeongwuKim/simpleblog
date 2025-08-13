@@ -37,7 +37,12 @@ function Postfilter() {
       <div className="w-[80px]">
         <DropdownBox
           defaultBoxIndex={0}
-          items={[{ content: "전체" }, { content: "일주일" }, { content: "한달" }, { content: "일년" }]}
+          items={[
+            { content: "전체" },
+            { content: "일주일" },
+            { content: "한달" },
+            { content: "일년" },
+          ]}
         />
       </div>
       <div className="w-[calc(100%-100px)]">

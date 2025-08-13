@@ -74,7 +74,11 @@ export const getDeliveryDomain = (
   return uploadPrefix + id + uploadSuffix;
 };
 
-export const getThumbnailURL = (type: string, fileId: string): string => {
+export const getThumbnailURL = (
+  type: "video" | "image",
+  fileId: string
+): string => {
+  console.log(fileId);
   let url = "";
   if (type == "video")
     url = `https://customer-mgkas9o5mlq4q3on.cloudflarestream.com/${fileId}/thumbnails/thumbnail.jpg`;

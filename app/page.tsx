@@ -1,17 +1,32 @@
-import { DropdownBox } from "@/components/ui/dropdown/dropdownBox";
-import { CardItem } from "@/components/ui/items/cardItem";
-import TagItem from "@/components/ui/items/tagItem";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import getQueryClient from "./hooks/useQueryClient";
+import InfiniteScrollPostArea from "@/components/layout/infiniteScrollPostArea";
 
-export default function Home() {
+const getFeedData = async (pageNumber: number) => {
+  const url = `/api/post`;
+  debugger;
+  const result = await (await fetch(url, { cache: "no-store" })).json();
+  return result;
+};
+export default async function Home() {
+  const queryClient = getQueryClient();
+  const queryKey = ["Post"];
+
+  await queryClient.prefetchInfiniteQuery({
+    queryKey,
+    queryFn: ({ pageParam }) => getFeedData(pageParam),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, pages) => {
+      return pages.length;
+    },
+    pages: 0,
+  });
+
   return (
-    <div className="w-full h-full">
-      <div className=" grid grid-cols-1 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 gap-4 relative">
-        {[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1].map((v, i) => (
-          <div key={i} className="aspect-square floatBox">
-            <CardItem></CardItem>
-          </div>
-        ))}
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <div className="w-full h-full">
+        <InfiniteScrollPostArea queryKey={queryKey} />
       </div>
-    </div>
+    </HydrationBoundary>
   );
 }
