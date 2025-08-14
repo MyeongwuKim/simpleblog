@@ -65,6 +65,7 @@
   --color-button1: #fff;
   --breakpoint-sm: 768px;
   --breakpoint-md: 1056px;
+  --breakpoint-xl: 1366px;
   --breakpoint-lg: 1440px;
 }
 

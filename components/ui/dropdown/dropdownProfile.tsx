@@ -21,7 +21,7 @@ export function DropdownProfile({ items, clickEvt, profileImg }: ProfileProps) {
       theme={{
         floating: {
           style: {
-            auto: "bg-background1 dark:bg-background1",
+            auto: "bg-background1 dark:bg-background1 border-none",
           },
           item: {
             base: "flex w-full cursor-pointer focus:outline-none items-center justify-start px-4 py-2 text-sm hover:bg-bg-page1",

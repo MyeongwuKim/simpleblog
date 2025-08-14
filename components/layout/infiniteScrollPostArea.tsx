@@ -4,6 +4,7 @@ import { useInfiniteScrollData } from "@/app/hooks/useInfiniteQuery";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { CardItem } from "../ui/items/cardItem";
 import { Post } from "@prisma/client";
+import { CardItemSkeleton } from "../ui/skeleton";
 
 interface InfiniteScrollPostAreaProps {
   queryKey: string[];
@@ -30,18 +31,22 @@ export default function InfiniteScrollPostArea({
     queryFn: getPostData,
     initialPageParam: 0,
   });
-  if (isLoading) {
-    return <div>로딩중!</div>;
-  }
+
   const flatData = data?.pages.flatMap((page) => page.data) ?? [];
-  console.log(flatData);
+
   return (
     <div className=" grid grid-cols-1 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 gap-4 relative">
-      {flatData.map((post, i) => (
-        <div key={post.id} className="aspect-square floatBox">
-          <CardItem {...post} />
-        </div>
-      ))}
+      {isLoading
+        ? Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className=" h-[300px]">
+              <CardItemSkeleton />
+            </div>
+          ))
+        : flatData.map((post, i) => (
+            <div key={post.slug} className=" h-[300px] floatBox">
+              <CardItem {...post} />
+            </div>
+          ))}
     </div>
   );
 }

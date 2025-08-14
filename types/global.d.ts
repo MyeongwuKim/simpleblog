@@ -1,14 +1,15 @@
-declare interface QueryResponse<T> {
-  ok: boolean;
-  error: string;
-  data: T;
-}
+// global.d.ts
+import { Post } from "@prisma/client";
 
-declare interface PostType {
-  title: string;
-  tag: string[];
-  content: string;
-  imageIds?: string[];
-  preview?: string | null;
-  thumbnail?: string | null;
+declare global {
+  interface QueryResponse<T> {
+    ok: boolean;
+    error: string;
+    data: T;
+  }
+
+  interface PostType
+    extends Omit<Post, "createdAt" | "updatedAt" | "id" | "tagIds"> {
+    tag: string[];
+  }
 }

@@ -14,8 +14,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html>
-      <body className={`ease-linear `}>
+    <html className="h-full">
+      <body className={`ease-linear h-full bg-bg-page2`}>
         <MyProvider>
           <CommonBody>{children}</CommonBody>
         </MyProvider>

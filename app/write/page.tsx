@@ -10,24 +10,13 @@ import {
   useState,
 } from "react";
 import useCodeMirror from "../lib/use-codemirror";
-import dynamic from "next/dynamic";
 import DefButton from "@/components/ui/buttons/defButton";
 import { useUI } from "@/components/providers/uiProvider";
 import { useMutation } from "@tanstack/react-query";
 import { getFormatImagesId } from "../hooks/useUtil";
-
-const Dynamic_Preview = dynamic(
-  () =>
-    import("@/components/write/preview").then((mode) => {
-      return mode;
-    }),
-  {
-    ssr: false,
-    loading: () => {
-      return <div>로딩중</div>;
-    },
-  }
-);
+import Preview from "@/components/write/preview";
+import { useRouter } from "next/navigation";
+import Slugger from "github-slugger";
 
 type Action = { type: "SET_FORM"; payload: Partial<PostType> };
 
@@ -36,6 +25,10 @@ const initialState: PostType = {
   tag: [],
   content: "",
   imageIds: [],
+  isTemp: false,
+  preview: null,
+  slug: "",
+  thumbnail: null,
 };
 
 const reducer = (state: PostType, action: Action) => {
@@ -59,7 +52,7 @@ const WriteContext = createContext<ContextType | undefined>(undefined);
 
 export default function Write() {
   const [state, dispatch] = useReducer(reducer, initialState);
-
+  const router = useRouter();
   const writeMutate = useMutation<QueryResponse<null>, Error, PostType>({
     mutationFn: async (data) => {
       const result = await (
@@ -75,11 +68,13 @@ export default function Write() {
     },
     onSuccess: (res) => {
       openToast(false, "포스트 작성을 완료하였습니다.", 1);
+      router.push("/");
     },
     onError: (error) => {
       openToast(true, error.message, 1);
     },
   });
+
   const { openToast } = useUI();
 
   const validate = useCallback((): { isOk: boolean; msg: string } => {
@@ -113,6 +108,11 @@ export default function Write() {
     [state.content]
   );
 
+  function createSlug(title: string) {
+    const slug = new Slugger().slug(title);
+    return slug;
+  }
+
   const handleDocChange = useCallback((content: string) => {
     dispatch({
       type: "SET_FORM",
@@ -127,24 +127,14 @@ export default function Write() {
     onChange: handleDocChange,
   });
 
-  // const setCotentPreview = useCallback((element: any) => {
-  //   let previewContent = "";
-  //   if (element?.children) {
-  //     for (let i = 0; i < element.children.length; i++) {
-  //       let child = element.children[i];
-  //       if (child.tagName == "P" || child.tagName == "BLOCKQUOTE") {
-  //         previewContent += child.outerText.split("\n").join(" ");
-  //       }
-  //     }
-  //   }
-  //   //setPreview(previewContent.substring(0, 50));
-  // }, []);
-
   return (
     <WriteContext.Provider value={{ state, dispatch }}>
       <div id="write" className="w-full h-full bg-gray-100 dark:bg-[#0c0c0c]">
-        <div className="relative w-full flex flex-row gap-8 h-full ">
-          <div id="editorContainer" className="flex w-full flex-col h-full">
+        <div className="relative w-full flex gap-8 h-full ">
+          <div
+            id="editorContainer"
+            className="flex w-full flex-col h-full relative"
+          >
             <Editor
               defaultTitleValue={""}
               editorView={editorView!}
@@ -164,7 +154,7 @@ export default function Write() {
                     noBg: true,
                   }}
                   content="나가기"
-                  onClickEvt={() => {}}
+                  onClickEvt={() => router.back()}
                 />
               </div>
               <div className="h-[45px] w-auto flex gap-4">
@@ -175,7 +165,13 @@ export default function Write() {
                     noBg: true,
                   }}
                   content="임시저장"
-                  onClickEvt={() => {}}
+                  onClickEvt={() => {
+                    writeMutate.mutate({
+                      ...state,
+                      isTemp: true,
+                      slug: createSlug(state.title),
+                    });
+                  }}
                 />
                 <DefButton
                   style={{ color: "cyan", noBg: false }}
@@ -188,11 +184,13 @@ export default function Write() {
                     }
                     const [preview, thumbnail] = extractThumbAndPreview();
                     let imageIds = getFormatImagesId(state.content);
+
                     writeMutate.mutate({
                       ...state,
                       imageIds,
                       preview,
                       thumbnail,
+                      slug: createSlug(state.title),
                     });
                   }}
                 />
@@ -208,7 +206,7 @@ export default function Write() {
               id="previewContainer"
               className={`w-full h-full bg-transparent`}
             >
-              <Dynamic_Preview />
+              <Preview />
             </div>
           </div>
         </div>

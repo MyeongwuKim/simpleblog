@@ -13,12 +13,12 @@ export default function CommonBody({ children }: CommonBodyType) {
   const pathname = usePathname(); // 현재 경로명 (예: /blog/post-1)
 
   return (
-    <div className="w-full h-full overflow-auto absolute left-0 top-0 bg-bg-page2">
+    <>
       {pathname.includes("/write") ? (
-        <div className="w-full h-full">{children}</div>
+        <>{children}</>
       ) : (
         <>
-          <div className={`w-full h-[60px] top-0 left-0 px-8 absolute`}>
+          <div className={`w-full h-[60px] top-0 left-0 px-8 `}>
             <Head />
           </div>
           <div className="w-full relative mt-[60px] h-auto  p-8">
@@ -27,7 +27,7 @@ export default function CommonBody({ children }: CommonBodyType) {
           </div>
         </>
       )}
-    </div>
+    </>
   );
 }
 

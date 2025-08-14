@@ -3,13 +3,14 @@ import { NextResponse, NextRequest } from "next/server";
 
 export const GET = async (
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { slug: string } }
 ) => {
-  const { id } = await params;
+  const { slug } = await params;
   try {
     const postData = await db.post.findUnique({
-      where: { id },
+      where: { slug },
       select: {
+        id: true,
         title: true,
         content: true,
         createdAt: true,

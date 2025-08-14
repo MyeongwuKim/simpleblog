@@ -14,8 +14,10 @@ model Post {
   content   String
   preview   String?
   thumbnail String?
+  slug      String   @unique
   tagIds    String[] @db.ObjectId
   tag       Tag[]    @relation(fields: [tagIds], references: [id])
+  isTemp    Boolean  @default(false)
   imageIds  String[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

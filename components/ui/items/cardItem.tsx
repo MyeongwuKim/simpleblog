@@ -11,9 +11,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { MdImageNotSupported } from "react-icons/md";
 
-export function CardItem({ createdAt, id, preview, thumbnail, title }: Post) {
+export function CardItem({
+  createdAt,
+  id,
+  preview,
+  thumbnail,
+  title,
+  slug,
+}: Post) {
   return (
-    <Link href={`/post/${id}`} className="w-full h-full relative flex flex-col">
+    <Link
+      href={`/post/${slug}`}
+      className="w-full h-full relative flex flex-col"
+    >
       <Card
         theme={{
           root: {

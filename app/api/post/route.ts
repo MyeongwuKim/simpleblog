@@ -1,15 +1,20 @@
 import { db } from "@/app/lib/db";
+
 import { NextResponse, NextRequest } from "next/server";
 
 export const GET = async (res: NextResponse, req: NextRequest) => {
   try {
     const postData = await db.post.findMany({
+      where: {
+        NOT: { isTemp: true },
+      },
       select: {
         createdAt: true,
         id: true,
         preview: true,
         thumbnail: true,
         title: true,
+        slug: true,
       },
     });
 
@@ -29,14 +34,35 @@ export const GET = async (res: NextResponse, req: NextRequest) => {
   }
 };
 
+async function createUniqueSlug(base: string) {
+  let slug = "";
+  let isUnique = false;
+
+  while (!isUnique) {
+    const random = Math.random().toString(36).substring(2, 9); // 7자리 랜덤
+    slug = `${base}-${random}`;
+    const existing = await db.post.findUnique({ where: { slug } });
+    if (!existing) isUnique = true;
+  }
+
+  return slug;
+}
+
 export const POST = async (req: NextRequest) => {
   try {
     const result = await db.$transaction(async (tx) => {
       let jsonData = await req.json();
 
-      const { content, tag, title, imageIds, preview, thumbnail } =
+      let { content, tag, title, imageIds, preview, thumbnail, isTemp, slug } =
         jsonData.data as PostType;
 
+      const existing = await db.post.findUnique({
+        where: { slug },
+      });
+
+      if (existing) {
+        slug = await createUniqueSlug(slug);
+      }
       const post = await tx.post.create({
         data: {
           content,
@@ -44,9 +70,11 @@ export const POST = async (req: NextRequest) => {
           imageIds,
           preview,
           thumbnail,
+          isTemp,
+          slug,
         },
       });
-
+      if (isTemp) return { post };
       let tags = [];
       for (const body of tag) {
         const _tag = await tx.tag.upsert({
