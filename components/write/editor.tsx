@@ -1,5 +1,5 @@
 import { EditorView } from "@codemirror/view";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import ToolBar from "./toolbar";
 import TagInput from "../ui/input/tagInput";
@@ -8,14 +8,9 @@ import { useWrite } from "@/app/write/page";
 interface Props {
   refContainer: React.RefObject<HTMLDivElement> | null;
   editorView: EditorView;
-  defaultTitleValue: string;
 }
 
-const Editor: React.FC<Props> = ({
-  editorView,
-  refContainer,
-  defaultTitleValue,
-}) => {
+const Editor: React.FC<Props> = ({ editorView, refContainer }) => {
   const { dispatch, state } = useWrite();
   const titleArea = useRef<any>("");
 
@@ -32,7 +27,9 @@ const Editor: React.FC<Props> = ({
     current!.style.height = "auto";
     current!.style.height = current!.scrollHeight + "px";
   };
-
+  useEffect(() => {
+    console.log(state.tag);
+  }, [state.tag]);
   return (
     <div className="h-[calc(100%-60px)]  relative w-full bg-bg-page2 dark:shadow-black shadow-md">
       <div className="flex flex-col flex-auto relative  h-[calc(100%-0px)] gap-2">
@@ -60,6 +57,7 @@ const Editor: React.FC<Props> = ({
           </div>
           <div className="">
             <TagInput
+              tags={state.tag}
               callback={(tag) =>
                 dispatch({
                   type: "SET_FORM",

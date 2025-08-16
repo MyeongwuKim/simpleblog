@@ -1,26 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import TagItem from "../items/tagItem";
 
 const TagInput = ({
   callback,
-  defaultValue,
+  tags,
 }: {
   callback?: (tags: string[]) => void;
-  defaultValue?: string[];
+  tags: string[];
 }) => {
-  const [tags, setTags] = useState<string[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [isComposit, setIsComposit] = useState<boolean>(false);
-  const [placeHolder, setPlaceHolder] = useState<string>(
-    "태그 입력후 엔터나 쉼표를 눌러보세요."
+
+  const addTag = useCallback(() => {
+    if (!inputRef.current) return;
+    const value = inputRef.current.value.trim();
+    if (!value || tags.includes(value)) return;
+
+    callback?.([...tags, value]);
+    inputRef.current.value = "";
+  }, [tags, callback]);
+
+  const removeTag = useCallback(
+    (index: number) => {
+      callback?.(tags.filter((_, i) => i !== index));
+    },
+    [tags, callback]
   );
-  useEffect(() => {
-    if (callback) callback(tags);
-  }, [tags]);
-  useEffect(() => {
-    setTags(defaultValue ? defaultValue : []);
-  }, [defaultValue]);
 
   return (
     <div
@@ -31,15 +38,20 @@ const TagInput = ({
         return (
           <TagItem
             mode="normal"
-            clickEvt={() =>
-              setTags((prevTags) => prevTags.filter((_, index) => index !== i))
-            }
+            clickEvt={() => removeTag(i)}
             text={v}
             key={i}
           />
         );
       })}
       <input
+        ref={inputRef}
+        onBlur={() => {
+          const value = inputRef.current?.value.trim();
+          if (value) {
+            addTag(); // 값이 있으면 addTag 호출
+          }
+        }}
         id="tagInputItem"
         onCompositionEnd={() => setIsComposit(false)}
         onCompositionStart={() => setIsComposit(true)}
@@ -47,24 +59,13 @@ const TagInput = ({
           if (isComposit) return;
           if (e.key == "Backspace") {
             if (e.target?.value?.length! <= 0 && tags.length > 0) {
-              setTags((prevTags) => {
-                let newTags = [...prevTags];
-                newTags.pop();
-                return newTags;
-              });
+              removeTag(tags.length - 1);
               e.preventDefault();
             }
           } else if (e.key == "Enter") {
-            if (e.target && e.target?.value?.length! > 0) {
-              setTags((prevTags) => {
-                const value = e.target?.value?.trim();
-                if (!value || prevTags.includes(value)) {
-                  e.target.value = "";
-                  return prevTags;
-                }
-                e.target.value = "";
-                return [...prevTags, value];
-              });
+            const value = inputRef.current?.value.trim();
+            if (value) {
+              addTag(); // 값이 있으면 addTag 호출
             }
             e.preventDefault();
           }

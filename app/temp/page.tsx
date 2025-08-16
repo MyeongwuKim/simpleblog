@@ -1,17 +1,15 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import getQueryClient from "./hooks/useQueryClient";
-import { fetchPosts } from "./lib/fetchers/post";
+import getQueryClient from "../hooks/useQueryClient";
+import { fetchTempPosts } from "../lib/fetchers/post";
 import InfiniteScrollProvider from "@/components/layout/InfiniteScroll/infiniteScrollProvider";
-import { CardItem } from "@/components/ui/items/cardItem";
-import { CardItemSkeleton } from "@/components/ui/skeleton";
 
-export default async function Home() {
+export default async function Temp() {
   const queryClient = getQueryClient();
-  const queryKey = ["Post"];
+  const queryKey = ["temp"];
 
   await queryClient.prefetchInfiniteQuery({
     queryKey,
-    queryFn: ({ pageParam }) => fetchPosts(pageParam),
+    queryFn: ({ pageParam }) => fetchTempPosts(pageParam),
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => {
       return pages.length;
@@ -21,7 +19,9 @@ export default async function Home() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <InfiniteScrollProvider queryKey={queryKey} type="post" />
+      <div className="max-w-[768px] w-full ml-auto mr-auto  h-full relative">
+        <InfiniteScrollProvider queryKey={queryKey} type="temp" />
+      </div>
     </HydrationBoundary>
   );
 }

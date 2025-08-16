@@ -2,19 +2,32 @@ import { db } from "@/app/lib/db";
 
 import { NextResponse, NextRequest } from "next/server";
 
-export const GET = async (res: NextResponse, req: NextRequest) => {
+export const GET = async (req: NextRequest) => {
+  const page = req.nextUrl.searchParams.get("page");
+  const type = req.nextUrl.searchParams.get("type");
+  const pageNumber = page ? parseInt(page, 10) : 0;
+
   try {
     const postData = await db.post.findMany({
       where: {
-        NOT: { isTemp: true },
+        NOT: { isTemp: type != "temp" },
       },
       select: {
-        createdAt: true,
+        ...(type !== "temp"
+          ? {
+              createdAt: true,
+              thumbnail: true,
+            }
+          : {
+              updatedAt: true,
+            }),
         id: true,
-        preview: true,
-        thumbnail: true,
-        title: true,
         slug: true,
+        preview: true,
+        title: true,
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
 
@@ -49,13 +62,11 @@ async function createUniqueSlug(base: string) {
 }
 
 export const POST = async (req: NextRequest) => {
+  let jsonData = await req.json();
+  let { content, tag, title, imageIds, preview, thumbnail, isTemp, slug } =
+    jsonData.data as PostType;
   try {
     const result = await db.$transaction(async (tx) => {
-      let jsonData = await req.json();
-
-      let { content, tag, title, imageIds, preview, thumbnail, isTemp, slug } =
-        jsonData.data as PostType;
-
       const existing = await db.post.findUnique({
         where: { slug },
       });
@@ -74,7 +85,6 @@ export const POST = async (req: NextRequest) => {
           slug,
         },
       });
-      if (isTemp) return { post };
       let tags = [];
       for (const body of tag) {
         const _tag = await tx.tag.upsert({
@@ -101,6 +111,7 @@ export const POST = async (req: NextRequest) => {
     });
     return NextResponse.json({
       ok: true,
+      data: result.post,
     });
   } catch (e: any) {
     let error = e?.code

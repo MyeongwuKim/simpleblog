@@ -13,7 +13,7 @@ export function CardItemSkeleton() {
         root: {
           base: "border-0",
           children:
-            "flex h-full flex-col justify-center gap-2 p-2 bg-background1",
+            "flex h-full w-full flex-col justify-center gap-2 p-2 bg-background1",
         },
       }}
       className="w-full h-full"

@@ -9,6 +9,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { HiCog, HiLogout } from "react-icons/hi";
 import { DropdownProfile } from "../ui/dropdown/dropdownProfile";
 import { FaBookBookmark } from "react-icons/fa6";
+import { FaSave } from "react-icons/fa";
 
 const showList = ["/", "/profile", "/comments"];
 
@@ -65,6 +66,9 @@ export default function Head() {
                 case "설정":
                   route.push("/setting");
                   break;
+                case "임시글":
+                  route.push("/temp");
+                  break;
                 case "글쓰기":
                   route.push("/write");
                   break;
@@ -73,6 +77,7 @@ export default function Head() {
             items={[
               { content: "글쓰기", icon: TfiWrite },
               { content: "설정", icon: HiCog },
+              { content: "임시글", icon: FaSave },
               { content: "로그아웃", icon: HiLogout },
             ]}
           />

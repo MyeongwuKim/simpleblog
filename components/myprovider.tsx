@@ -31,6 +31,14 @@ export function MyProvider({ children }: { children: React.ReactNode }) {
           </ThemeProvider>
         </ReduxProvider>
       </ReactQueryStreamedHydration>
+      {process.env.NODE_ENV == "development" ? (
+        <ReactQueryDevtools
+          initialIsOpen={false}
+          buttonPosition="bottom-left"
+        />
+      ) : (
+        ""
+      )}
     </QueryClientProvider>
   );
 }

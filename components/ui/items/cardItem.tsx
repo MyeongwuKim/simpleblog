@@ -55,7 +55,7 @@ export function CardItem({
           >
             {title};
           </h4>
-          <p className="line-clamp-3 text-text2 leading-[1.5em]">{preview};</p>
+          <p className="line-clamp-3 text-text2 leading-[1.5em]">{preview}</p>
         </div>
         <div className="text-text3">{formateDate(createdAt, "NOR")}</div>
       </Card>

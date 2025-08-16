@@ -12,11 +12,13 @@ import {
 import useCodeMirror from "../lib/use-codemirror";
 import DefButton from "@/components/ui/buttons/defButton";
 import { useUI } from "@/components/providers/uiProvider";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getFormatImagesId } from "../hooks/useUtil";
 import Preview from "@/components/write/preview";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Slugger from "github-slugger";
+import { Post, Tag } from "@prisma/client";
+import { fetchPostContent } from "../lib/fetchers/post";
 
 type Action = { type: "SET_FORM"; payload: Partial<PostType> };
 
@@ -48,12 +50,41 @@ type ContextType = {
   dispatch: React.Dispatch<Action>;
 };
 
+const toPostType = (data: any): PostType => {
+  return {
+    title: data.title ?? "",
+    tag: data.tag.length > 0 ? data.tag.map((item: any) => item.body) : [],
+    content: data.content ?? "",
+    imageIds: data.imageIds ?? [],
+    isTemp: data.isTemp ?? false,
+    preview: data.preview ?? null,
+    slug: data.slug ?? "",
+    thumbnail: data.thumbnail ?? null,
+  };
+};
+
 const WriteContext = createContext<ContextType | undefined>(undefined);
 
 export default function Write() {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const searchParams = useSearchParams();
+  const slug = searchParams.get("slug");
+  const isValidSlug = typeof slug === "string" && slug.length > 0;
+  const queryClient = useQueryClient();
   const router = useRouter();
-  const writeMutate = useMutation<QueryResponse<null>, Error, PostType>({
+
+  const {
+    data: result,
+    isLoading,
+    error,
+  } = useQuery<QueryResponse<Post & { tag: Tag[] }>>({
+    queryKey: ["post", slug],
+    queryFn: () => fetchPostContent(slug!),
+    enabled: isValidSlug,
+  });
+
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  const writeMutate = useMutation<QueryResponse<Post>, Error, PostType>({
     mutationFn: async (data) => {
       const result = await (
         await fetch("/api/post", {
@@ -67,13 +98,42 @@ export default function Write() {
       return result;
     },
     onSuccess: (res) => {
-      openToast(false, "포스트 작성을 완료하였습니다.", 1);
-      router.push("/");
+      openToast(
+        false,
+        res.data.isTemp
+          ? "임시저장을 완료하였습니다."
+          : "글 작성을 완료하였습니다.",
+        1
+      );
+      //임시글이라면 Temp 무효화
+      if (res.data.isTemp) {
+        queryClient.setQueryData(["Temp"], (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any, i: number) => {
+              if (i === 0) {
+                return {
+                  ...page,
+                  data: [res.data, ...page.data], // 맨 앞에 추가
+                };
+              }
+              return page;
+            }),
+          };
+        });
+      } else router.push("/");
     },
     onError: (error) => {
       openToast(true, error.message, 1);
     },
   });
+
+  useEffect(() => {
+    if (result?.ok) {
+      dispatch({ type: "SET_FORM", payload: toPostType(result.data) });
+    }
+  }, [result]);
 
   const { openToast } = useUI();
 
@@ -99,7 +159,11 @@ export default function Write() {
         /imagedelivery\.net\/[^\/]+\/([^\/]+)/
       );
       let preview = state.content
+        // 이미지 마크다운 제거
+        .replace(/!\[.*?\]\(.*?\)/g, "")
+        // 기존 특수문자 제거
         .replace(/[#_*`>+\-\[\]\(\)~|]/g, "")
+        // 줄바꿈을 공백으로 변환
         .replace(/\n/g, " ")
         .trim();
 
@@ -127,6 +191,19 @@ export default function Write() {
     onChange: handleDocChange,
   });
 
+  // state.content가 바뀌면 에디터에 반영
+  useEffect(() => {
+    if (editorView && state.content !== editorView.state.doc.toString()) {
+      editorView.dispatch({
+        changes: {
+          from: 0,
+          to: editorView.state.doc.length,
+          insert: state.content,
+        },
+      });
+    }
+  }, [state.content, editorView]);
+
   return (
     <WriteContext.Provider value={{ state, dispatch }}>
       <div id="write" className="w-full h-full bg-gray-100 dark:bg-[#0c0c0c]">
@@ -136,7 +213,6 @@ export default function Write() {
             className="flex w-full flex-col h-full relative"
           >
             <Editor
-              defaultTitleValue={""}
               editorView={editorView!}
               refContainer={refContainer as RefObject<HTMLDivElement>}
             />
@@ -166,9 +242,12 @@ export default function Write() {
                   }}
                   content="임시저장"
                   onClickEvt={() => {
+                    const [preview, thumbnail] = extractThumbAndPreview();
+
                     writeMutate.mutate({
                       ...state,
                       isTemp: true,
+                      preview,
                       slug: createSlug(state.title),
                     });
                   }}
@@ -183,6 +262,7 @@ export default function Write() {
                       return;
                     }
                     const [preview, thumbnail] = extractThumbAndPreview();
+
                     let imageIds = getFormatImagesId(state.content);
 
                     writeMutate.mutate({

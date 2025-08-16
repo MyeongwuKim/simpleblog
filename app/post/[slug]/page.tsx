@@ -1,5 +1,6 @@
+import { fetchPostContent } from "@/app/lib/fetchers/post";
 import CommonPost from "@/components/layout/commonPost";
-import InfiniteScrollPostArea from "@/components/layout/infiniteScrollPostArea";
+
 import {
   dehydrate,
   HydrationBoundary,
@@ -8,25 +9,15 @@ import {
 
 // app/posts/[postId]/page.tsx
 interface PageProps {
-  params: { postId: string };
+  params: { slug: string };
 }
-
-const getPostData = async (postId: string) => {
-  const url = `/api/post/${postId}`;
-  const result = await (await fetch(url, { cache: "no-store" })).json();
-  return result;
-};
-const getPostDataWithKey = ({ queryKey }: { queryKey: [string, string] }) => {
-  const [_key, postId] = queryKey;
-  return getPostData(postId);
-};
 
 export default async function Post({ params }: PageProps) {
   const queryClient = new QueryClient();
-  const { postId } = await params;
+  const { slug } = await params;
   await queryClient.prefetchQuery({
-    queryKey: ["post", postId],
-    queryFn: () => getPostData(postId),
+    queryKey: ["post", slug],
+    queryFn: () => fetchPostContent(slug),
   });
 
   return (

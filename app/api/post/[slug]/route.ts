@@ -13,6 +13,7 @@ export const GET = async (
         id: true,
         title: true,
         content: true,
+        isTemp: true,
         createdAt: true,
         tag: {
           select: {

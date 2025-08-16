@@ -19,23 +19,18 @@ import remarkParse from "remark-parse";
 import { unified } from "unified";
 import React, { useEffect, useRef, useState } from "react";
 import PostSkeleton from "../ui/skeleton";
-
-const getPostData = async (postId: string) => {
-  const url = `/api/post/${postId}`;
-  const result = await (await fetch(url, { cache: "no-store" })).json();
-  return result;
-};
+import { fetchPostContent } from "@/app/lib/fetchers/post";
 
 export default function CommonPost() {
   const params = useParams();
-  const postId = params.postId as string;
+  const slug = params.slug as string;
   const {
     data: result,
     isLoading,
     error,
   } = useQuery<QueryResponse<Post & { tag: Tag[] }>>({
-    queryKey: ["Post", postId],
-    queryFn: () => getPostData(postId),
+    queryKey: ["post", slug],
+    queryFn: () => fetchPostContent(slug),
   });
   const headRef = useRef<HTMLDivElement>(null);
 
