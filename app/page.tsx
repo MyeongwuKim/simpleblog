@@ -7,7 +7,7 @@ import { CardItemSkeleton } from "@/components/ui/skeleton";
 
 export default async function Home() {
   const queryClient = getQueryClient();
-  const queryKey = ["Post"];
+  const queryKey = ["post"];
 
   await queryClient.prefetchInfiniteQuery({
     queryKey,

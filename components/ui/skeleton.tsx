@@ -1,7 +1,7 @@
 "use client";
 import { Card } from "flowbite-react";
 
-function Skeleton({ className = "", rounded = "rounded-lg" }) {
+function Skeleton({ className = "", rounded = "rounded-md" }) {
   return (
     <div className={`animate-pulse bg-background4 ${rounded} ${className}`} />
   );
@@ -94,3 +94,14 @@ export default function PostSkeleton() {
     </div>
   );
 }
+
+export const TempItemSkeleton = () => {
+  return (
+    <div className="w-full h-full  flex flex-col py-4 gap-4 border-b border-border1">
+      <Skeleton className="w-1/3 h-5"></Skeleton>
+      <Skeleton className="w-2/3 h-5"></Skeleton>
+
+      <Skeleton className="w-1/4 h-3"></Skeleton>
+    </div>
+  );
+};

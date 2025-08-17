@@ -4,7 +4,7 @@ import { useInfiniteScrollData } from "@/app/hooks/useInfiniteQuery";
 import { fetchPosts, fetchTempPosts } from "@/app/lib/fetchers/post";
 import { CardItem } from "@/components/ui/items/cardItem";
 import TempItem from "@/components/ui/items/tempItem";
-import { CardItemSkeleton } from "@/components/ui/skeleton";
+import { CardItemSkeleton, TempItemSkeleton } from "@/components/ui/skeleton";
 import { Post } from "@prisma/client";
 
 // 타입 정의
@@ -48,7 +48,9 @@ const rendererMap: Record<DataType, RendererMap> = {
       </div>
     ),
     renderSkeleton: (i) => (
-      <div key={i} className="h-[300px] bg-gray-200 animate-pulse" />
+      <div key={i} className="h-[170px]">
+        <TempItemSkeleton />
+      </div>
     ),
   },
 };

@@ -19,19 +19,25 @@ import remarkParse from "remark-parse";
 import { unified } from "unified";
 import React, { useEffect, useRef, useState } from "react";
 import PostSkeleton from "../ui/skeleton";
-import { fetchPostContent } from "@/app/lib/fetchers/post";
+import {
+  fetchPostContentByPostId,
+  fetchPostIdBySlug,
+} from "@/app/lib/fetchers/post";
 
 export default function CommonPost() {
   const params = useParams();
   const slug = params.slug as string;
-  const {
-    data: result,
-    isLoading,
-    error,
-  } = useQuery<QueryResponse<Post & { tag: Tag[] }>>({
+  const { data: slugResult } = useQuery<QueryResponse<{ id: string }>>({
     queryKey: ["post", slug],
-    queryFn: () => fetchPostContent(slug),
+    queryFn: () => fetchPostIdBySlug(slug),
   });
+
+  const { data: result, isLoading: isPostLoading } = useQuery({
+    queryKey: ["post", slugResult?.data.id],
+    queryFn: () => fetchPostContentByPostId(slugResult!.data.id),
+    enabled: !!slugResult?.data.id, // id가 있으면 실행
+  });
+
   const headRef = useRef<HTMLDivElement>(null);
 
   function extractHeadings(markdown: string) {
@@ -56,10 +62,10 @@ export default function CommonPost() {
     visit(tree);
     return headings;
   }
-
-  if (isLoading) {
+  if (isPostLoading || !result) {
     return <></>;
   }
+
   const { data, ok } = result as QueryResponse<Post & { tag: Tag[] }>;
 
   return (
@@ -69,6 +75,7 @@ export default function CommonPost() {
         title={data.title}
         tag={data.tag}
         createdAt={data.createdAt}
+        postId={data.id}
       />
       <PostSide headRef={headRef} headings={extractHeadings(data.content)} />
       <PostBody content={data.content} />
@@ -90,9 +97,10 @@ interface HeadProps {
   title: string;
   tag: Tag[];
   createdAt: Date;
+  postId: string;
 }
 const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
-  ({ tag, title, createdAt }, ref) => (
+  ({ tag, title, createdAt, postId }, ref) => (
     <div id="post-head">
       <h1 ref={ref} className="font-bold text-5xl leading-[1.5] mb-8">
         {title}
@@ -100,7 +108,9 @@ const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
       <div className="w-full flex justify-between mb-2 [&_span]:text-lg [&_span]:text-text3">
         <span>{formateDate(createdAt, "NOR")}</span>
         <div className="gap-2 flex">
-          <span>수정</span>
+          <Link href={`/write?id=${postId}`}>
+            <span>수정</span>
+          </Link>
           <span>삭제</span>
         </div>
       </div>

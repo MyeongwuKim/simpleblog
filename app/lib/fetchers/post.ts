@@ -20,8 +20,14 @@ export const fetchTempPosts = async (pageNumber: number) => {
   return res.json();
 };
 
-export const fetchPostContent = async (slug: string) => {
-  const url = `/api/post/${slug}`;
+export const fetchPostIdBySlug = async (slug: string) => {
+  const url = `/api/post/slug/${slug}`;
+  const result = await (await fetch(url, { cache: "no-store" })).json();
+  return result;
+};
+
+export const fetchPostContentByPostId = async (postId: string) => {
+  const url = `/api/post/postId/${postId}`;
   const result = await (await fetch(url, { cache: "no-store" })).json();
   return result;
 };

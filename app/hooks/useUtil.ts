@@ -1,3 +1,5 @@
+import { db } from "../lib/db";
+
 export const setScrollValue = (pathname: string, value: string) => {
   const key =
     pathname.replace("/", "").length <= 0 ? "post" : pathname.replace("/", "");
@@ -107,3 +109,36 @@ export const getFormatImagesId = (content: string): string[] => {
   }
   return imagesIdArr;
 };
+
+export async function createUniqueSlug(base: string) {
+  let slug = "";
+  let isUnique = false;
+
+  while (!isUnique) {
+    const random = Math.random().toString(36).substring(2, 9); // 7자리 랜덤
+    slug = `${base}-${random}`;
+    const existing = await db.post.findUnique({ where: { slug } });
+    if (!existing) isUnique = true;
+  }
+
+  return slug;
+}
+
+export function formatRelativeTime(date: Date) {
+  const now = new Date();
+  const past = new Date(date);
+  const diffMs = now.getTime() - past.getTime(); // 차이(ms)
+
+  const seconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (seconds < 60) return "방금 전";
+  if (minutes < 60) return `${minutes}분 전`;
+  if (hours < 24) return `${hours}시간 전`;
+  if (days < 7) return `${days}일 전`;
+
+  // 그 이상이면 날짜 표시
+  return formateDate(date, "NOR");
+}

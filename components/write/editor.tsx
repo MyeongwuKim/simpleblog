@@ -27,9 +27,7 @@ const Editor: React.FC<Props> = ({ editorView, refContainer }) => {
     current!.style.height = "auto";
     current!.style.height = current!.scrollHeight + "px";
   };
-  useEffect(() => {
-    console.log(state.tag);
-  }, [state.tag]);
+
   return (
     <div className="h-[calc(100%-60px)]  relative w-full bg-bg-page2 dark:shadow-black shadow-md">
       <div className="flex flex-col flex-auto relative  h-[calc(100%-0px)] gap-2">

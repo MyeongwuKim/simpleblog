@@ -7,7 +7,6 @@ import {
   useContext,
   useEffect,
   useReducer,
-  useState,
 } from "react";
 import useCodeMirror from "../lib/use-codemirror";
 import DefButton from "@/components/ui/buttons/defButton";
@@ -18,7 +17,7 @@ import Preview from "@/components/write/preview";
 import { useRouter, useSearchParams } from "next/navigation";
 import Slugger from "github-slugger";
 import { Post, Tag } from "@prisma/client";
-import { fetchPostContent } from "../lib/fetchers/post";
+import { fetchPostContentByPostId } from "../lib/fetchers/post";
 
 type Action = { type: "SET_FORM"; payload: Partial<PostType> };
 
@@ -36,10 +35,7 @@ const initialState: PostType = {
 const reducer = (state: PostType, action: Action) => {
   switch (action.type) {
     case "SET_FORM":
-      return {
-        ...state,
-        ...action.payload, // 여기서 직접 병합
-      };
+      return { ...state, ...action.payload };
     default:
       return state;
   }
@@ -50,106 +46,204 @@ type ContextType = {
   dispatch: React.Dispatch<Action>;
 };
 
-const toPostType = (data: any): PostType => {
-  return {
-    title: data.title ?? "",
-    tag: data.tag.length > 0 ? data.tag.map((item: any) => item.body) : [],
-    content: data.content ?? "",
-    imageIds: data.imageIds ?? [],
-    isTemp: data.isTemp ?? false,
-    preview: data.preview ?? null,
-    slug: data.slug ?? "",
-    thumbnail: data.thumbnail ?? null,
-  };
-};
+const toPostType = (data: any): PostType => ({
+  title: data.title ?? "",
+  tag: data.tag?.length
+    ? data.tag.map((item: any) => (item.body ? item.body : item))
+    : [],
+  content: data.content ?? "",
+  imageIds: data.imageIds ?? [],
+  isTemp: data.isTemp ?? false,
+  preview: data.preview ?? null,
+  slug: data.slug ?? "",
+  thumbnail: data.thumbnail ?? null,
+});
 
 const WriteContext = createContext<ContextType | undefined>(undefined);
 
 export default function Write() {
   const searchParams = useSearchParams();
-  const slug = searchParams.get("slug");
-  const isValidSlug = typeof slug === "string" && slug.length > 0;
+  const postId = searchParams.get("id");
+  const isValidPostId = typeof postId === "string" && postId.length > 0;
   const queryClient = useQueryClient();
   const router = useRouter();
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { openToast } = useUI();
 
-  const {
-    data: result,
-    isLoading,
-    error,
-  } = useQuery<QueryResponse<Post & { tag: Tag[] }>>({
-    queryKey: ["post", slug],
-    queryFn: () => fetchPostContent(slug!),
-    enabled: isValidSlug,
+  const { data: result } = useQuery<QueryResponse<Post & { tag: Tag[] }>>({
+    queryKey: ["post", postId],
+    queryFn: () => fetchPostContentByPostId(postId!),
+    enabled: isValidPostId,
   });
 
-  const [state, dispatch] = useReducer(reducer, initialState);
+  // temp 캐시 업데이트 (삭제,추가)
+  const updateTempPostCache = (oldData: any, res: Post) => {
+    if (!oldData) return oldData;
+
+    let found = false;
+
+    const newPages = oldData.pages.map((page: any) => ({
+      ...page,
+      data: page.data
+        .map((item: any) => {
+          if (item.id === res.id) {
+            found = true;
+            return res.isTemp ? { ...item, ...res } : null;
+          }
+          return item;
+        })
+        .filter(Boolean),
+    }));
+
+    // 새 임시글이면 맨 앞에 추가
+    if (res.isTemp && !found) {
+      if (newPages.length === 0) {
+        newPages.push({ data: [res] });
+      } else {
+        newPages[0].data.unshift(res);
+      }
+    }
+
+    return {
+      ...oldData,
+      pages: newPages,
+    };
+  };
+  //새글 작성일시 post 캐시에 아이템 추가
+  const insertNewPostCache = (queryKey: string[], item: Post) => {
+    queryClient.setQueryData(queryKey, (oldData: any) => {
+      // 캐시가 없으면 새 페이지 생성
+      if (!oldData) return oldData; // 없으면 fetch에 맡김
+      console.log({
+        ...oldData,
+        pages: oldData.pages.map((page: any, i: number) =>
+          i === 0 ? { ...page, data: [item, ...page.data] } : page
+        ),
+        // pageParams는 그대로 유지
+        pageParams: oldData.pageParams,
+      });
+      // 캐시가 있으면 기존 페이지 유지 + 첫 페이지 맨 앞에 새 글 추가
+      return {
+        ...oldData,
+        pages: oldData.pages.map((page: any, i: number) =>
+          i === 0 ? { ...page, data: [item, ...page.data] } : page
+        ),
+        // pageParams는 그대로 유지
+        pageParams: oldData.pageParams,
+      };
+    });
+  };
+  //게시된 글 수정했을때 post페이지에 반영
+  const updateExistingPostCache = (queryKey: string[], item: Post) => {
+    queryClient.setQueryData(queryKey, (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        pages: oldData.pages.map((page: any) => ({
+          ...page,
+          data: page.data.map((pItem: any) =>
+            pItem.id === item.id ? item : pItem
+          ),
+        })),
+      };
+    });
+  };
+
+  const handleTempPost = (res: Post) => {
+    queryClient.setQueryData(["temp"], (oldData: any) =>
+      updateTempPostCache(oldData, res)
+    );
+    queryClient.invalidateQueries({ queryKey: ["temp"], exact: true });
+
+    if (isValidPostId) {
+      queryClient.setQueryData(["post", postId], (oldData: any) =>
+        oldData ? { ...oldData, data: { ...oldData.data, ...res } } : oldData
+      );
+    }
+
+    openToast(false, "임시저장을 완료하였습니다.", 1);
+  };
+
+  const handleUpdatePost = (res: Post, prevIsTemp: boolean) => {
+    queryClient.setQueryData(["temp"], (oldData: any) =>
+      updateTempPostCache(oldData, res)
+    );
+
+    queryClient.setQueryData(["post", postId], (oldData: any) =>
+      oldData ? { ...oldData, data: { ...oldData.data, ...res } } : oldData
+    );
+
+    //임시글 -> 추가했을때..
+    if (prevIsTemp) insertNewPostCache(["post"], res);
+    //게시글 -> 수정했을때..
+    else updateExistingPostCache(["post"], res);
+
+    queryClient.invalidateQueries({ queryKey: ["post"], exact: true });
+    router.push(`/post/${res.slug}`);
+    if (prevIsTemp) openToast(false, "글 작성을 완료하였습니다.", 1);
+  };
+
+  const handleNewPost = (res: Post) => {
+    insertNewPostCache(["post"], res);
+    router.push(`/post/${res.slug}`);
+    queryClient.invalidateQueries({ queryKey: ["post"], exact: true });
+
+    openToast(false, "글 작성을 완료하였습니다.", 1);
+  };
+
+  // --- Mutations ---
+  const updateMuate = useMutation<QueryResponse<Post>, Error, PostType>({
+    mutationFn: async (data) => {
+      const result = await (
+        await fetch(`/api/post/postId/${postId}`, {
+          method: "POST",
+          body: JSON.stringify({ ...data, createdAt: new Date() }),
+        })
+      ).json();
+      if (!result.ok) throw new Error(result.error);
+      return result;
+    },
+    onSuccess: (res) => {
+      if (res.data.isTemp) handleTempPost(res.data); //임시글 수정
+      else if (isValidPostId) handleUpdatePost(res.data, result?.data.isTemp!);
+      //임시글 -> 작성, 게시글 -> 수정
+      else handleNewPost(res.data);
+    },
+    onError: (error) => openToast(true, error.message, 1),
+  });
 
   const writeMutate = useMutation<QueryResponse<Post>, Error, PostType>({
     mutationFn: async (data) => {
       const result = await (
         await fetch("/api/post", {
           method: "POST",
-          body: JSON.stringify({ data }),
+          body: JSON.stringify({ ...data }),
         })
       ).json();
-
       if (!result.ok) throw new Error(result.error);
-
       return result;
     },
     onSuccess: (res) => {
-      openToast(
-        false,
-        res.data.isTemp
-          ? "임시저장을 완료하였습니다."
-          : "글 작성을 완료하였습니다.",
-        1
-      );
-      //임시글이라면 Temp 무효화
-      if (res.data.isTemp) {
-        queryClient.setQueryData(["Temp"], (oldData: any) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            pages: oldData.pages.map((page: any, i: number) => {
-              if (i === 0) {
-                return {
-                  ...page,
-                  data: [res.data, ...page.data], // 맨 앞에 추가
-                };
-              }
-              return page;
-            }),
-          };
-        });
-      } else router.push("/");
+      if (res.data.isTemp) handleTempPost(res.data);
+      else handleNewPost(res.data);
     },
-    onError: (error) => {
-      openToast(true, error.message, 1);
-    },
+    onError: (error) => openToast(true, error.message, 1),
   });
 
+  // --- 기타 로직 ---
   useEffect(() => {
-    if (result?.ok) {
+    if (result?.ok)
       dispatch({ type: "SET_FORM", payload: toPostType(result.data) });
-    }
   }, [result]);
 
-  const { openToast } = useUI();
-
-  const validate = useCallback((): { isOk: boolean; msg: string } => {
+  const validate = useCallback(() => {
     let result = { isOk: true, msg: "" };
-
-    if (state.title.length <= 0) {
-      result.msg = "제목을 입력해주세요.";
-      result.isOk = false;
-    } else if (state.tag.length <= 0) {
-      result.msg = "태그를 입력해주세요.";
-      result.isOk = false;
-    } else if (state.content.length <= 0) {
-      result.msg = "내용을 입력해주세요.";
-      result.isOk = false;
-    }
+    if (state.title.length <= 0)
+      result = { isOk: false, msg: "제목을 입력해주세요." };
+    else if (state.tag.length <= 0)
+      result = { isOk: false, msg: "태그를 입력해주세요." };
+    else if (state.content.length <= 0)
+      result = { isOk: false, msg: "내용을 입력해주세요." };
     return result;
   }, [state]);
 
@@ -158,40 +252,44 @@ export default function Write() {
       const thumbnail = state.content.match(
         /imagedelivery\.net\/[^\/]+\/([^\/]+)/
       );
-      let preview = state.content
-        // 이미지 마크다운 제거
+      const preview = state.content
         .replace(/!\[.*?\]\(.*?\)/g, "")
-        // 기존 특수문자 제거
         .replace(/[#_*`>+\-\[\]\(\)~|]/g, "")
-        // 줄바꿈을 공백으로 변환
         .replace(/\n/g, " ")
         .trim();
-
       return [preview.slice(0, length), thumbnail ? thumbnail[1] : null];
     },
     [state.content]
   );
 
-  function createSlug(title: string) {
-    const slug = new Slugger().slug(title);
-    return slug;
-  }
+  const createSlug = (title: string) => new Slugger().slug(title);
 
   const handleDocChange = useCallback((content: string) => {
-    dispatch({
-      type: "SET_FORM",
-      payload: {
-        content,
-      },
-    });
+    dispatch({ type: "SET_FORM", payload: { content } });
   }, []);
+
+  const onMutatProcess = useCallback(
+    (process: number) => {
+      const [preview, thumbnail] = extractThumbAndPreview();
+      const imageIds = getFormatImagesId(state.content);
+      const mutate = isValidPostId ? updateMuate : writeMutate;
+      mutate.mutate({
+        ...state,
+        isTemp: process === 2,
+        preview,
+        imageIds,
+        thumbnail,
+        ...(isValidPostId ? {} : { slug: createSlug(state.title) }),
+      });
+    },
+    [state]
+  );
 
   let [refContainer, editorView] = useCodeMirror<HTMLDivElement>({
     initialDoc: state.content,
     onChange: handleDocChange,
   });
 
-  // state.content가 바뀌면 에디터에 반영
   useEffect(() => {
     if (editorView && state.content !== editorView.state.doc.toString()) {
       editorView.dispatch({
@@ -233,54 +331,43 @@ export default function Write() {
                   onClickEvt={() => router.back()}
                 />
               </div>
-              <div className="h-[45px] w-auto flex gap-4">
-                <DefButton
-                  style={{
-                    color: "black",
-                    textColor: "text-cyan-500",
-                    noBg: true,
-                  }}
-                  content="임시저장"
-                  onClickEvt={() => {
-                    const [preview, thumbnail] = extractThumbAndPreview();
-
-                    writeMutate.mutate({
-                      ...state,
-                      isTemp: true,
-                      preview,
-                      slug: createSlug(state.title),
-                    });
-                  }}
-                />
-                <DefButton
-                  style={{ color: "cyan", noBg: false }}
-                  content="작성하기"
-                  onClickEvt={() => {
-                    const { isOk, msg } = validate();
-                    if (!isOk) {
-                      openToast(true, msg, 1);
-                      return;
+              <div className="h-[45px]  w-auto flex gap-4">
+                <div
+                  className={`w-[110px]  ${
+                    isValidPostId && !result?.data.isTemp && "invisible"
+                  }`}
+                >
+                  <DefButton
+                    style={{
+                      color: "black",
+                      textColor: "text-cyan-500",
+                      noBg: true,
+                    }}
+                    content="임시저장"
+                    onClickEvt={() => onMutatProcess(2)}
+                  />
+                </div>
+                <div className="w-[110px]">
+                  <DefButton
+                    style={{ color: "cyan", noBg: false }}
+                    content={
+                      isValidPostId && !result?.data.isTemp
+                        ? "수정하기"
+                        : "작성하기"
                     }
-                    const [preview, thumbnail] = extractThumbAndPreview();
-
-                    let imageIds = getFormatImagesId(state.content);
-
-                    writeMutate.mutate({
-                      ...state,
-                      imageIds,
-                      preview,
-                      thumbnail,
-                      slug: createSlug(state.title),
-                    });
-                  }}
-                />
+                    onClickEvt={() => {
+                      const { isOk, msg } = validate();
+                      if (!isOk) return openToast(true, msg, 1);
+                      onMutatProcess(1);
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
           <div
             id="previewWrapper"
-            className={`sm:z-[99] sm:top-0 sm:left-0 w-full h-full
-            sm:flex justify-center items-center `}
+            className={`sm:z-[99] sm:top-0 sm:left-0 w-full h-full sm:flex justify-center items-center `}
           >
             <div
               id="previewContainer"

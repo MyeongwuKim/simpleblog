@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  formateDate,
-  formatSringDate,
-  getThumbnailURL,
-} from "@/app/hooks/useUtil";
+import { formatRelativeTime, getThumbnailURL } from "@/app/hooks/useUtil";
 import { Post } from "@prisma/client";
 import { Card } from "flowbite-react";
 import Image from "next/image";
@@ -57,7 +53,7 @@ export function CardItem({
           </h4>
           <p className="line-clamp-3 text-text2 leading-[1.5em]">{preview}</p>
         </div>
-        <div className="text-text3">{formateDate(createdAt, "NOR")}</div>
+        <div className="text-text3">{formatRelativeTime(createdAt)}</div>
       </Card>
     </Link>
   );

@@ -29,7 +29,6 @@ export default function TabButtons() {
       let item = tabList[i];
       tabItems.current[item.pathname] = i;
     }
-    console.log(tabItems.current);
   }, []);
 
   useEffect(() => {
@@ -62,7 +61,11 @@ export default function TabButtons() {
         }}
       >
         {tabList.map((v, i) => (
-          <TabItem active={v.pathname == pathname} title={v.title} icon={v.icon} />
+          <TabItem
+            active={v.pathname == pathname}
+            title={v.title}
+            icon={v.icon}
+          />
         ))}
       </Tabs>
       <div

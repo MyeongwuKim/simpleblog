@@ -11,15 +11,6 @@ export const GET = async (
       where: { slug },
       select: {
         id: true,
-        title: true,
-        content: true,
-        isTemp: true,
-        createdAt: true,
-        tag: {
-          select: {
-            body: true,
-          },
-        },
       },
     });
     return NextResponse.json({
