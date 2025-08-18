@@ -19,6 +19,12 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "flowbite.com",
       },
+      {
+        protocol: "https",
+        hostname: "velog.velcdn.com",
+        port: "",
+        pathname: "/**", // velog의 모든 경로 허용
+      },
     ],
   },
 };

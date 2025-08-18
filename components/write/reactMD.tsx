@@ -57,10 +57,7 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
           },
           h1({ node, children, ...props }) {
             return (
-              <h1
-                className="appendix font-sans mb-[1em] text-[32px] font-bold"
-                {...props}
-              >
+              <h1 className="text-4xl font-bold leading-snug my-8" {...props}>
                 {children}
               </h1>
             );
@@ -68,7 +65,7 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
           h2({ node, children, ...props }) {
             return (
               <h2
-                className="appendix font-sans mb-[1em] text-[24px] font-bold"
+                className="text-2xl font-semibold leading-snug my-4"
                 {...props}
               >
                 {children}
@@ -108,7 +105,10 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
           },
           p({ node, children, ...props }) {
             return (
-              <p className="font-sans mb-[1em]" {...props}>
+              <p
+                className="text-base leading-relaxed my-4 text-text1"
+                {...props}
+              >
                 {children}
               </p>
             );

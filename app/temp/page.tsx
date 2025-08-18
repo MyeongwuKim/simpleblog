@@ -19,7 +19,7 @@ export default async function Temp() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="max-w-[768px] w-full ml-auto mr-auto  h-full relative">
+      <div className="max-w-[768px]  w-full ml-auto mr-auto relative">
         <InfiniteScrollProvider queryKey={queryKey} type="temp" />
       </div>
     </HydrationBoundary>

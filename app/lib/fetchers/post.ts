@@ -31,3 +31,9 @@ export const fetchPostContentByPostId = async (postId: string) => {
   const result = await (await fetch(url, { cache: "no-store" })).json();
   return result;
 };
+
+export const fetchAllPostContentByPostId = async (postId: string) => {
+  const url = `/api/post/postId/${postId}?type=all`;
+  const result = await (await fetch(url, { cache: "no-store" })).json();
+  return result;
+};

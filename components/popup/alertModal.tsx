@@ -48,7 +48,7 @@ export function AlertModal({ msg, btnMsg, title, onClose }: AlertModalProps) {
           <div className="">
             <div className="mb-10 flex flex-col gap-4 mt-4">
               {title && (
-                <h3 className="text-xl  font-bold text-text1 ">포스트 삭제</h3>
+                <h3 className="text-xl  font-bold text-text1 ">{title}</h3>
               )}
               <div className="text-text2 text-base">{msg}</div>
             </div>

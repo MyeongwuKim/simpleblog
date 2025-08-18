@@ -10,7 +10,12 @@ import {
   useSearchParams,
 } from "next/navigation";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import {
+  UseMutateFunction,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Post, Tag } from "@prisma/client";
 import { formateDate } from "@/app/hooks/useUtil";
 import Slugger from "github-slugger";
@@ -20,22 +25,59 @@ import { unified } from "unified";
 import React, { useEffect, useRef, useState } from "react";
 import PostSkeleton from "../ui/skeleton";
 import {
-  fetchPostContentByPostId,
+  fetchAllPostContentByPostId,
   fetchPostIdBySlug,
 } from "@/app/lib/fetchers/post";
+import { useUI } from "../providers/uiProvider";
 
 export default function CommonPost() {
   const params = useParams();
+  const queryClient = useQueryClient();
+  const route = useRouter();
+  const { openToast } = useUI();
   const slug = params.slug as string;
+
   const { data: slugResult } = useQuery<QueryResponse<{ id: string }>>({
     queryKey: ["post", slug],
     queryFn: () => fetchPostIdBySlug(slug),
   });
-
   const { data: result, isLoading: isPostLoading } = useQuery({
     queryKey: ["post", slugResult?.data.id],
-    queryFn: () => fetchPostContentByPostId(slugResult!.data.id),
+    queryFn: () => fetchAllPostContentByPostId(slugResult!.data.id),
     enabled: !!slugResult?.data.id, // id가 있으면 실행
+  });
+  const { mutate, isPending } = useMutation<QueryResponse<Post>, Error>({
+    mutationFn: async (data) => {
+      const result = await (
+        await fetch(`/api/post/postId/${slugResult?.data.id}`, {
+          method: "DELETE",
+        })
+      ).json();
+
+      if (!result.ok) throw new Error(result.error);
+      return result;
+    },
+    onSuccess: (res) => {
+      queryClient.setQueryData(["post"], (oldData: any) => {
+        if (!oldData) return oldData;
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: QueryResponse<Post[]>) => ({
+            ...page,
+            data: page.data.filter((p) => p.id !== slugResult?.data.id),
+          })),
+        };
+      });
+      // 해당 post 상세 캐시 제거
+      queryClient.removeQueries({ queryKey: ["post", slugResult?.data.id] });
+      console.log(slug);
+      queryClient.removeQueries({ queryKey: ["post", slug] });
+      queryClient.invalidateQueries({ queryKey: ["post"], exact: true });
+      openToast(false, "성공적으로 삭제하였습니다.", 1);
+      route.back();
+    },
+    onError: (error) => openToast(true, error.message, 1),
   });
 
   const headRef = useRef<HTMLDivElement>(null);
@@ -62,32 +104,40 @@ export default function CommonPost() {
     visit(tree);
     return headings;
   }
-  if (isPostLoading || !result) {
-    return <></>;
+  if (isPostLoading || !result || isPending) {
+    return <PostSkeleton />;
   }
 
-  const { data, ok } = result as QueryResponse<Post & { tag: Tag[] }>;
+  const {
+    data: { current, next, prev },
+    ok,
+  } = result as QueryResponse<{
+    current: Post & { tag: Tag[] };
+    prev: Post;
+    next: Post;
+  }>;
 
   return (
     <div className="w-full h-full">
       <PostHead
         ref={headRef}
-        title={data.title}
-        tag={data.tag}
-        createdAt={data.createdAt}
-        postId={data.id}
+        title={current.title}
+        tag={current.tag}
+        createdAt={current.createdAt}
+        postId={current.id}
+        mutate={mutate}
       />
-      <PostSide headRef={headRef} headings={extractHeadings(data.content)} />
-      <PostBody content={data.content} />
+      <PostSide headRef={headRef} headings={extractHeadings(current.content)} />
+      <PostBody content={current.content} />
       <div className="w-full h-[1px] bg-text4 mt-20" />
-      <PostFooter />
+      <PostFooter next={next} prev={prev} />
     </div>
   );
 }
 
 export function PostBody({ content }: { content: string }) {
   return (
-    <div id="post-body" className=" mt-20">
+    <div id="post-body" className="my-40 min-h-[100px]">
       <ReactMD doc={content} />
     </div>
   );
@@ -98,37 +148,59 @@ interface HeadProps {
   tag: Tag[];
   createdAt: Date;
   postId: string;
+  mutate: UseMutateFunction;
 }
 const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
-  ({ tag, title, createdAt, postId }, ref) => (
-    <div id="post-head">
-      <h1 ref={ref} className="font-bold text-5xl leading-[1.5] mb-8">
-        {title}
-      </h1>
-      <div className="w-full flex justify-between mb-2 [&_span]:text-lg [&_span]:text-text3">
-        <span>{formateDate(createdAt, "NOR")}</span>
-        <div className="gap-2 flex">
-          <Link href={`/write?id=${postId}`}>
-            <span>수정</span>
-          </Link>
-          <span>삭제</span>
+  ({ tag, title, createdAt, postId, mutate }, ref) => {
+    const { openModal } = useUI();
+
+    const removeEvt = async () => {
+      const result = await openModal("ALERT", {
+        title: "글 삭제",
+        msg: "글을 지우시겠습니까?",
+        btnMsg: ["취소", "확인"],
+      });
+      if (result) mutate();
+    };
+    return (
+      <div id="post-head" className="mt-20">
+        <h1 ref={ref} className="font-bold text-5xl leading-[1.5] mb-8">
+          {title}
+        </h1>
+        <div className="w-full flex justify-between mb-2 [&_span]:text-lg [&_span]:text-text3">
+          <span>{formateDate(createdAt, "NOR")}</span>
+          <div className="gap-2 flex">
+            <Link href={`/write?id=${postId}`}>
+              <span>수정</span>
+            </Link>
+            <span className="cursor-pointer" onClick={removeEvt}>
+              삭제
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {tag.map((v, i) => (
+            <TagItem key={i} text={v.body} />
+          ))}
         </div>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {tag.map((v, i) => (
-          <TagItem key={i} text={v.body} />
-        ))}
-      </div>
-    </div>
-  )
+    );
+  }
 );
-function PostFooter() {
+interface PostFooterProps {
+  next: Post;
+  prev: Post;
+}
+function PostFooter({ next, prev }: PostFooterProps) {
   return (
-    <div className="mt-20">
+    <div className="mt-30">
       <div className="w-full flex justify-between flex-auto">
-        {[1, 2].map((v, i) => {
-          return <FooterItem key={i} dir={i} />;
-        })}
+        <div className={`${next ? "" : "invisible"}`}>
+          <FooterItem slug={next?.slug} title={next?.title} dir={0} />
+        </div>
+        <div className={`${prev ? "" : "invisible"}`}>
+          <FooterItem slug={prev?.slug} title={prev?.title} dir={1} />
+        </div>
       </div>
     </div>
   );

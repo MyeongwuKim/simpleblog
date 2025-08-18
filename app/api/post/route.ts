@@ -9,6 +9,12 @@ export const GET = async (req: NextRequest) => {
   const pageNumber = page ? parseInt(page, 10) : 0;
 
   try {
+    const totalCount = await db.post.count({
+      where: {
+        NOT: { isTemp: type != "temp" },
+      },
+    });
+
     const postData = await db.post.findMany({
       where: {
         NOT: { isTemp: type != "temp" },
@@ -27,6 +33,8 @@ export const GET = async (req: NextRequest) => {
         preview: true,
         title: true,
       },
+      take: 12,
+      skip: pageNumber * 12,
       orderBy: {
         createdAt: "desc",
       },
@@ -35,6 +43,7 @@ export const GET = async (req: NextRequest) => {
     return NextResponse.json({
       ok: true,
       data: postData,
+      totalCount,
     });
   } catch (e: any) {
     let error = e?.code

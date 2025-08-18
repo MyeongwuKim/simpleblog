@@ -13,7 +13,7 @@ type TabItemType = {
 };
 
 const tabList: TabItemType[] = [
-  { title: "포스트", icon: MdDashboard, pathname: "/" },
+  { title: "피드", icon: MdDashboard, pathname: "/" },
   { title: "프로필", icon: HiUserCircle, pathname: "/profile" },
   { title: "방명록", icon: MdInsertComment, pathname: "/comments" },
 ];

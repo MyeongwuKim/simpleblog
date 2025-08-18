@@ -1,3 +1,4 @@
+import { db } from "@/app/lib/db";
 import { fetchPostIdBySlug } from "@/app/lib/fetchers/post";
 import CommonPost from "@/components/layout/commonPost";
 
@@ -7,10 +8,32 @@ import {
   QueryClient,
   useQuery,
 } from "@tanstack/react-query";
+import { Metadata } from "next";
 
 // app/posts/[postId]/page.tsx
 interface PageProps {
   params: { slug: string };
+}
+
+// 🔥 동적 메타데이터
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const decodedSlug = decodeURIComponent(params.slug); // ← 여기서 디코딩
+  let post = await db.post.findUnique({
+    where: {
+      slug: decodedSlug,
+    },
+    select: {
+      title: true,
+    },
+  });
+  return {
+    title: post?.title,
+    openGraph: {
+      title: post?.title,
+    },
+  };
 }
 
 export default async function Post({ params }: PageProps) {

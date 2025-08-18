@@ -7,6 +7,7 @@ export const GET = async (
   { params }: { params: { postId: string } }
 ) => {
   const { postId } = await params;
+  const type = req.nextUrl.searchParams.get("type");
   try {
     const postData = await db.post.findUnique({
       where: { id: postId },
@@ -24,9 +25,39 @@ export const GET = async (
         },
       },
     });
+
+    // 이전 글 (더 오래된 글)
+    const prevPost = await db.post.findFirst({
+      where: {
+        createdAt: { lt: postData?.createdAt }, // 현재 글보다 이전
+      },
+      orderBy: { createdAt: "desc" }, // 가장 가까운 이전 글
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+      },
+    });
+
+    // 다음 글 (더 최신 글)
+    const nextPost = await db.post.findFirst({
+      where: {
+        createdAt: { gt: postData?.createdAt }, // 현재 글보다 이후
+      },
+      orderBy: { createdAt: "asc" }, // 가장 가까운 다음 글
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+      },
+    });
+
     return NextResponse.json({
       ok: true,
-      data: postData,
+      data: {
+        current: postData,
+        ...(type ? { prev: prevPost, next: nextPost } : {}),
+      },
     });
   } catch (e: any) {
     let error = e?.code
@@ -93,6 +124,45 @@ export const POST = async (
     return NextResponse.json({
       ok: true,
       data: result.post,
+    });
+  } catch (e: any) {
+    let error = e?.code
+      ? `Prisma errorCode:${e.code}, Prisma Error ${JSON.stringify(e.meta)}`
+      : `일시적 오류입니다. 다시 시도해주세요.`;
+    return NextResponse.json({
+      ok: false,
+      error,
+    });
+  } finally {
+  }
+};
+
+export const DELETE = async (
+  req: NextRequest,
+  { params }: { params: { postId: string } }
+) => {
+  const { postId } = await params;
+
+  try {
+    const postData = await db.post.delete({
+      where: {
+        id: postId,
+      },
+    });
+    postData.imageIds.forEach((id) => {
+      fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/images/v1/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${process.env.CF_TOKEN}`,
+          },
+        }
+      ).catch((err) => console.error("삭제 실패:", err));
+    });
+    return NextResponse.json({
+      ok: true,
+      data: postData,
     });
   } catch (e: any) {
     let error = e?.code

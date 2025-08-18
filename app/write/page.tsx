@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useReducer,
+  useRef,
 } from "react";
 import useCodeMirror from "../lib/use-codemirror";
 import DefButton from "@/components/ui/buttons/defButton";
@@ -68,9 +69,12 @@ export default function Write() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const [state, dispatch] = useReducer(reducer, initialState);
+  const previewRef = useRef<HTMLDivElement>(null);
   const { openToast } = useUI();
 
-  const { data: result } = useQuery<QueryResponse<Post & { tag: Tag[] }>>({
+  const { data: result } = useQuery<
+    QueryResponse<{ current: Post & { tag: Tag[] } }>
+  >({
     queryKey: ["post", postId],
     queryFn: () => fetchPostContentByPostId(postId!),
     enabled: isValidPostId,
@@ -191,7 +195,6 @@ export default function Write() {
     openToast(false, "글 작성을 완료하였습니다.", 1);
   };
 
-  // --- Mutations ---
   const updateMuate = useMutation<QueryResponse<Post>, Error, PostType>({
     mutationFn: async (data) => {
       const result = await (
@@ -205,7 +208,8 @@ export default function Write() {
     },
     onSuccess: (res) => {
       if (res.data.isTemp) handleTempPost(res.data); //임시글 수정
-      else if (isValidPostId) handleUpdatePost(res.data, result?.data.isTemp!);
+      else if (isValidPostId)
+        handleUpdatePost(res.data, result?.data.current.isTemp!);
       //임시글 -> 작성, 게시글 -> 수정
       else handleNewPost(res.data);
     },
@@ -230,10 +234,9 @@ export default function Write() {
     onError: (error) => openToast(true, error.message, 1),
   });
 
-  // --- 기타 로직 ---
   useEffect(() => {
     if (result?.ok)
-      dispatch({ type: "SET_FORM", payload: toPostType(result.data) });
+      dispatch({ type: "SET_FORM", payload: toPostType(result.data.current) });
   }, [result]);
 
   const validate = useCallback(() => {
@@ -264,10 +267,6 @@ export default function Write() {
 
   const createSlug = (title: string) => new Slugger().slug(title);
 
-  const handleDocChange = useCallback((content: string) => {
-    dispatch({ type: "SET_FORM", payload: { content } });
-  }, []);
-
   const onMutatProcess = useCallback(
     (process: number) => {
       const [preview, thumbnail] = extractThumbAndPreview();
@@ -287,8 +286,20 @@ export default function Write() {
 
   let [refContainer, editorView] = useCodeMirror<HTMLDivElement>({
     initialDoc: state.content,
-    onChange: handleDocChange,
+    onChange: useCallback((content: string) => {
+      dispatch({ type: "SET_FORM", payload: { content } });
+    }, []),
   });
+
+  useEffect(() => {
+    if (previewRef.current && editorView) {
+      const editor = editorView.dom;
+      const preview = previewRef.current;
+      const isEditorAtBottom =
+        editor.scrollHeight - editor.scrollTop === editor.clientHeight;
+      if (isEditorAtBottom) preview.scrollTop = preview.scrollHeight;
+    }
+  }, [state.content, editorView]);
 
   useEffect(() => {
     if (editorView && state.content !== editorView.state.doc.toString()) {
@@ -334,7 +345,7 @@ export default function Write() {
               <div className="h-[45px]  w-auto flex gap-4">
                 <div
                   className={`w-[110px]  ${
-                    isValidPostId && !result?.data.isTemp && "invisible"
+                    isValidPostId && !result?.data.current.isTemp && "invisible"
                   }`}
                 >
                   <DefButton
@@ -351,7 +362,7 @@ export default function Write() {
                   <DefButton
                     style={{ color: "cyan", noBg: false }}
                     content={
-                      isValidPostId && !result?.data.isTemp
+                      isValidPostId && !result?.data.current.isTemp
                         ? "수정하기"
                         : "작성하기"
                     }
@@ -373,7 +384,7 @@ export default function Write() {
               id="previewContainer"
               className={`w-full h-full bg-transparent`}
             >
-              <Preview />
+              <Preview ref={previewRef} />
             </div>
           </div>
         </div>
