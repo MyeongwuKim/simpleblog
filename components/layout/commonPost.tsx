@@ -37,14 +37,25 @@ export default function CommonPost() {
   const { openToast } = useUI();
   const slug = params.slug as string;
 
-  const { data: slugResult } = useQuery<QueryResponse<{ id: string }>>({
+  const { data: slugResult, isError: slugError } = useQuery<
+    QueryResponse<{ id: string }>
+  >({
     queryKey: ["post", slug],
     queryFn: () => fetchPostIdBySlug(slug),
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
   });
-  const { data: result, isLoading: isPostLoading } = useQuery({
-    queryKey: ["post", slugResult?.data.id],
+
+  const {
+    data: result,
+    isLoading: isPostLoading,
+    isError: postError,
+  } = useQuery({
+    queryKey: ["post", slugResult?.data?.id],
     queryFn: () => fetchAllPostContentByPostId(slugResult!.data.id),
-    enabled: !!slugResult?.data.id, // id가 있으면 실행
+    enabled: !!slugResult?.data?.id, // id가 있으면 실행
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
   });
   const { mutate, isPending } = useMutation<QueryResponse<Post>, Error>({
     mutationFn: async (data) => {
@@ -71,7 +82,6 @@ export default function CommonPost() {
       });
       // 해당 post 상세 캐시 제거
       queryClient.removeQueries({ queryKey: ["post", slugResult?.data.id] });
-      console.log(slug);
       queryClient.removeQueries({ queryKey: ["post", slug] });
       queryClient.invalidateQueries({ queryKey: ["post"], exact: true });
       openToast(false, "성공적으로 삭제하였습니다.", 1);
@@ -104,7 +114,8 @@ export default function CommonPost() {
     visit(tree);
     return headings;
   }
-  if (isPostLoading || !result || isPending) {
+
+  if (isPostLoading || !result || isPending || !slugError || !postError) {
     return <PostSkeleton />;
   }
 

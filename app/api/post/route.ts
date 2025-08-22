@@ -39,20 +39,13 @@ export const GET = async (req: NextRequest) => {
         createdAt: "desc",
       },
     });
-
     return NextResponse.json({
       ok: true,
       data: postData,
       totalCount,
     });
   } catch (e: any) {
-    let error = e?.code
-      ? `Prisma errorCode:${e.code}, Prisma Error ${JSON.stringify(e.meta)}`
-      : `일시적 오류입니다. 다시 시도해주세요.`;
-    return NextResponse.json({
-      ok: false,
-      error,
-    });
+    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
   } finally {
   }
 };

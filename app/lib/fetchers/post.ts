@@ -1,39 +1,59 @@
-export const fetchPosts = async (pageNumber: number) => {
-  const url = `/api/post?page=${pageNumber}`;
-  const res = await fetch(url, { cache: "no-store" });
+const baseUrl = process.env.NEXTAUTH_URL; // 예: http://localhost:3000
 
+export async function fetchPosts(page: number) {
+  const res = await fetch(`${baseUrl}/api/post?page=${page}`);
   if (!res.ok) {
-    throw new Error("Failed to fetch posts");
+    return { ok: false, data: [], error: `HTTP ${res.status}` };
   }
+  const jsonData = await res.json(); // ← 여기서 한 번만 읽음
 
-  return res.json();
-};
+  if (!jsonData.ok) return { ok: false, data: [], error: jsonData.error };
+  return jsonData;
+}
 
 export const fetchTempPosts = async (pageNumber: number) => {
-  const url = `/api/post?type=temp&page=${pageNumber}`;
+  const url = `${baseUrl}/api/post?type=temp&page=${pageNumber}`;
   const res = await fetch(url, { cache: "no-store" });
 
   if (!res.ok) {
-    throw new Error("Failed to fetch temp posts");
+    return { ok: false, data: [], error: `HTTP ${res.status}` };
   }
+  const jsonData = await res.json();
 
-  return res.json();
+  if (!jsonData.ok) return { ok: false, data: [], error: jsonData.error };
+  return jsonData;
 };
 
 export const fetchPostIdBySlug = async (slug: string) => {
-  const url = `/api/post/slug/${slug}`;
-  const result = await (await fetch(url, { cache: "no-store" })).json();
-  return result;
-};
+  const url = `${baseUrl}/api/post/slug/${slug}`;
+  const res = await fetch(url, { cache: "no-store" });
 
+  if (!res.ok) throw new Error("데이터를 가져오지 못했습니다.");
+
+  const jsonData = await res.json();
+
+  return jsonData;
+};
+//current단독으로만 가져옴
 export const fetchPostContentByPostId = async (postId: string) => {
-  const url = `/api/post/postId/${postId}`;
-  const result = await (await fetch(url, { cache: "no-store" })).json();
-  return result;
-};
+  const url = `${baseUrl}/api/post/postId/${postId}`;
+  const res = await fetch(url, { cache: "no-store" });
 
+  if (!res.ok) throw new Error("글 정보를 데이터를 가져오지 못했습니다.");
+
+  const jsonData = await res.json();
+
+  return jsonData;
+};
+//prev,next,current 다 가져옴
 export const fetchAllPostContentByPostId = async (postId: string) => {
-  const url = `/api/post/postId/${postId}?type=all`;
-  const result = await (await fetch(url, { cache: "no-store" })).json();
-  return result;
+  const url = `${baseUrl}/api/post/postId/${postId}?type=all`;
+
+  const res = await fetch(url, { cache: "no-store" });
+
+  if (!res.ok) throw new Error("글 정보를 가져오지 못했습니다.");
+
+  const jsonData = await res.json();
+
+  return jsonData;
 };

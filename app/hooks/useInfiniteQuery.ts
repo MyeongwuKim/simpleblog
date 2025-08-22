@@ -46,17 +46,15 @@ export function useInfiniteScrollData<
     queryKey,
     queryFn: ({ pageParam }) =>
       queryFn((pageParam ?? initialPageParam) as TPageParam),
-    getNextPageParam:
-      getNextPageParam ??
-      ((lastPage: ApiResponse<TPageData>, pages: ApiResponse<TPageData>[]) => {
-        if (!lastPage.ok || lastPage.data.length === 0) return undefined;
-        const loadedCount = pages.reduce(
-          (acc, page) => acc + page.data.length,
-          0
-        );
-        const totalCount = lastPage.totalCount ?? 0;
-        return loadedCount < totalCount ? pages.length : undefined;
-      }),
+    getNextPageParam: (lastPage, pages) => {
+      if (!lastPage.ok || lastPage.data.length === 0) return undefined;
+      const loadedCount = pages.reduce(
+        (acc, page) => acc + page.data.length,
+        0
+      );
+      const totalCount = lastPage.totalCount ?? 0;
+      return loadedCount < totalCount ? pages.length : undefined;
+    },
     initialPageParam,
     gcTime,
   });

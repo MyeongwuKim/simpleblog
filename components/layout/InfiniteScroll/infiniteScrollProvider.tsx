@@ -6,12 +6,18 @@ import { CardItem } from "@/components/ui/items/cardItem";
 import TempItem from "@/components/ui/items/tempItem";
 import { CardItemSkeleton, TempItemSkeleton } from "@/components/ui/skeleton";
 import { Post } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useInView } from "react-intersection-observer";
 
 // 타입 정의
 type DataType = "post" | "temp";
 
+interface Page<T = any> {
+  ok: boolean;
+  data: T[];
+  error?: string; // 실패 시만 존재
+}
 interface InfiniteScrollProviderProps {
   queryKey: string[];
   type: DataType;
@@ -62,13 +68,19 @@ export default function InfiniteScrollProvider({
   type,
   pageSize = 12,
 }: InfiniteScrollProviderProps) {
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteScrollData({
-      queryKey,
-      queryFn: rendererMap[type].fetcher,
-      initialPageParam: 0,
-    });
-
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isError,
+  } = useInfiniteScrollData({
+    queryKey,
+    queryFn: rendererMap[type].fetcher,
+    initialPageParam: 0,
+  });
+  const queryClient = useQueryClient();
   const { ref, inView } = useInView({
     threshold: 0.1,
   });
@@ -80,7 +92,15 @@ export default function InfiniteScrollProvider({
   }, [inView, hasNextPage, isFetchingNextPage]);
 
   const flatData = data?.pages.flatMap((page) => page.data) ?? [];
+  const pageErrors: Page[] =
+    data?.pages.filter((page) => page.ok === false) ?? [];
+  const failedPages = data?.pages
+    .map((page, index) => (!page.ok ? index : null))
+    .filter((i) => i !== null) as number[];
 
+  if (isError) {
+    return <div>Error</div>;
+  }
   return (
     <div className="relative">
       <div className={rendererMap[type].layout}>
@@ -99,6 +119,24 @@ export default function InfiniteScrollProvider({
           {Array.from({ length: pageSize }).map((_, i) =>
             rendererMap[type].renderSkeleton(i)
           )}
+        </div>
+      )}
+      {!isFetchingNextPage && pageErrors.length > 0 && (
+        <div className="text-red-500 mt-4 text-center">
+          <div>{pageErrors[0].error} 😢</div>
+          <button
+            className="px-4 py-2 bg-red-500 text-white rounded mt-2"
+            onClick={() => {
+              queryClient.setQueryData([type], (oldData: any) => ({
+                ...oldData,
+                pages: oldData.pages.filter(
+                  (_: any, index: number) => index !== failedPages[0]
+                ),
+              }));
+            }}
+          >
+            다시 시도
+          </button>
         </div>
       )}
     </div>

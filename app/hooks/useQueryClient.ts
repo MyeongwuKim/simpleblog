@@ -1,15 +1,22 @@
 import { cache } from "react";
-import { MutationCache, QueryClient } from "@tanstack/query-core";
+import { MutationCache, QueryCache, QueryClient } from "@tanstack/query-core";
 
-// const mutationCache = new MutationCache({
-//   onError: (error, variables, context, mutation) => {
-//     console.error("에러 메시지:", error.message); // "아오 실패다!!"
-//   },
-// });
+const mutationCache = new MutationCache({
+  onError: (error, variables, context, mutation) => {
+    console.error("에러 메시지:", error.message); // "아오 실패다!!"
+  },
+});
+
+const queryCache = new QueryCache({
+  onError: (error, query) => {
+    console.error("쿼리 에러 발생:", (error as Error).message);
+  },
+});
 
 const getQueryClient = cache(
   () =>
     new QueryClient({
+      queryCache,
       // mutationCache,
       defaultOptions: {
         queries: {
@@ -18,7 +25,7 @@ const getQueryClient = cache(
           retry: 1,
           refetchOnMount: false,
           refetchOnWindowFocus: false,
-          throwOnError: true,
+          //throwOnError: true,
         },
       },
     })
