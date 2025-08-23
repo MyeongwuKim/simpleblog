@@ -1,4 +1,4 @@
-import CommentForm from "@/components/ui/forms/commentForm";
+import CommentForm from "@/components/ui/comment/commentForm";
 import CommentItem from "@/components/ui/items/commentItem";
 
 export default function Comments() {

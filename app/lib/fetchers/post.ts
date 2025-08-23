@@ -1,10 +1,15 @@
-export async function fetchPosts(page: number, queryKey: string[]) {
+export async function fetchPosts(
+  page: number,
+  params: { tag?: string; datetype?: string }
+) {
   const baseUrl = process.env.NEXTAUTH_URL ?? ""; // undefined면 빈 문자열
-  const res = await fetch(
-    `${baseUrl}/api/post?page=${page}${
-      queryKey.length > 0 ? `&tag=${queryKey[1]}` : ""
-    }`
-  );
+  let url =
+    `${baseUrl}/api/post?page=${page}` +
+    (params.tag ? `&tag=${params.tag}` : "") +
+    (params.datetype ? `&datetype=${params.datetype}` : "");
+
+  const res = await fetch(url);
+
   if (!res.ok) {
     return { ok: false, data: [], error: `HTTP ${res.status}` };
   }

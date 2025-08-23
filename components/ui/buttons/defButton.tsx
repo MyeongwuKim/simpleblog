@@ -1,29 +1,27 @@
 "use client";
 import { Button, ButtonColors } from "flowbite-react";
 import { DynamicStringEnumKeysOf } from "flowbite-react/types";
-import React, { JSX } from "react";
-import { BtnType } from "./buttonType";
+import React, { memo } from "react";
+import { CommonBtnProps } from "./buttonType";
 
-interface DefBtnProps extends BtnType {
-  style?: {
-    textColor?: string;
-    textSize?: string;
-    noBg?: boolean;
-    outline?: boolean;
-    color?: DynamicStringEnumKeysOf<ButtonColors>;
-  };
+interface DefBtnProps extends CommonBtnProps {
+  outline?: boolean;
+  btnColor?: DynamicStringEnumKeysOf<ButtonColors>;
+  className?: string;
 }
 
-export default function DefButton({
-  content,
+function DefButton({
+  innerItem,
   iconEle,
-  style,
-  type = "button",
+  outline,
   onClickEvt,
+  className = "",
+  btnColor,
+  ...rest
 }: DefBtnProps) {
   return (
     <Button
-      type={type}
+      {...rest}
       theme={{
         color: {
           cyan: `bg-cyan-300  hover:bg-cyan-400 
@@ -31,15 +29,16 @@ export default function DefButton({
         },
       }}
       onClick={onClickEvt}
-      className={`w-full h-full cursor-pointer text-[1.125rem] focus:ring-0 font-semibold
-        ${style?.textColor ? style?.textColor : "text-button1"} ${style?.noBg ? "hover:bg-bg-page3" : ""}`}
-      color={style?.color}
-      outline={style?.outline}
+      className={`w-full h-full cursor-pointer text-[1.125rem] focus:ring-0 font-semibold ${className}`}
+      color={btnColor}
+      outline={outline}
     >
       <div className="flex gap-2 items-center">
-        {iconEle ? iconEle : ""}
-        {content ? <span className={`${style?.textSize ? style?.textSize : ""}`}>{content}</span> : ""}
+        {iconEle && iconEle}
+        {innerItem && <span>{innerItem}</span>}
       </div>
     </Button>
   );
 }
+
+export default memo(DefButton);

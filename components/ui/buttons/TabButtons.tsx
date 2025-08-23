@@ -1,79 +1,77 @@
 "use client";
-import { TabItem, Tabs } from "flowbite-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { IconType } from "react-icons";
 import { HiUserCircle } from "react-icons/hi";
 import { MdDashboard, MdInsertComment } from "react-icons/md";
 
 type TabItemType = {
   title: string;
-  icon: IconType;
+  icon: React.ComponentType<any>;
   pathname: string;
 };
 
 const tabList: TabItemType[] = [
-  { title: "피드", icon: MdDashboard, pathname: "/" },
+  { title: "게시글", icon: MdDashboard, pathname: "/" },
   { title: "프로필", icon: HiUserCircle, pathname: "/profile" },
   { title: "방명록", icon: MdInsertComment, pathname: "/comments" },
 ];
 
-export default function TabButtons() {
+export default function CustomTabs() {
   const router = useRouter();
   const pathname = usePathname();
-  const tabItems = useRef<{ [key: string]: number }>({});
-  const [tabId, setTabId] = useState<number>(0);
+  const activeIndex = tabList.findIndex((t) => t.pathname === pathname);
+
+  // underline 위치/폭
+  const [underline, setUnderline] = useState({ left: 0, width: 0 });
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
-    for (let i = 0; i < tabList.length; i++) {
-      let item = tabList[i];
-      tabItems.current[item.pathname] = i;
+    if (activeIndex !== -1 && tabRefs.current[activeIndex]) {
+      const el = tabRefs.current[activeIndex]!;
+      setUnderline({
+        left: el.offsetLeft,
+        width: el.offsetWidth,
+      });
     }
-  }, []);
-
-  useEffect(() => {
-    setTabId(tabItems.current[pathname]);
-  }, [pathname]);
+  }, [activeIndex, pathname]);
 
   return (
-    <div className="w-auto relative">
-      <Tabs
-        theme={{
-          tablist: {
-            base: "w-auto",
-            tabitem: {
-              base: "md:text-xl lg:text-xl  relative text-base",
-              variant: {
-                pills: {
-                  active: {
-                    off: "text-text3 cursor-pointer hover:text-text3 dark:hover:text-text3 dark:hover:bg-transparent",
-                    on: "text-text1  font-bold bg-transparent rounded-none ",
-                  },
-                },
-              },
-            },
-          },
-        }}
-        variant="pills"
-        onActiveTabChange={(tab) => {
-          setTabId(tab);
-          router.push(tabList[tab].pathname);
-        }}
-      >
-        {tabList.map((v, i) => (
-          <TabItem
-            active={v.pathname == pathname}
-            title={v.title}
-            icon={v.icon}
-          />
-        ))}
-      </Tabs>
+    <div className="flex flex-col gap-2 relative">
+      {/* Tab List */}
+      <div className="flex text-center relative">
+        {tabList.map((tab, i) => {
+          const Icon = tab.icon;
+          const isActive = i === activeIndex;
+
+          return (
+            <button
+              key={tab.pathname}
+              ref={(el) => {
+                tabRefs.current[i] = el as HTMLButtonElement | null;
+              }}
+              onClick={() => router.push(tab.pathname)}
+              className={`flex items-center justify-center rounded-t-lg p-4 text-sm font-medium focus:outline-none
+                ${
+                  isActive
+                    ? "text-text1 font-bold"
+                    : "text-text3 hover:text-text2"
+                }`}
+            >
+              <Icon className="mr-2 h-5 w-5" />
+              {tab.title}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Underline */}
       <div
+        className="ease-in-out duration-200 absolute border-b-2 border-text1"
         style={{
-          left: `${tabId * 33 + 2}%`,
+          bottom: 0, // 버튼 바로 아래
+          left: underline.left,
+          width: underline.width,
         }}
-        id="Tab_UnderLine"
-        className={`ease-in-out duration-200 absolute top-[60px] border-b-2 w-[33.3%]`}
       />
     </div>
   );

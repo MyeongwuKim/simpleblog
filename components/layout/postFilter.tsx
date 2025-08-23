@@ -1,11 +1,12 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { DropdownBox } from "../ui/dropdown/dropdownBox";
+
 import TagItem from "../ui/items/tagItem";
 import { Tag } from "@prisma/client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import DropdownBox from "../ui/dropdown/dropdownBox";
 
 const fetchTagList = async () => {
   const url = `/api/tag`;
@@ -93,16 +94,12 @@ export default function Postfilter() {
     [route]
   );
 
-  const [count, setCount] = useState<number>(0);
-
   return (
     <div className="w-full h-[45px] relative flex items-center gap-4 mb-4">
       <div className="w-[80px]">
         <DropdownBox
           value={dateType}
-          clickEvt={(value) => {
-            changeDateType(value);
-          }}
+          clickEvt={changeDateType}
           items={[
             { content: "전체", value: "all" },
             { content: "일주일", value: "week" },

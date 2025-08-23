@@ -17,8 +17,9 @@ export default function TempItem({ preview, title, updatedAt, id }: Post) {
         <span>{formatRelativeTime(updatedAt)}</span>
         <div className={`w-auto h-[40px] `}>
           <LabelButton
-            style={{ textSize: "text-md", color: "cyan", underline: true }}
-            content="삭제"
+            color="cyan"
+            className="underline"
+            innerItem="삭제"
             onClickEvt={() => {}}
           />
         </div>

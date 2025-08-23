@@ -1,14 +1,13 @@
-import { BtnType } from "./buttonType";
+import { memo } from "react";
+import { CommonBtnProps } from "./buttonType";
 
-interface LblBtnProps extends BtnType {
-  style: {
-    underline?: boolean;
-    color?: string;
-    textSize: string;
-  };
+type colorType = "gray" | "cyan";
+interface LblBtnProps extends CommonBtnProps {
+  color?: colorType;
+  className?: string;
 }
 
-const getTextColor = (color: string) => {
+const getTextColor = (color: colorType) => {
   let str = "";
   switch (color) {
     case "cyan":
@@ -21,15 +20,22 @@ const getTextColor = (color: string) => {
   return str;
 };
 
-export default function LabelButton({ content, onClickEvt, style }: LblBtnProps) {
+function LabelButton({
+  onClickEvt,
+  color,
+  innerItem,
+  className = "",
+}: LblBtnProps) {
   return (
     <button
       onClick={onClickEvt}
-      className={`${style?.textSize} w-full h-full text-left cursor-pointer  ${
-        style?.underline ? "underline" : ""
-      } ${getTextColor(style?.color!)}`}
+      className={`${className} w-full h-full text-left cursor-pointer ${getTextColor(
+        color!
+      )}`}
     >
-      {content}
+      {innerItem}
     </button>
   );
 }
+
+export default memo(LabelButton);

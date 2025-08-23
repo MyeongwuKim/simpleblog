@@ -182,16 +182,17 @@ export default function Write() {
     //게시글 -> 수정했을때..
     else updateExistingPostCache(["post"], res);
 
-    queryClient.invalidateQueries({ queryKey: ["post"], exact: true });
+    queryClient.invalidateQueries({ queryKey: ["post"] });
     router.push(`/post/${res.slug}`);
     if (prevIsTemp) openToast(false, "글 작성을 완료하였습니다.", 1);
   };
 
   const handleNewPost = (res: Post) => {
     insertNewPostCache(["post"], res);
-    router.push(`/post/${res.slug}`);
-    queryClient.invalidateQueries({ queryKey: ["post"], exact: true });
-
+    //router.push(`/post/${res.slug}`);
+    router.push("/");
+    queryClient.invalidateQueries({ queryKey: ["post"] });
+    queryClient.invalidateQueries({ queryKey: ["tag"] }); // 태그 카운트도 최신화
     openToast(false, "글 작성을 완료하였습니다.", 1);
   };
 
@@ -229,7 +230,9 @@ export default function Write() {
     },
     onSuccess: (res) => {
       if (res.data.isTemp) handleTempPost(res.data);
-      else handleNewPost(res.data);
+      else {
+        handleNewPost(res.data);
+      }
     },
     onError: (error) => openToast(true, error.message, 1),
   });

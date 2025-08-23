@@ -1,25 +1,29 @@
 import { createUniqueSlug } from "@/app/hooks/useUtil";
 import { db } from "@/app/lib/db";
-
-import { NextResponse, NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {
   const page = req.nextUrl.searchParams.get("page");
   const tagStr = req.nextUrl.searchParams.get("tag");
   const type = req.nextUrl.searchParams.get("type");
+  const datetype = req.nextUrl.searchParams.get("datetype");
+
   const pageNumber = page ? parseInt(page, 10) : 0;
-  const tagFilter = tagStr != "undefined";
+  const tagFilter = !!tagStr && tagStr !== "undefined";
+
+  let dateCondition = {};
+  if (datetype === "week") {
+    dateCondition = { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
+  } else if (datetype === "month") {
+    dateCondition = { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) };
+  } else if (datetype === "year") {
+    dateCondition = { gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) };
+  }
   try {
     const totalCount = await db.post.count({
       where: {
         NOT: { isTemp: type != "temp" },
-      },
-    });
-
-    const postData = await db.post.findMany({
-      where: {
-        isTemp: type === "temp", // temp 여부
-        ...(tagFilter // tag가 있을 때만 정확 일치 필터 추가
+        ...(tagFilter
           ? {
               tag: {
                 some: {
@@ -28,16 +32,28 @@ export const GET = async (req: NextRequest) => {
               },
             }
           : {}),
+        ...(datetype ? { createdAt: dateCondition } : {}),
+      },
+    });
+
+    const postData = await db.post.findMany({
+      where: {
+        isTemp: type === "temp",
+        ...(tagFilter
+          ? {
+              tag: {
+                some: {
+                  body: { equals: tagStr! },
+                },
+              },
+            }
+          : {}),
+        ...(datetype ? { createdAt: dateCondition } : {}),
       },
       select: {
         ...(type !== "temp"
-          ? {
-              createdAt: true,
-              thumbnail: true,
-            }
-          : {
-              updatedAt: true,
-            }),
+          ? { createdAt: true, thumbnail: true }
+          : { updatedAt: true }),
         id: true,
         slug: true,
         preview: true,
@@ -49,6 +65,7 @@ export const GET = async (req: NextRequest) => {
         createdAt: "desc",
       },
     });
+
     return NextResponse.json({
       ok: true,
       data: postData,

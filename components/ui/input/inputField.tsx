@@ -1,16 +1,29 @@
 import { Label, TextInput } from "flowbite-react";
 import { TextInputSizes } from "flowbite-react";
 import { DynamicStringEnumKeysOf } from "flowbite-react/types";
-import { FC, HTMLInputTypeAttribute, SVGProps } from "react";
-import { inputFieldType } from "./formType";
+import React, {
+  FC,
+  HTMLInputTypeAttribute,
+  InputHTMLAttributes,
+  memo,
+  SVGProps,
+} from "react";
 
-interface InputFieldProps extends inputFieldType {
+interface InputFieldProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "size"> {
   type: HTMLInputTypeAttribute;
   size: DynamicStringEnumKeysOf<TextInputSizes>;
   icon?: FC<SVGProps<SVGSVGElement>>;
+  className?: string;
 }
 
-export function InputField({ size, type, icon, placeholder }: InputFieldProps) {
+function InputField({
+  size,
+  type,
+  icon,
+  className = "",
+  ...rest
+}: InputFieldProps) {
   return (
     <TextInput
       applyTheme={{
@@ -27,12 +40,14 @@ export function InputField({ size, type, icon, placeholder }: InputFieldProps) {
         field: {
           input: {
             colors: {
-              gray: "bg-background1 border-border1 focus:ring-0 placeholder-gray-500",
+              gray:
+                "bg-background1 border-border1 focus:ring-0 placeholder-gray-500 " +
+                className,
             },
           },
         },
       }}
-      placeholder={placeholder}
+      {...rest}
       icon={icon}
       className="rounded-md text-text2 "
       type={type}
@@ -40,3 +55,5 @@ export function InputField({ size, type, icon, placeholder }: InputFieldProps) {
     />
   );
 }
+
+export default memo(InputField);

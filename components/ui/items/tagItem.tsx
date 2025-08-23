@@ -20,7 +20,6 @@ type TagItemProps<Mode extends "normal" | "check"> = Mode extends "check"
 type AnyTagItemProps = TagItemProps<"normal"> | TagItemProps<"check">;
 
 const TagItem = (props: AnyTagItemProps) => {
-  console.log("rerender");
   return (
     <Badge
       applyTheme={{
@@ -69,6 +68,8 @@ const TagItem = (props: AnyTagItemProps) => {
     </Badge>
   );
 };
+
+//export default TagItem;
 export default memo(TagItem, (prev, next) => {
   // mode가 다르면 리렌더 필요
   if (prev.mode !== next.mode) return false;

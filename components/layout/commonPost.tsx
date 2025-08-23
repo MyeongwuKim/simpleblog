@@ -273,8 +273,9 @@ function PostSide({ headings, headRef }: PostSide) {
                 >
                   <LabelButton
                     onClickEvt={() => scrollToHeading(id)}
-                    style={{ textSize: "text-sm", color: "gray" }}
-                    content={<span>{text}</span>}
+                    color="gray"
+                    className="text-sm"
+                    innerItem={<span>{text}</span>}
                   />
                 </li>
               );

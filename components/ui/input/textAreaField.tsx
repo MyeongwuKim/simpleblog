@@ -1,11 +1,14 @@
 import { Textarea } from "flowbite-react";
-import { inputFieldType } from "./formType";
 
-interface TextAreaProps extends inputFieldType {}
+import { TextareaHTMLAttributes } from "react";
 
-export function TextAreaField({ placeholder }: TextAreaProps) {
+interface TextAreaProps
+  extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "size"> {}
+
+export function TextAreaField({ ...rest }: TextAreaProps) {
   return (
     <Textarea
+      {...rest}
       applyTheme={{
         colors: {
           gray: "replace",
@@ -17,7 +20,6 @@ export function TextAreaField({ placeholder }: TextAreaProps) {
           gray: "text-text1 placeholder-gray-500  bg-background1 border-border1",
         },
       }}
-      placeholder={placeholder}
       className="rounded-md text-text2 focus:outline-0 w-full h-full"
     />
   );

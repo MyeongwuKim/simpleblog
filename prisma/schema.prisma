@@ -33,11 +33,14 @@ model Tag {
 }
 
 model Profile {
-  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  id         String  @id @default(auto()) @map("_id") @db.ObjectId
   title      String
   content    String
   introduce  String
-  profileImg String
+  profileImg String?
+  github     String?
+  notion     String?
+  instagram  String?
 }
 
 model Comment {

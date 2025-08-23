@@ -12,6 +12,10 @@ import { useInView } from "react-intersection-observer";
 
 // 타입 정의
 type DataType = "post" | "temp";
+type FetcherType = (
+  page: number,
+  params: { tag?: string; datetype?: string }
+) => Promise<any>;
 
 interface Page<T = any> {
   ok: boolean;
@@ -19,14 +23,17 @@ interface Page<T = any> {
   error?: string; // 실패 시만 존재
 }
 interface InfiniteScrollProviderProps {
-  queryKey: string[];
+  queryKey: readonly unknown[];
   type: DataType;
   pageSize?: number; // skeleton 갯수
 }
 
 interface RendererMap {
   layout: string;
-  fetcher: (pageParam: number, key: string[]) => Promise<any>;
+  fetcher: (
+    pageParam: number,
+    params: { tag?: string; datetype?: string }
+  ) => Promise<any>;
   renderContent: (item: any) => React.ReactNode;
   renderSkeleton: (i: number) => React.ReactNode;
 }
@@ -77,9 +84,14 @@ export default function InfiniteScrollProvider({
     isError,
   } = useInfiniteScrollData({
     queryKey,
-    queryFn: (page, key) => {
-      return rendererMap[type].fetcher(page, key as string[]);
+    queryFn: (page) => {
+      const [, params] = queryKey as [
+        string,
+        { tag?: string; datetype?: string }?
+      ];
+      return rendererMap[type].fetcher(page ?? 0, params ?? {});
     },
+
     initialPageParam: 0,
   });
   const queryClient = useQueryClient();
@@ -108,6 +120,7 @@ export default function InfiniteScrollProvider({
   const flatData = data?.pages.flatMap((page) => page.data) ?? [];
   const pageErrors: Page[] =
     data?.pages.filter((page) => page.ok === false) ?? [];
+
   const failedPages = data?.pages
     .map((page, index) => (!page.ok ? index : null))
     .filter((i) => i !== null) as number[];

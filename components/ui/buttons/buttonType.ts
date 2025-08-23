@@ -1,8 +1,8 @@
-import React from "react";
+import React, { ButtonHTMLAttributes } from "react";
 
-export type BtnType = {
-  content?: string | React.ReactNode;
+export interface CommonBtnProps
+  extends ButtonHTMLAttributes<HTMLButtonElement> {
+  innerItem?: string | React.ReactNode;
   iconEle?: React.ReactNode;
   onClickEvt?: () => void;
-  type?: "submit" | "reset" | "button";
-};
+}
