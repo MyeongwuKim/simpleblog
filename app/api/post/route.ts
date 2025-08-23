@@ -5,9 +5,10 @@ import { NextResponse, NextRequest } from "next/server";
 
 export const GET = async (req: NextRequest) => {
   const page = req.nextUrl.searchParams.get("page");
+  const tagStr = req.nextUrl.searchParams.get("tag");
   const type = req.nextUrl.searchParams.get("type");
   const pageNumber = page ? parseInt(page, 10) : 0;
-
+  const tagFilter = tagStr != "undefined";
   try {
     const totalCount = await db.post.count({
       where: {
@@ -17,7 +18,16 @@ export const GET = async (req: NextRequest) => {
 
     const postData = await db.post.findMany({
       where: {
-        NOT: { isTemp: type != "temp" },
+        isTemp: type === "temp", // temp 여부
+        ...(tagFilter // tag가 있을 때만 정확 일치 필터 추가
+          ? {
+              tag: {
+                some: {
+                  body: { equals: tagStr! },
+                },
+              },
+            }
+          : {}),
       },
       select: {
         ...(type !== "temp"

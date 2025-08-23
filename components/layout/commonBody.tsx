@@ -1,9 +1,7 @@
 "use client";
 import { usePathname } from "next/navigation";
 import Head from "./commonHead";
-import { Provider } from "react-redux";
-import { DropdownBox } from "../ui/dropdown/dropdownBox";
-import TagItem from "../ui/items/tagItem";
+import Postfilter from "./postFilter";
 
 type CommonBodyType = {
   children: React.ReactNode;
@@ -28,32 +26,5 @@ export default function CommonBody({ children }: CommonBodyType) {
         </>
       )}
     </>
-  );
-}
-
-function Postfilter() {
-  return (
-    <div className="w-full h-[45px] relative flex items-center gap-4 mb-4">
-      <div className="w-[80px]">
-        <DropdownBox
-          defaultBoxIndex={0}
-          items={[
-            { content: "전체" },
-            { content: "일주일" },
-            { content: "한달" },
-            { content: "일년" },
-          ]}
-        />
-      </div>
-      <div className="w-[calc(100%-100px)]">
-        <div className="flex overflow-x-auto gap-2">
-          {[1, 2, 3, 4, 5].map((v, i) => (
-            <div key={i} className="flex-none">
-              <TagItem mode="check" isChecked={false} text="전체(45)" />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
   );
 }

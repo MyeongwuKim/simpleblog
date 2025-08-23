@@ -13,7 +13,10 @@ export interface ApiResponse<T> {
 
 interface UseInfiniteScrollDataProps<TPageData, TPageParam, TError = unknown> {
   queryKey: QueryKey;
-  queryFn: (pageParam: TPageParam) => Promise<ApiResponse<TPageData>>;
+  queryFn: (
+    pageParam: TPageParam,
+    queryKey: QueryKey
+  ) => Promise<ApiResponse<TPageData>>;
   gcTime?: number;
   initialPageParam: TPageParam;
   getNextPageParam?: (
@@ -44,8 +47,8 @@ export function useInfiniteScrollData<
     QueryKey
   >({
     queryKey,
-    queryFn: ({ pageParam }) =>
-      queryFn((pageParam ?? initialPageParam) as TPageParam),
+    queryFn: ({ pageParam, queryKey }) =>
+      queryFn((pageParam ?? initialPageParam) as TPageParam, queryKey),
     getNextPageParam: (lastPage, pages) => {
       if (!lastPage.ok || lastPage.data.length === 0) return undefined;
       const loadedCount = pages.reduce(

@@ -7,7 +7,7 @@ import TempItem from "@/components/ui/items/tempItem";
 import { CardItemSkeleton, TempItemSkeleton } from "@/components/ui/skeleton";
 import { Post } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
 
 // 타입 정의
@@ -26,7 +26,7 @@ interface InfiniteScrollProviderProps {
 
 interface RendererMap {
   layout: string;
-  fetcher: (pageParam: number) => Promise<any>;
+  fetcher: (pageParam: number, key: string[]) => Promise<any>;
   renderContent: (item: any) => React.ReactNode;
   renderSkeleton: (i: number) => React.ReactNode;
 }
@@ -77,19 +77,33 @@ export default function InfiniteScrollProvider({
     isError,
   } = useInfiniteScrollData({
     queryKey,
-    queryFn: rendererMap[type].fetcher,
+    queryFn: (page, key) => {
+      return rendererMap[type].fetcher(page, key as string[]);
+    },
     initialPageParam: 0,
   });
   const queryClient = useQueryClient();
+  const containerRef = useRef<HTMLDivElement>(null);
   const { ref, inView } = useInView({
-    threshold: 0.1,
+    threshold: 0.5,
   });
 
+  const hasBodyOverflow = () => {
+    if (typeof window === "undefined") return false;
+    return document.documentElement.scrollHeight > window.innerHeight;
+  };
+
   useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [inView, hasNextPage, isFetchingNextPage]);
+    if (!inView) return;
+
+    if (isLoading || isFetchingNextPage) return;
+    if (!hasNextPage) return;
+
+    // 오버플로우 없으면 스킵
+    if (!hasBodyOverflow()) return;
+
+    fetchNextPage();
+  }, [inView, isLoading, isFetchingNextPage, hasNextPage]);
 
   const flatData = data?.pages.flatMap((page) => page.data) ?? [];
   const pageErrors: Page[] =
@@ -101,8 +115,9 @@ export default function InfiniteScrollProvider({
   if (isError) {
     return <div>Error</div>;
   }
+
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <div className={rendererMap[type].layout}>
         {isLoading
           ? Array.from({ length: pageSize }).map((_, i) =>
@@ -111,7 +126,7 @@ export default function InfiniteScrollProvider({
           : flatData.map(rendererMap[type].renderContent)}
 
         {/* sentinel 항상 리스트 끝에 위치 */}
-        <div ref={ref} className="h-10 w-full" />
+        {flatData.length > 0 && <div ref={ref} className="h-10 w-full" />}
       </div>
 
       {isFetchingNextPage && (

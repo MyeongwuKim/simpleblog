@@ -115,7 +115,7 @@ export default function CommonPost() {
     return headings;
   }
 
-  if (isPostLoading || !result || isPending || !slugError || !postError) {
+  if (isPostLoading || !result || isPending || slugError || postError) {
     return <PostSkeleton />;
   }
 

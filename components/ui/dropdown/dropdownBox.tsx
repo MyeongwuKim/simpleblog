@@ -4,11 +4,12 @@ import { DropdownType } from "./dropdownType";
 import { useState } from "react";
 
 interface BoxProps extends DropdownType {
-  defaultBoxIndex: number;
   boxSize?: string;
+  value: any;
 }
-export function DropdownBox({ items, clickEvt, defaultBoxIndex }: BoxProps) {
-  const [boxIndex, setBoxIndex] = useState<number>(defaultBoxIndex);
+export function DropdownBox({ items, clickEvt, value }: BoxProps) {
+  const selected = items.find((item) => item.value === value) ?? items[0];
+
   return (
     <Dropdown
       applyTheme={{
@@ -29,16 +30,15 @@ export function DropdownBox({ items, clickEvt, defaultBoxIndex }: BoxProps) {
           },
         },
       }}
-      label={items[boxIndex].content}
+      label={selected.content}
       inline
     >
-      {items.map(({ content, icon }, i) => (
+      {items.map(({ content, icon, value }, i) => (
         <DropdownItem
           icon={icon}
           key={i}
           onClick={() => {
-            setBoxIndex(i);
-            if (clickEvt) clickEvt(content);
+            if (clickEvt) clickEvt(value);
           }}
         >
           {content}

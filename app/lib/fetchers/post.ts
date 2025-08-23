@@ -1,7 +1,10 @@
-const baseUrl = process.env.NEXTAUTH_URL; // 예: http://localhost:3000
-
-export async function fetchPosts(page: number) {
-  const res = await fetch(`${baseUrl}/api/post?page=${page}`);
+export async function fetchPosts(page: number, queryKey: string[]) {
+  const baseUrl = process.env.NEXTAUTH_URL ?? ""; // undefined면 빈 문자열
+  const res = await fetch(
+    `${baseUrl}/api/post?page=${page}${
+      queryKey.length > 0 ? `&tag=${queryKey[1]}` : ""
+    }`
+  );
   if (!res.ok) {
     return { ok: false, data: [], error: `HTTP ${res.status}` };
   }
@@ -12,6 +15,7 @@ export async function fetchPosts(page: number) {
 }
 
 export const fetchTempPosts = async (pageNumber: number) => {
+  const baseUrl = process.env.NEXTAUTH_URL ?? ""; // undefined면 빈 문자열
   const url = `${baseUrl}/api/post?type=temp&page=${pageNumber}`;
   const res = await fetch(url, { cache: "no-store" });
 
@@ -25,6 +29,7 @@ export const fetchTempPosts = async (pageNumber: number) => {
 };
 
 export const fetchPostIdBySlug = async (slug: string) => {
+  const baseUrl = process.env.NEXTAUTH_URL ?? ""; // undefined면 빈 문자열
   const url = `${baseUrl}/api/post/slug/${slug}`;
   const res = await fetch(url, { cache: "no-store" });
 
@@ -36,6 +41,7 @@ export const fetchPostIdBySlug = async (slug: string) => {
 };
 //current단독으로만 가져옴
 export const fetchPostContentByPostId = async (postId: string) => {
+  const baseUrl = process.env.NEXTAUTH_URL ?? ""; // undefined면 빈 문자열
   const url = `${baseUrl}/api/post/postId/${postId}`;
   const res = await fetch(url, { cache: "no-store" });
 
@@ -47,6 +53,7 @@ export const fetchPostContentByPostId = async (postId: string) => {
 };
 //prev,next,current 다 가져옴
 export const fetchAllPostContentByPostId = async (postId: string) => {
+  const baseUrl = process.env.NEXTAUTH_URL ?? ""; // undefined면 빈 문자열
   const url = `${baseUrl}/api/post/postId/${postId}?type=all`;
 
   const res = await fetch(url, { cache: "no-store" });

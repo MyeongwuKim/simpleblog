@@ -5,13 +5,21 @@ import InfiniteScrollProvider from "@/components/layout/InfiniteScroll/infiniteS
 import { CardItem } from "@/components/ui/items/cardItem";
 import { CardItemSkeleton } from "@/components/ui/skeleton";
 
-export default async function Home() {
+interface SearchParams {
+  searchParams: {
+    tag?: string;
+  };
+}
+
+export default async function Home({ searchParams }: SearchParams) {
   const queryClient = getQueryClient();
-  const queryKey = ["post"];
+  const { tag } = await searchParams;
+
+  const queryKey = !tag ? ["post"] : ["post", tag];
 
   await queryClient.prefetchInfiniteQuery({
     queryKey,
-    queryFn: ({ pageParam }) => fetchPosts(pageParam),
+    queryFn: ({ pageParam }) => fetchPosts(pageParam, queryKey),
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => {
       return pages.length;

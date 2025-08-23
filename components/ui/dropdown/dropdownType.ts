@@ -3,7 +3,8 @@ import { ComponentProps, FC } from "react";
 export type DropdownType = {
   items: {
     content: string;
+    value: any;
     icon?: FC<ComponentProps<"svg">>;
   }[];
-  clickEvt?: (content: string) => void;
+  clickEvt?: (value: any) => void;
 };
