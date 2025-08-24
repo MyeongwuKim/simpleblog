@@ -75,10 +75,10 @@ export default function Head() {
               }
             }}
             items={[
-              { content: "글쓰기", icon: TfiWrite },
-              { content: "설정", icon: HiCog },
-              { content: "임시글", icon: FaSave },
-              { content: "로그아웃", icon: HiLogout },
+              { content: "글쓰기", icon: TfiWrite, value: "글쓰기" },
+              { content: "설정", icon: HiCog, value: "설정" },
+              { content: "임시글", icon: FaSave, value: "임시글" },
+              { content: "로그아웃", icon: HiLogout, value: "로그아웃" },
             ]}
           />
         </div>

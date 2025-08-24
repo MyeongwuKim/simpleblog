@@ -29,9 +29,12 @@ function InputField({
       applyTheme={{
         field: {
           input: {
-            base: "replace",
+            base: "replace", // 기본 스타일 싹 교체
             colors: {
               gray: "replace",
+            },
+            withAddon: {
+              off: "replace",
             },
           },
         },
@@ -41,15 +44,19 @@ function InputField({
           input: {
             colors: {
               gray:
-                "bg-background1 border-border1 focus:ring-0 placeholder-gray-500 " +
+                "border-0 border-b-[1px] border-border1 rounded-none " + // ✅ 둥근 모서리 제거
+                "bg-transparent focus:border-cyan-500 focus:ring-0 placeholder-gray-500 " +
                 className,
+            },
+            withAddon: {
+              off: "rounded-none",
             },
           },
         },
       }}
       {...rest}
       icon={icon}
-      className="rounded-md text-text2 "
+      className="text-text2 focus:outline-none rounded-none" // ✅ radius 완전 제거
       type={type}
       sizing={size}
     />

@@ -4,6 +4,7 @@ import { useInfiniteScrollData } from "@/app/hooks/useInfiniteQuery";
 import { fetchPosts, fetchTempPosts } from "@/app/lib/fetchers/post";
 import { CardItem } from "@/components/ui/items/cardItem";
 import TempItem from "@/components/ui/items/tempItem";
+import NoPostIcon from "@/components/ui/noPostIcon";
 import { CardItemSkeleton, TempItemSkeleton } from "@/components/ui/skeleton";
 import { Post } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -132,16 +133,28 @@ export default function InfiniteScrollProvider({
   return (
     <div ref={containerRef} className="relative">
       <div className={rendererMap[type].layout}>
-        {isLoading
-          ? Array.from({ length: pageSize }).map((_, i) =>
-              rendererMap[type].renderSkeleton(i)
-            )
-          : flatData.map(rendererMap[type].renderContent)}
-
-        {/* sentinel 항상 리스트 끝에 위치 */}
-        {flatData.length > 0 && <div ref={ref} className="h-10 w-full" />}
+        {isLoading ? (
+          Array.from({ length: pageSize }).map((_, i) =>
+            rendererMap[type].renderSkeleton(i)
+          )
+        ) : flatData.length > 0 ? (
+          <>
+            {flatData.map(rendererMap[type].renderContent)}
+            {/* sentinel 항상 리스트 끝에 위치 */}
+            <div ref={ref} className="h-10 w-full" />
+          </>
+        ) : (
+          <div className="col-span-full flex flex-col items-center justify-center py-20 text-gray-400 w-full">
+            <NoPostIcon
+              content={
+                type == "post"
+                  ? "작성된 글이 없습니다."
+                  : "작성된 임시글이 없습니다."
+              }
+            />
+          </div>
+        )}
       </div>
-
       {isFetchingNextPage && (
         <div className={rendererMap[type].layout}>
           {Array.from({ length: pageSize }).map((_, i) =>

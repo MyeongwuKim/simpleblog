@@ -1,6 +1,7 @@
 "use client";
 import DefButton from "../buttons/defButton";
-import { InputField } from "../input/inputField";
+import InputField from "../input/inputField";
+
 import { TextAreaField } from "../input/textAreaField";
 
 export default function CommentForm() {
@@ -21,9 +22,9 @@ export default function CommentForm() {
         <div className="w-[120px] h-[45px]  absolute right-0">
           <DefButton
             type="submit"
-            style={{ color: "cyan", noBg: false, textSize: "text-base" }}
-            content="댓글 작성"
-            onClickEvt={() => {}}
+            className="hover:bg-bg-page3 text-cyan-500"
+            btnColor="black"
+            innerItem={"댓글 작성"}
           />
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { Card, createTheme } from "flowbite-react";
 import { FaGithub, FaInstagram } from "react-icons/fa6";
+import { RiNotionFill } from "react-icons/ri";
 
 const mainTheme = createTheme({
   card: {
@@ -36,13 +37,15 @@ export function ProfileItem() {
       <div className="grid grid-rows-[auto_auto_40px]   w-full h-full gap-4">
         <div className="font-bold text-3xl">김명우asdasdasdasd</div>
         <p className="font-normal text-text3">
-          안녕하세요.. 안녕하세요.. 안녕하세요..안녕하세요.. 안녕하세요.. s 안녕하세요..안녕하세요.. 안녕하세요..
-          안녕하세요..asdasd 안녕하세요.. 안녕하세요.. 안녕하세요..안녕하세요.. 안녕하세요.. s 안녕하세요..안녕하세요..
-          안녕하세요.. 안녕하세요..asdasdaa
+          안녕하세요.. 안녕하세요.. 안녕하세요..안녕하세요.. 안녕하세요.. s
+          안녕하세요..안녕하세요.. 안녕하세요.. 안녕하세요..asdasd 안녕하세요..
+          안녕하세요.. 안녕하세요..안녕하세요.. 안녕하세요.. s
+          안녕하세요..안녕하세요.. 안녕하세요.. 안녕하세요..asdasdaa
         </p>
         <div className="flex w-full gap-2">
           <FaInstagram className="h-[36px] w-[36px] text-text1"></FaInstagram>
           <FaGithub className="h-[36px] w-[36px] text-text1"></FaGithub>
+          <RiNotionFill className="h-[36px] w-[36px] text-text1"></RiNotionFill>
         </div>
       </div>
     </Card>

@@ -153,6 +153,42 @@ export default function Write() {
     });
   };
 
+  const updateTagCache = (tags: Tag[]) => {
+    queryClient.setQueryData(
+      ["tag"], // 태그 목록 캐시 key
+      (old: any) => {
+        if (!old) return old;
+
+        let data = [...old.data];
+
+        // "전체" 카운트 업데이트
+        data = data.map((t) =>
+          t.body === "전체"
+            ? {
+                ...t,
+                _count: { posts: t._count.posts + 1 },
+              }
+            : t
+        );
+
+        // 작성된 글의 태그 처리
+        for (const newTag of tags) {
+          const existing = data.find((t) => t.body === newTag.body);
+          if (existing) {
+            existing._count.posts += 1;
+          } else {
+            data.push({
+              ...newTag, // id, body 그대로 사용
+              _count: { posts: 1 }, // count는 새로 추가니까 1부터 시작
+            });
+          }
+        }
+
+        return { ...old, data };
+      }
+    );
+  };
+
   const handleTempPost = (res: Post) => {
     queryClient.setQueryData(["temp"], (oldData: any) =>
       updateTempPostCache(oldData, res)
@@ -187,16 +223,20 @@ export default function Write() {
     if (prevIsTemp) openToast(false, "글 작성을 완료하였습니다.", 1);
   };
 
-  const handleNewPost = (res: Post) => {
-    insertNewPostCache(["post"], res);
-    //router.push(`/post/${res.slug}`);
-    router.push("/");
+  const handleNewPost = (res: { post: Post; tag: Tag[] }) => {
+    insertNewPostCache(["post"], res.post);
+    router.push(`/post/${res.post.slug}`);
     queryClient.invalidateQueries({ queryKey: ["post"] });
+    updateTagCache(res.tag);
     queryClient.invalidateQueries({ queryKey: ["tag"] }); // 태그 카운트도 최신화
     openToast(false, "글 작성을 완료하였습니다.", 1);
   };
 
-  const updateMuate = useMutation<QueryResponse<Post>, Error, PostType>({
+  const updateMuate = useMutation<
+    QueryResponse<{ post: Post; tag: Tag[] }>,
+    Error,
+    PostType
+  >({
     mutationFn: async (data) => {
       const result = await (
         await fetch(`/api/post/postId/${postId}`, {
@@ -208,16 +248,20 @@ export default function Write() {
       return result;
     },
     onSuccess: (res) => {
-      if (res.data.isTemp) handleTempPost(res.data); //임시글 수정
+      if (res.data.post.isTemp) handleTempPost(res.data.post); //임시글 수정
       else if (isValidPostId)
-        handleUpdatePost(res.data, result?.data.current.isTemp!);
+        handleUpdatePost(res.data.post, result?.data.current.isTemp!);
       //임시글 -> 작성, 게시글 -> 수정
       else handleNewPost(res.data);
     },
     onError: (error) => openToast(true, error.message, 1),
   });
 
-  const writeMutate = useMutation<QueryResponse<Post>, Error, PostType>({
+  const writeMutate = useMutation<
+    QueryResponse<{ post: Post; tag: Tag[] }>,
+    Error,
+    PostType
+  >({
     mutationFn: async (data) => {
       const result = await (
         await fetch("/api/post", {
@@ -229,7 +273,8 @@ export default function Write() {
       return result;
     },
     onSuccess: (res) => {
-      if (res.data.isTemp) handleTempPost(res.data);
+      console.log(res);
+      if (res.data.post.isTemp) handleTempPost(res.data.post);
       else {
         handleNewPost(res.data);
       }
@@ -336,12 +381,9 @@ export default function Write() {
             >
               <div className="h-[45px] w-auto">
                 <DefButton
-                  style={{
-                    color: "black",
-                    textColor: "text-text1",
-                    noBg: true,
-                  }}
-                  content="나가기"
+                  className=" text-text1"
+                  btnColor="black"
+                  innerItem={"나가기"}
                   onClickEvt={() => router.back()}
                 />
               </div>
@@ -352,19 +394,17 @@ export default function Write() {
                   }`}
                 >
                   <DefButton
-                    style={{
-                      color: "black",
-                      textColor: "text-cyan-500",
-                      noBg: true,
-                    }}
-                    content="임시저장"
+                    className="hover:bg-bg-page3 text-cyan-500"
+                    btnColor="black"
+                    innerItem={"임시저장"}
                     onClickEvt={() => onMutatProcess(2)}
                   />
                 </div>
                 <div className="w-[110px]">
                   <DefButton
-                    style={{ color: "cyan", noBg: false }}
-                    content={
+                    className="hover:bg-bg-page3  text-button1"
+                    btnColor="cyan"
+                    innerItem={
                       isValidPostId && !result?.data.current.isTemp
                         ? "수정하기"
                         : "작성하기"

@@ -67,29 +67,9 @@ export const timeStamp = () => {
 
 /**클라우드플레어 이미지 주소(이미지 아이디, 형식 필요)*/
 export const getDeliveryDomain = (
-  id: string,
-  suffix: "public" | "avatar" | "thumbnail"
+  fileId: string,
+  type: "public" | "avatar" | "thumbnail"
 ) => {
-  const uploadPrefix = "https://imagedelivery.net/0VaIqAONZ2vq2gejAGX7Sw/";
-  const uploadSuffix = `/${suffix}`;
-
-  return uploadPrefix + id + uploadSuffix;
-};
-
-export const getThumbnailURL = (
-  type: "video" | "image",
-  fileId: string
-): string => {
-  let url = "";
-  if (type == "video")
-    url = `https://customer-mgkas9o5mlq4q3on.cloudflarestream.com/${fileId}/thumbnails/thumbnail.jpg`;
-  else
-    url = `https://imagedelivery.net/0VaIqAONZ2vq2gejAGX7Sw/${fileId}/thumbnail`;
-
-  return url;
-};
-
-export const getImage = (type: string, fileId: string): string => {
   return `https://imagedelivery.net/0VaIqAONZ2vq2gejAGX7Sw/${fileId}/${type}`;
 };
 

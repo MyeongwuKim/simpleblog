@@ -37,6 +37,7 @@ const TagInput = ({
       {tags.map((v, i) => {
         return (
           <TagItem
+            id=""
             mode="normal"
             clickEvt={() => removeTag(i)}
             text={v}

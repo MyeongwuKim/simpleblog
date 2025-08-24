@@ -7,17 +7,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import DropdownBox from "../ui/dropdown/dropdownBox";
+import { fetchTagList } from "@/app/lib/fetchers/tag";
 
-const fetchTagList = async () => {
-  const url = `/api/tag`;
-  const res = await fetch(url, { cache: "no-store" });
-
-  if (!res.ok) throw new Error("데이터를 가져오지 못했습니다.");
-
-  const jsonData = await res.json();
-
-  return jsonData;
-};
 export default function Postfilter() {
   const route = useRouter();
   const pathname = usePathname();
@@ -121,6 +112,9 @@ export default function Postfilter() {
             : tagResult?.data.map((v, i) => (
                 <div key={v.body} className="flex-none">
                   <TagItem
+                    id={v.id}
+                    body={v.body}
+                    clickValueType="body"
                     clickEvt={changeTagFilter}
                     mode="check"
                     isChecked={

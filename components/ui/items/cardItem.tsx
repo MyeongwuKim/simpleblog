@@ -1,6 +1,6 @@
 "use client";
 
-import { formatRelativeTime, getThumbnailURL } from "@/app/hooks/useUtil";
+import { formatRelativeTime, getDeliveryDomain } from "@/app/hooks/useUtil";
 import { Post } from "@prisma/client";
 import { Card } from "flowbite-react";
 import Image from "next/image";
@@ -35,7 +35,7 @@ export function CardItem({
               <Image
                 objectFit="cover"
                 fill
-                src={getThumbnailURL("image", thumbnail)}
+                src={getDeliveryDomain(thumbnail, "thumbnail")}
                 alt="thumbnail"
               />
             ) : (

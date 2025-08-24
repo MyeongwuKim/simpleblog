@@ -127,7 +127,10 @@ export const POST = async (req: NextRequest) => {
     });
     return NextResponse.json({
       ok: true,
-      data: result.post,
+      data: {
+        post: result.post,
+        tag: result.tags,
+      },
     });
   } catch (e: any) {
     let error = e?.code

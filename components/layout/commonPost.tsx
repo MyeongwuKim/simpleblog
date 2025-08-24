@@ -84,6 +84,7 @@ export default function CommonPost() {
       queryClient.removeQueries({ queryKey: ["post", slugResult?.data.id] });
       queryClient.removeQueries({ queryKey: ["post", slug] });
       queryClient.invalidateQueries({ queryKey: ["post"], exact: true });
+      queryClient.invalidateQueries({ queryKey: ["tag"] });
       openToast(false, "성공적으로 삭제하였습니다.", 1);
       route.back();
     },
@@ -190,9 +191,11 @@ const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {tag.map((v, i) => (
-            <TagItem key={i} text={v.body} />
-          ))}
+          {tag.length <= 0 ? (
+            <span className="text-text3">등록된 태그가 없습니다.</span>
+          ) : (
+            tag.map((v, i) => <TagItem id={v.id} key={i} text={v.body} />)
+          )}
         </div>
       </div>
     );

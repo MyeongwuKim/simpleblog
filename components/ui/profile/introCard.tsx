@@ -1,82 +1,87 @@
 "use client";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DefButton from "../buttons/defButton";
-
 import LabelButton from "../buttons/labelButton";
-import { timeStamp } from "@/app/hooks/useUtil";
+import { getDeliveryDomain, timeStamp } from "@/app/hooks/useUtil";
 import { useUI } from "@/components/providers/uiProvider";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Profile } from "@prisma/client";
 import InputField from "../input/inputField";
-import { fetchProfile } from "@/app/lib/fetchers/profile";
+import { profileMutate, profileQuery } from "./query";
 
 export default function IntroCard() {
   const { openToast } = useUI();
   const [isEdit, setIsEdit] = useState(false);
   const [profileImg, setProfileImg] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false); // ✅ 업로드 상태
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    data: profileResult,
-    isError: slugError,
-    isLoading: profileLoading,
-  } = useQuery<QueryResponse<Profile>>({
-    queryKey: ["profile"],
-    queryFn: fetchProfile,
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
-  });
+  const { data: profileResult, isLoading: profileLoading } = profileQuery();
 
-  const { mutate } = useMutation<
-    QueryResponse<Profile>,
-    Error,
-    Partial<Profile> & { form: "profileimg" | "intro" | "social" | "cotent" }
-  >({
-    mutationFn: async (data) => {
-      const result = await (
-        await fetch(`/api/profile`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data), // ✅ data 전달
-        })
-      ).json();
-      if (!result.ok) throw new Error(result.error);
-      return result;
-    },
-    onSuccess: ({ data }) => {
-      setUploading(false); // 업로드 완료 후 상태 해제
-    },
-    onError: () => {
+  const { mutate } = profileMutate({
+    onSuccessCallback: (data) => {
       setUploading(false);
-      openToast(true, "프로필 저장 실패", 1);
+      if (data?.data?.profileImg) {
+        // ✅ 업로드 성공 시 Cloudflare URL로 교체
+        setProfileImg(getDeliveryDomain(data.data.profileImg, "public"));
+      }
+    },
+    onError: (error) => {
+      openToast(true, error.message, 1);
+      setUploading(false);
     },
   });
 
-  const renderMap = {
-    edit: <EditIntro onConfirm={() => setIsEdit(false)} />,
-    read: <ReadIntro onEdit={() => setIsEdit(true)} />,
-  };
+  // ✅ 서버에서 내려온 초기값 세팅
+  useEffect(() => {
+    if (profileResult?.ok && profileResult.data.profileImg) {
+      setProfileImg(getDeliveryDomain(profileResult.data.profileImg, "public"));
+    }
+  }, [profileResult]);
+
+  if (profileLoading) return <div></div>;
+
+  const renderMap = useMemo(
+    () => ({
+      edit: (
+        <EditIntro
+          _title={profileResult?.data?.title || ""}
+          _intro={profileResult?.data?.introduce || ""}
+          onConfirm={({ title, intro }) => {
+            mutate({ form: "intro", title, introduce: intro });
+            setIsEdit(false);
+          }}
+        />
+      ),
+      read: (
+        <ReadIntro
+          title={profileResult?.data?.title || ""}
+          intro={profileResult?.data?.introduce || ""}
+          onEdit={() => setIsEdit(true)}
+        />
+      ),
+    }),
+    [profileResult]
+  );
 
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
   const handleRemove = useCallback(() => {
-    console.log("remove!");
     setProfileImg(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
-  }, []);
+    // 필요하다면 서버에도 반영
+    mutate({ form: "profileimg", profileImg: null as any });
+  }, [mutate]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // ✅ 미리보기
       const previewUrl = URL.createObjectURL(file);
       setProfileImg(previewUrl);
-      setUploading(true); // ✅ 업로드 시작
+      setUploading(true);
+
       try {
         const { uploadURL } = await (
           await fetch(`/api/upload`, { method: "POST" })
@@ -98,6 +103,7 @@ export default function IntroCard() {
           })
         ).json();
 
+        // ✅ 업로드 성공 → 서버에도 저장
         mutate({ profileImg: id, form: "profileimg" });
       } catch {
         setUploading(false);
@@ -107,9 +113,9 @@ export default function IntroCard() {
   };
 
   return (
-    <div className="w-full h-full flex flex-row flex-auto">
-      <div className="flex flex-col items-center border-r-[1px] border-border1 pr-8">
-        <div className="w-[128px] h-[192px] rounded-md relative mb-4 overflow-hidden flex items-center justify-center">
+    <div className="w-full h-full flex flex-row flex-auto max-sm:flex-col sm:mb-10">
+      <div className="flex flex-col items-center pr-8">
+        <div className="w-[128px] h-[192px] rounded-md relative mb-4 overflow-hidden flex items-center justify-center ">
           {profileImg ? (
             <Image
               className="w-full h-full object-cover"
@@ -132,7 +138,6 @@ export default function IntroCard() {
             btnColor="cyan"
             innerItem={uploading ? "업로드중.." : "업로드"}
             onClickEvt={handleUploadClick}
-            // 업로드 중에는 버튼 비활성화
             disabled={uploading}
           />
           <input
@@ -155,6 +160,7 @@ export default function IntroCard() {
         </div>
       </div>
 
+      <div className="border-r-[1px] border-border1 max-sm:border-b-[1px] max-sm:mt-6 max-sm:mb-6" />
       <div className="px-8 flex flex-auto flex-col gap-2">
         {isEdit ? renderMap.edit : renderMap.read}
       </div>
@@ -162,36 +168,64 @@ export default function IntroCard() {
   );
 }
 
-function EditIntro({ onConfirm }: { onConfirm: () => void }) {
+function EditIntro({
+  onConfirm,
+  _intro,
+  _title,
+}: {
+  onConfirm: ({ title, intro }: { title: string; intro: string }) => void;
+  _title: string;
+  _intro: string;
+}) {
+  const [title, setTitle] = useState<string>(_title);
+  const [intro, setIntro] = useState<string>(_intro);
+
   return (
     <>
-      <InputField size="md" type="text" maxLength={30} className="h-[58px]" />
+      <InputField
+        size="md"
+        type="text"
+        maxLength={30}
+        className="h-[58px]"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
       <InputField
         size="md"
         type="text"
         maxLength={200}
         className="min-h-[58px]"
+        value={intro}
+        onChange={(e) => setIntro(e.target.value)}
       />
       <div className="flex justify-end">
         <DefButton
-          className="hover:bg-bg-page3  w-[80px] h-[40px] text-button1"
+          className="hover:bg-bg-page3 w-[80px] h-[40px] text-button1"
           btnColor="cyan"
           innerItem="확인"
-          onClickEvt={onConfirm}
+          onClickEvt={() => onConfirm({ title, intro })}
         />
       </div>
     </>
   );
 }
 
-function ReadIntro({ onEdit }: { onEdit: () => void }) {
+function ReadIntro({
+  onEdit,
+  intro,
+  title,
+}: {
+  onEdit: () => void;
+  title: string;
+  intro: string;
+}) {
   return (
     <>
-      <div className="h-[58px]">
-        <h1 className="text-text1 text-3xl ">김명우웁니다1</h1>
+      <div className={`h-[58px] ${title.length <= 0 && "hidden"}`}>
+        <h1 className="text-text1 text-3xl">{title}</h1>
       </div>
-      <div className="min-h-[58px]">
-        <p className="text-text2">안녕하세요, 블로그 운영자 김명우입니다 👋</p>
+      <div className={`h-[58px] ${title.length <= 0 && "hidden"}`}>
+        <p className="text-text2">{intro}</p>
       </div>
 
       <div className="h-[40px] w-[40px]">

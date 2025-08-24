@@ -36,6 +36,9 @@
   .floatBox {
     @apply transition delay-150 duration-300 ease-in-out hover:-translate-y-2;
   }
+  .layout {
+    @apply w-[768px] ml-auto mr-auto max-md:w-full;
+  }
   .left-moveBox {
     &:hover {
       & > div:first-child {
