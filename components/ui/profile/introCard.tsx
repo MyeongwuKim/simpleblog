@@ -18,11 +18,10 @@ export default function IntroCard() {
   const { data: profileResult, isLoading: profileLoading } = profileQuery();
 
   const { mutate } = profileMutate({
-    onSuccessCallback: (data) => {
+    onSuccessCallback: (result) => {
       setUploading(false);
-      if (data?.data?.profileImg) {
-        // ✅ 업로드 성공 시 Cloudflare URL로 교체
-        setProfileImg(getDeliveryDomain(data.data.profileImg, "public"));
+      if (result?.data?.profileImg) {
+        setProfileImg(getDeliveryDomain(result.data.profileImg, "public"));
       }
     },
     onError: (error) => {
@@ -31,14 +30,11 @@ export default function IntroCard() {
     },
   });
 
-  // ✅ 서버에서 내려온 초기값 세팅
   useEffect(() => {
-    if (profileResult?.ok && profileResult.data.profileImg) {
+    if (profileResult?.ok && profileResult?.data?.profileImg) {
       setProfileImg(getDeliveryDomain(profileResult.data.profileImg, "public"));
     }
   }, [profileResult]);
-
-  if (profileLoading) return <div></div>;
 
   const renderMap = useMemo(
     () => ({
@@ -67,10 +63,17 @@ export default function IntroCard() {
     fileInputRef.current?.click();
   }, []);
 
-  const handleRemove = useCallback(() => {
-    setProfileImg(null);
+  const handleRemove = useCallback(async () => {
+    if (profileResult?.data.profileImg) {
+      fetch("/api/upload", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: profileImg }),
+      });
+    }
     if (fileInputRef.current) fileInputRef.current.value = "";
-    // 필요하다면 서버에도 반영
     mutate({ form: "profileimg", profileImg: null as any });
   }, [mutate]);
 
@@ -111,6 +114,8 @@ export default function IntroCard() {
       }
     }
   };
+
+  if (profileLoading) return <div></div>;
 
   return (
     <div className="w-full h-full flex flex-row flex-auto max-sm:flex-col sm:mb-10">
@@ -200,7 +205,7 @@ function EditIntro({
       />
       <div className="flex justify-end">
         <DefButton
-          className="hover:bg-bg-page3 w-[80px] h-[40px] text-button1"
+          className="w-[80px] h-[40px] text-button1"
           btnColor="cyan"
           innerItem="확인"
           onClickEvt={() => onConfirm({ title, intro })}

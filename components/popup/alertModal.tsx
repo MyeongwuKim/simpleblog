@@ -64,7 +64,7 @@ export function AlertModal({ msg, btnMsg, title, onClose }: AlertModalProps) {
               </div>
               <div className={`h-11 ${btnMsg[1].length <= 0 && "invisible"}`}>
                 <DefButton
-                  className="hover:bg-bg-page3  text-button1"
+                  className="  text-button1"
                   btnColor="cyan"
                   innerItem={btnMsg[1]}
                   onClickEvt={() => onClose(1)}

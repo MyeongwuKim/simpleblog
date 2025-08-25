@@ -25,7 +25,26 @@ export const POST = async (req: NextRequest) => {
   }
 };
 
-export const DELETE = async (req: NextRequest) => {};
+export const DELETE = async (req: NextRequest) => {
+  const { id } = await req.json();
+  console.log(id);
+  try {
+    fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/images/v1/${id}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${process.env.CF_TOKEN}`,
+        },
+      }
+    );
+    return NextResponse.json({
+      ok: true,
+    });
+  } catch (e: any) {
+    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
+  }
+};
 // async function handler(req: NextApiRequest, res: NextApiResponse) {
 //   try {
 //     let response;

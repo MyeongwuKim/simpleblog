@@ -78,7 +78,6 @@ export const POST = async (req: NextRequest) => {
         );
     }
 
-    // ✅ 업데이트 실행
     const updated = await db.profile.update({
       where: { id: profile.id },
       data: updateData,

@@ -2,7 +2,7 @@ import { fetchProfile } from "@/app/lib/fetchers/profile";
 import { Profile } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-type ProfileFormType = "profileimg" | "intro" | "social" | "cotent";
+type ProfileFormType = "profileimg" | "intro" | "social" | "content";
 type ProfileMutationVariables = Partial<Profile> & { form: ProfileFormType };
 
 export function profileQuery() {

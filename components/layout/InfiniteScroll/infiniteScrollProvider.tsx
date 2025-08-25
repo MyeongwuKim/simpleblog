@@ -1,10 +1,13 @@
 "use client";
 
 import { useInfiniteScrollData } from "@/app/hooks/useInfiniteQuery";
+import { fetchComments } from "@/app/lib/fetchers/comments";
 import { fetchPosts, fetchTempPosts } from "@/app/lib/fetchers/post";
+import NoPostIcon from "@/components/ui/icon/noPostIcon";
 import { CardItem } from "@/components/ui/items/cardItem";
+import CommentItem from "@/components/ui/items/commentItem";
 import TempItem from "@/components/ui/items/tempItem";
-import NoPostIcon from "@/components/ui/noPostIcon";
+
 import { CardItemSkeleton, TempItemSkeleton } from "@/components/ui/skeleton";
 import { Post } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,7 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
 
 // 타입 정의
-type DataType = "post" | "temp";
+type DataType = "post" | "temp" | "comments";
 type FetcherType = (
   page: number,
   params: { tag?: string; datetype?: string }
@@ -69,6 +72,20 @@ const rendererMap: Record<DataType, RendererMap> = {
       </div>
     ),
   },
+  comments: {
+    layout: "flex flex-wrap flex-col gap-4",
+    fetcher: fetchComments,
+    renderContent: (item: any) => (
+      <div key={item.id} className="h-[170px]">
+        <CommentItem {...item} />
+      </div>
+    ),
+    renderSkeleton: (i) => (
+      <div key={i} className="h-[170px]">
+        <TempItemSkeleton />
+      </div>
+    ),
+  },
 };
 
 export default function InfiniteScrollProvider({
@@ -104,6 +121,22 @@ export default function InfiniteScrollProvider({
   const hasBodyOverflow = () => {
     if (typeof window === "undefined") return false;
     return document.documentElement.scrollHeight > window.innerHeight;
+  };
+
+  const getNoPostContent = () => {
+    let content = "";
+    switch (type) {
+      case "post":
+        content = "작성된 글이 없습니다.";
+        break;
+      case "temp":
+        content = "작성된 임시글이 없습니다.";
+        break;
+      case "comments":
+        content = "작성된 댓글이 없습니다.";
+        break;
+    }
+    return content;
   };
 
   useEffect(() => {
@@ -145,13 +178,7 @@ export default function InfiniteScrollProvider({
           </>
         ) : (
           <div className="col-span-full flex flex-col items-center justify-center py-20 text-gray-400 w-full">
-            <NoPostIcon
-              content={
-                type == "post"
-                  ? "작성된 글이 없습니다."
-                  : "작성된 임시글이 없습니다."
-              }
-            />
+            <NoPostIcon content={getNoPostContent()} />
           </div>
         )}
       </div>

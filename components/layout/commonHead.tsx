@@ -10,6 +10,7 @@ import { HiCog, HiLogout } from "react-icons/hi";
 import { DropdownProfile } from "../ui/dropdown/dropdownProfile";
 import { FaBookBookmark } from "react-icons/fa6";
 import { FaSave } from "react-icons/fa";
+import { profileQuery } from "../ui/profile/query";
 
 const showList = ["/", "/profile", "/comments"];
 
@@ -19,6 +20,7 @@ export default function Head() {
   const route = useRouter();
   const pathname = usePathname();
 
+  const { data } = profileQuery();
   useEffect(() => {
     setTheme(myTheme!);
   }, [myTheme]);
@@ -61,6 +63,7 @@ export default function Head() {
 
         <div className="w-auto h-[45px]">
           <DropdownProfile
+            profileImg={data?.data.profileImg}
             clickEvt={async (content: string) => {
               switch (content) {
                 case "설정":

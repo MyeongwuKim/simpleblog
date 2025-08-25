@@ -11,6 +11,18 @@ export const GET = async (req: NextRequest) => {
   const pageNumber = page ? parseInt(page, 10) : 0;
   const tagFilter = !!tagStr && tagStr !== "undefined";
 
+  if (tagFilter) {
+    const exist = await db.tag.findUnique({
+      where: { body: tagStr },
+    });
+
+    if (!exist) {
+      return NextResponse.json(
+        { ok: false, error: "존재하지 않는 태그" },
+        { status: 200 }
+      );
+    }
+  }
   let dateCondition = {};
   if (datetype === "week") {
     dateCondition = { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
@@ -133,13 +145,7 @@ export const POST = async (req: NextRequest) => {
       },
     });
   } catch (e: any) {
-    let error = e?.code
-      ? `Prisma errorCode:${e.code}, Prisma Error ${JSON.stringify(e.meta)}`
-      : `일시적 오류입니다. 다시 시도해주세요.`;
-    return NextResponse.json({
-      ok: false,
-      error,
-    });
+    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
   } finally {
     await db.$disconnect();
   }

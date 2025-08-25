@@ -74,9 +74,9 @@ function EditSocialForm({
         e.preventDefault(); // ✅ 브라우저 기본 submit 막기
         mutate({
           form: "social",
-          github: git,
-          instagram: insta,
-          notion: nt,
+          github: git.length <= 0 ? null : git,
+          instagram: insta.length <= 0 ? null : insta,
+          notion: nt.length <= 0 ? null : nt,
         });
         onConfirm();
       }}
@@ -107,7 +107,7 @@ function EditSocialForm({
         <div className="w-[100px] h-[40px]">
           <DefButton
             type="submit"
-            className="hover:bg-bg-page3  text-button1"
+            className="  text-button1"
             btnColor="cyan"
             innerItem="확인"
           />

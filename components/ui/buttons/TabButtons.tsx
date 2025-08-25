@@ -19,7 +19,18 @@ const tabList: TabItemType[] = [
 export default function CustomTabs() {
   const router = useRouter();
   const pathname = usePathname();
-  const activeIndex = tabList.findIndex((t) => t.pathname === pathname);
+
+  // 태그 페이지(`/react`, `/nextjs`)도 게시글 탭으로 인식
+  const isPostPage =
+    pathname === "/" ||
+    (!pathname.startsWith("/profile") &&
+      !pathname.startsWith("/comments") &&
+      !pathname.startsWith("/post"));
+
+  let activeIndex = tabList.findIndex((t) => t.pathname === pathname);
+  if (isPostPage) {
+    activeIndex = 0; // 게시글 탭 활성화
+  }
 
   // underline 위치/폭
   const [underline, setUnderline] = useState({ left: 0, width: 0 });
@@ -50,11 +61,11 @@ export default function CustomTabs() {
                 tabRefs.current[i] = el as HTMLButtonElement | null;
               }}
               onClick={() => router.push(tab.pathname)}
-              className={`flex items-center justify-center rounded-t-lg p-4 text-sm font-medium focus:outline-none
+              className={`flex items-center  justify-center rounded-t-lg p-4 text-sm font-medium focus:outline-none
                 ${
                   isActive
-                    ? "text-text1 font-bold"
-                    : "text-text3 hover:text-text2"
+                    ? "text-text1 font-bold "
+                    : "text-text3 hover:text-text2 cursor-pointer"
                 }`}
             >
               <Icon className="mr-2 h-5 w-5" />
@@ -68,7 +79,7 @@ export default function CustomTabs() {
       <div
         className="ease-in-out duration-200 absolute border-b-2 border-text1"
         style={{
-          bottom: 0, // 버튼 바로 아래
+          bottom: 0,
           left: underline.left,
           width: underline.width,
         }}

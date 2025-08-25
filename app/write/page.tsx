@@ -118,15 +118,7 @@ export default function Write() {
     queryClient.setQueryData(queryKey, (oldData: any) => {
       // 캐시가 없으면 새 페이지 생성
       if (!oldData) return oldData; // 없으면 fetch에 맡김
-      console.log({
-        ...oldData,
-        pages: oldData.pages.map((page: any, i: number) =>
-          i === 0 ? { ...page, data: [item, ...page.data] } : page
-        ),
-        // pageParams는 그대로 유지
-        pageParams: oldData.pageParams,
-      });
-      // 캐시가 있으면 기존 페이지 유지 + 첫 페이지 맨 앞에 새 글 추가
+
       return {
         ...oldData,
         pages: oldData.pages.map((page: any, i: number) =>
@@ -402,7 +394,7 @@ export default function Write() {
                 </div>
                 <div className="w-[110px]">
                   <DefButton
-                    className="hover:bg-bg-page3  text-button1"
+                    className="  text-button1"
                     btnColor="cyan"
                     innerItem={
                       isValidPostId && !result?.data.current.isTemp

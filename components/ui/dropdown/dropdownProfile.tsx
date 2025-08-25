@@ -4,11 +4,13 @@ import { Dropdown, DropdownDivider, DropdownItem } from "flowbite-react";
 import Image from "next/image";
 import { IoIosArrowDown } from "react-icons/io";
 import { DropdownType } from "./dropdownType";
+import { getDeliveryDomain } from "@/app/hooks/useUtil";
 
 interface ProfileProps extends DropdownType {
-  profileImg?: string;
+  profileImg?: string | null;
 }
 export function DropdownProfile({ items, clickEvt, profileImg }: ProfileProps) {
+  console.log(profileImg);
   return (
     <Dropdown
       applyTheme={{
@@ -35,7 +37,7 @@ export function DropdownProfile({ items, clickEvt, profileImg }: ProfileProps) {
             {profileImg ? (
               <Image
                 objectFit="cover"
-                src="profileImg"
+                src={getDeliveryDomain(profileImg, "thumbnail")}
                 fill
                 alt="profile"
                 className="w-full h-full rounded-full relative"
