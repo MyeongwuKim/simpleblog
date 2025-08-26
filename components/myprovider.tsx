@@ -8,6 +8,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools"; // 1. devto
 import getQueryClient from "@/app/hooks/useQueryClient";
 import { ReactQueryStreamedHydration } from "@tanstack/react-query-next-experimental";
 import { showGlobalToast, UIProvider } from "./providers/uiProvider";
+import { SessionProvider } from "next-auth/react";
 
 const queryClient = new QueryClient();
 
@@ -37,23 +38,25 @@ export function MyProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ReduxProvider store={store()}>
-      <ThemeProvider attribute="class">
-        <UIProvider>
-          <QueryClientProvider client={queryClient}>
-            <ReactQueryStreamedHydration>
-              {children}
-            </ReactQueryStreamedHydration>
-            {process.env.NODE_ENV == "development" ? (
-              <ReactQueryDevtools
-                initialIsOpen={false}
-                buttonPosition="bottom-right"
-              />
-            ) : (
-              ""
-            )}
-          </QueryClientProvider>
-        </UIProvider>
-      </ThemeProvider>
+      <SessionProvider>
+        <ThemeProvider attribute="class">
+          <UIProvider>
+            <QueryClientProvider client={queryClient}>
+              <ReactQueryStreamedHydration>
+                {children}
+              </ReactQueryStreamedHydration>
+              {process.env.NODE_ENV == "development" ? (
+                <ReactQueryDevtools
+                  initialIsOpen={false}
+                  buttonPosition="bottom-right"
+                />
+              ) : (
+                ""
+              )}
+            </QueryClientProvider>
+          </UIProvider>
+        </ThemeProvider>
+      </SessionProvider>
     </ReduxProvider>
   );
 }

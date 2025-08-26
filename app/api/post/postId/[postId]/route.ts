@@ -1,6 +1,8 @@
 import { createUniqueSlug } from "@/app/hooks/useUtil";
 import { db } from "@/app/lib/db";
+import { Tag } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
+import { ObjectId } from "mongodb";
 
 export const GET = async (
   req: NextRequest,
@@ -8,6 +10,11 @@ export const GET = async (
 ) => {
   const { postId } = await params;
   const type = req.nextUrl.searchParams.get("type");
+
+  if (!ObjectId.isValid(postId)) {
+    return NextResponse.json({ ok: false, data: null });
+  }
+
   try {
     const postData = await db.post.findUnique({
       where: { id: postId },
@@ -25,6 +32,12 @@ export const GET = async (
         },
       },
     });
+    if (!postData) {
+      return NextResponse.json(
+        { ok: false, data: null, error: "존재하지 않는 포스트" },
+        { status: 200 }
+      );
+    }
     // 이전 글 (더 오래된 글)
     const prevPost = await db.post.findFirst({
       where: {
@@ -89,7 +102,7 @@ export const POST = async (
           ...(createdAt ? { createdAt } : {}),
         },
       });
-      let tags = [];
+      let tags: Tag[] = [];
       for (const body of tag) {
         const _tag = await tx.tag.upsert({
           where: { body },

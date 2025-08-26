@@ -47,5 +47,6 @@ model Comment {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   content   String
+  isMe      Boolean  @default(false)
   createdAt DateTime @default(now())
 }

@@ -32,7 +32,6 @@ const mainTheme = createTheme({
 export function ProfileItem() {
   const { data: profileResult, isLoading: profileLoading } = profileQuery();
   const normalizedUrl = (url: string) => {
-    console.log(url.startsWith("http") ? url : `https://${url}`);
     return url.startsWith("http") ? url : `https://${url}`;
   };
 

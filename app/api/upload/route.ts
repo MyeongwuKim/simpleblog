@@ -26,8 +26,14 @@ export const POST = async (req: NextRequest) => {
 };
 
 export const DELETE = async (req: NextRequest) => {
-  const { id } = await req.json();
-  console.log(id);
+  const id = req.nextUrl.searchParams.get("id");
+  if (!id) {
+    return NextResponse.json(
+      { ok: false, error: "id required" },
+      { status: 400 }
+    );
+  }
+
   try {
     fetch(
       `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/images/v1/${id}`,

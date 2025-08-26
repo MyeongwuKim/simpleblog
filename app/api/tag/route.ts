@@ -40,7 +40,7 @@ export const GET = async (req: NextRequest) => {
 
 export const DELETE = async (req: NextRequest) => {
   try {
-    const { id } = await req.json();
+    const id = req.nextUrl.searchParams.get("id");
 
     if (!id) {
       return NextResponse.json(

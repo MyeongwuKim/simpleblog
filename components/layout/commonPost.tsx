@@ -29,6 +29,7 @@ import {
   fetchPostIdBySlug,
 } from "@/app/lib/fetchers/post";
 import { useUI } from "../providers/uiProvider";
+import { useSession } from "next-auth/react";
 
 export default function CommonPost() {
   const params = useParams();
@@ -164,6 +165,7 @@ interface HeadProps {
 }
 const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
   ({ tag, title, createdAt, postId, mutate }, ref) => {
+    const { data: session } = useSession();
     const { openModal } = useUI();
 
     const removeEvt = async () => {
@@ -181,14 +183,16 @@ const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
         </h1>
         <div className="w-full flex justify-between mb-2 [&_span]:text-lg [&_span]:text-text3">
           <span>{formateDate(createdAt, "NOR")}</span>
-          <div className="gap-2 flex">
-            <Link href={`/write?id=${postId}`}>
-              <span>수정</span>
-            </Link>
-            <span className="cursor-pointer" onClick={removeEvt}>
-              삭제
-            </span>
-          </div>
+          {session && (
+            <div className={`gap-2 flex`}>
+              <Link href={`/write?id=${postId}`}>
+                <span>수정</span>
+              </Link>
+              <span className="cursor-pointer" onClick={removeEvt}>
+                삭제
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           {tag.length <= 0 ? (

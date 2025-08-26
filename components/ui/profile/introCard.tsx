@@ -65,17 +65,14 @@ export default function IntroCard() {
 
   const handleRemove = useCallback(async () => {
     if (profileResult?.data.profileImg) {
-      fetch("/api/upload", {
+      fetch(`/api/upload?id=${profileResult?.data.profileImg}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ id: profileImg }),
       });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      mutate({ form: "profileimg", profileImg: null as any });
+      setProfileImg(null);
     }
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    mutate({ form: "profileimg", profileImg: null as any });
-  }, [mutate]);
+  }, [profileResult?.data.profileImg]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -106,7 +103,6 @@ export default function IntroCard() {
           })
         ).json();
 
-        // ✅ 업로드 성공 → 서버에도 저장
         mutate({ profileImg: id, form: "profileimg" });
       } catch {
         setUploading(false);

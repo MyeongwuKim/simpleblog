@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 export default function NotFound() {
   const route = useRouter();
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center justify-center w-full h-full">
       <NotFoundIcon></NotFoundIcon>
 
       <DefButton

@@ -15,10 +15,11 @@ import { useUI } from "@/components/providers/uiProvider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getFormatImagesId } from "../hooks/useUtil";
 import Preview from "@/components/write/preview";
-import { useRouter, useSearchParams } from "next/navigation";
+import { notFound, useRouter, useSearchParams } from "next/navigation";
 import Slugger from "github-slugger";
 import { Post, Tag } from "@prisma/client";
 import { fetchPostContentByPostId } from "../lib/fetchers/post";
+import NotFound from "../not-found";
 
 type Action = { type: "SET_FORM"; payload: Partial<PostType> };
 
@@ -72,9 +73,11 @@ export default function Write() {
   const previewRef = useRef<HTMLDivElement>(null);
   const { openToast } = useUI();
 
-  const { data: result } = useQuery<
-    QueryResponse<{ current: Post & { tag: Tag[] } }>
-  >({
+  const {
+    data: result,
+    isLoading,
+    isError,
+  } = useQuery<QueryResponse<{ current: Post & { tag: Tag[] } }>>({
     queryKey: ["post", postId],
     queryFn: () => fetchPostContentByPostId(postId!),
     enabled: isValidPostId,
@@ -265,7 +268,6 @@ export default function Write() {
       return result;
     },
     onSuccess: (res) => {
-      console.log(res);
       if (res.data.post.isTemp) handleTempPost(res.data.post);
       else {
         handleNewPost(res.data);
@@ -353,6 +355,13 @@ export default function Write() {
     }
   }, [state.content, editorView]);
 
+  if (isLoading) {
+    return <div></div>;
+  }
+
+  if (result && !result?.data && !result?.ok) {
+    return <NotFound />;
+  }
   return (
     <WriteContext.Provider value={{ state, dispatch }}>
       <div id="write" className="w-full h-full bg-gray-100 dark:bg-[#0c0c0c]">

@@ -33,9 +33,8 @@ export function TagForm() {
   >({
     mutationFn: async (id) => {
       const result = await (
-        await fetch("/api/tag", {
+        await fetch(`/api/tag?id=${id}`, {
           method: "DELETE",
-          body: JSON.stringify({ ...id }),
         })
       ).json();
       if (!result.ok) throw new Error(result.error);

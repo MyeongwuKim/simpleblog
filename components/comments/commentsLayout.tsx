@@ -7,10 +7,12 @@ import { TextAreaField } from "../ui/input/textAreaField";
 import { useCallback, useEffect, useState } from "react";
 import { useUI } from "../providers/uiProvider";
 import { Comment } from "@prisma/client";
+import { useSession } from "next-auth/react";
 
 export default function CommentsLayout() {
   const queryClient = useQueryClient();
   const { openToast } = useUI();
+  const { data: session } = useSession();
   const [name, setName] = useState<string>("");
   const [content, setContent] = useState<string>("");
 
@@ -67,8 +69,20 @@ export default function CommentsLayout() {
   }, []);
 
   const rules = [
-    { check: name.trim().length > 0, message: "이름을 입력해주세요." },
-    { check: content.trim().length > 0, message: "내용을 입력해주세요." },
+    // 로그인 안 했을 때만 이름 체크
+    ...(!session
+      ? [
+          {
+            check: name.trim().length > 0,
+            message: "이름을 입력해주세요.",
+          },
+        ]
+      : []),
+
+    {
+      check: content.trim().length > 0,
+      message: "내용을 입력해주세요.",
+    },
   ];
 
   const validate = () => {
@@ -86,20 +100,22 @@ export default function CommentsLayout() {
       onSubmit={(e) => {
         e.preventDefault();
         if (!validate()) return;
-        mutate({ content, name });
+        mutate({ content, name, isMe: session ? true : false });
       }}
       className="flex flex-col gap-4 mb-20"
     >
-      <div className="flex flex-auto">
-        <InputField
-          value={name}
-          onChange={onChangeText}
-          size="md"
-          id="name"
-          placeholder="이름"
-          type="text"
-        />
-      </div>
+      {!session && (
+        <div className="flex flex-auto">
+          <InputField
+            value={name}
+            onChange={onChangeText}
+            size="md"
+            id="name"
+            placeholder="이름"
+            type="text"
+          />
+        </div>
+      )}
       <div className="h-[98px]">
         <TextAreaField
           value={content}

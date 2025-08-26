@@ -1,6 +1,6 @@
 "use client";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import TabButtons from "../ui/buttons/TabButtons";
 import { TfiWrite } from "react-icons/tfi";
 import ToggleButton from "../ui/buttons/toggleButton";
@@ -11,11 +11,15 @@ import { DropdownProfile } from "../ui/dropdown/dropdownProfile";
 import { FaBookBookmark } from "react-icons/fa6";
 import { FaSave } from "react-icons/fa";
 import { profileQuery } from "../ui/profile/query";
+import { signIn, signOut, useSession } from "next-auth/react";
+import DefButton from "../ui/buttons/defButton";
+import Signin from "@/app/auth/signin/page";
 
 const showList = ["/", "/profile", "/comments"];
 
 export default function Head() {
   const { setTheme, theme } = useTheme();
+  const { data: session } = useSession();
   const [myTheme, setMyTheme] = useState<string | undefined>(theme);
   const route = useRouter();
   const pathname = usePathname();
@@ -24,7 +28,9 @@ export default function Head() {
   useEffect(() => {
     setTheme(myTheme!);
   }, [myTheme]);
-
+  const loginBtnClick = useCallback(() => {
+    signIn();
+  }, []);
   return (
     <div
       id="HeadView"
@@ -60,31 +66,43 @@ export default function Head() {
             unCheckIcon={<IoMoon className="w-[2rem] h-[2rem] relative" />}
           />
         </div>
-
-        <div className="w-auto h-[45px]">
-          <DropdownProfile
-            profileImg={data?.data.profileImg}
-            clickEvt={async (content: string) => {
-              switch (content) {
-                case "설정":
-                  route.push("/setting");
-                  break;
-                case "임시글":
-                  route.push("/temp");
-                  break;
-                case "글쓰기":
-                  route.push("/write");
-                  break;
-              }
-            }}
-            items={[
-              { content: "글쓰기", icon: TfiWrite, value: "글쓰기" },
-              { content: "설정", icon: HiCog, value: "설정" },
-              { content: "임시글", icon: FaSave, value: "임시글" },
-              { content: "로그아웃", icon: HiLogout, value: "로그아웃" },
-            ]}
+        {!session ? (
+          <DefButton
+            className="h-[45px] w-[90px] "
+            btnColor={"gray"}
+            outline={true}
+            innerItem={"로그인"}
+            onClickEvt={loginBtnClick}
           />
-        </div>
+        ) : (
+          <div className="w-auto h-[45px]">
+            <DropdownProfile
+              profileImg={data?.data.profileImg}
+              clickEvt={async (content: string) => {
+                switch (content) {
+                  case "설정":
+                    route.push("/setting");
+                    break;
+                  case "임시글":
+                    route.push("/temp");
+                    break;
+                  case "글쓰기":
+                    route.push("/write");
+                    break;
+                  case "로그아웃":
+                    signOut();
+                    break;
+                }
+              }}
+              items={[
+                { content: "글쓰기", icon: TfiWrite, value: "글쓰기" },
+                { content: "설정", icon: HiCog, value: "설정" },
+                { content: "임시글", icon: FaSave, value: "임시글" },
+                { content: "로그아웃", icon: HiLogout, value: "로그아웃" },
+              ]}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
