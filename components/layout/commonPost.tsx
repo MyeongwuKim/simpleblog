@@ -22,46 +22,35 @@ import Slugger from "github-slugger";
 
 import remarkParse from "remark-parse";
 import { unified } from "unified";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import PostSkeleton from "../ui/skeleton";
-import {
-  fetchAllPostContentByPostId,
-  fetchPostIdBySlug,
-} from "@/app/lib/fetchers/post";
+import { fetchAllPostContentByPostId } from "@/app/lib/fetchers/post";
 import { useUI } from "../providers/uiProvider";
 import { useSession } from "next-auth/react";
+import InfiniteScrollProvider from "./InfiniteScroll/infiniteScrollProvider";
 
-export default function CommonPost() {
-  const params = useParams();
+export default function CommonPost({ postId }: { postId: string }) {
   const queryClient = useQueryClient();
   const route = useRouter();
   const { openToast } = useUI();
-  const slug = params.slug as string;
-
-  const { data: slugResult, isError: slugError } = useQuery<
-    QueryResponse<{ id: string }>
-  >({
-    queryKey: ["post", slug],
-    queryFn: () => fetchPostIdBySlug(slug),
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
-  });
 
   const {
     data: result,
     isLoading: isPostLoading,
     isError: postError,
   } = useQuery({
-    queryKey: ["post", slugResult?.data?.id],
-    queryFn: () => fetchAllPostContentByPostId(slugResult!.data.id),
-    enabled: !!slugResult?.data?.id, // id가 있으면 실행
+    queryKey: ["post", postId],
+    queryFn: () => fetchAllPostContentByPostId(postId),
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
   });
-  const { mutate, isPending } = useMutation<QueryResponse<Post>, Error>({
+  const { mutate, isPending } = useMutation<
+    QueryResponse<{ post: Post; tag: Tag[] }>,
+    Error
+  >({
     mutationFn: async (data) => {
       const result = await (
-        await fetch(`/api/post/postId/${slugResult?.data.id}`, {
+        await fetch(`/api/post/postId/${postId}`, {
           method: "DELETE",
         })
       ).json();
@@ -72,18 +61,42 @@ export default function CommonPost() {
     onSuccess: (res) => {
       queryClient.setQueryData(["post"], (oldData: any) => {
         if (!oldData) return oldData;
-
         return {
           ...oldData,
           pages: oldData.pages.map((page: QueryResponse<Post[]>) => ({
             ...page,
-            data: page.data.filter((p) => p.id !== slugResult?.data.id),
+            data: page.data.filter((p) => p.id !== postId),
           })),
         };
       });
+      //태그 캐시 업데이트(삭제)
+      queryClient.setQueryData(["tag"], (old: any) => {
+        if (!old) return old;
+
+        let data = [...old.data];
+        data = data.map((t) =>
+          t.body === "전체"
+            ? {
+                ...t,
+                _count: { posts: Math.max(t._count.posts - 1, 0) }, // 음수 방지
+              }
+            : t
+        );
+
+        for (const deletedTag of res.data.tag) {
+          const existing = data.find((t) => t.body === deletedTag.body);
+          if (existing) {
+            if (existing._count.posts > 1) {
+              existing._count.posts -= 1;
+            } else {
+              data = data.filter((t) => t.body !== deletedTag.body);
+            }
+          }
+        }
+        return { ...old, data };
+      });
       // 해당 post 상세 캐시 제거
-      queryClient.removeQueries({ queryKey: ["post", slugResult?.data.id] });
-      queryClient.removeQueries({ queryKey: ["post", slug] });
+      queryClient.removeQueries({ queryKey: ["post", postId] });
       queryClient.invalidateQueries({ queryKey: ["post"], exact: true });
       queryClient.invalidateQueries({ queryKey: ["tag"] });
       openToast(false, "성공적으로 삭제하였습니다.", 1);
@@ -117,7 +130,7 @@ export default function CommonPost() {
     return headings;
   }
 
-  if (isPostLoading || !result || isPending || slugError || postError) {
+  if (isPostLoading || !result || isPending || postError) {
     return <PostSkeleton />;
   }
 
@@ -131,20 +144,37 @@ export default function CommonPost() {
   }>;
 
   return (
-    <div className="w-full h-full">
-      <PostHead
-        ref={headRef}
-        title={current.title}
-        tag={current.tag}
-        createdAt={current.createdAt}
-        postId={current.id}
-        mutate={mutate}
+    <>
+      <div className="layout mt-20 ml-auto mr-auto  h-full relative">
+        <PostHead
+          ref={headRef}
+          title={current.title}
+          tag={current.tag}
+          createdAt={current.createdAt}
+          postId={current.id}
+          mutate={mutate}
+        />
+        <PostSide
+          headRef={headRef}
+          headings={extractHeadings(current.content)}
+        />
+        <PostBody content={current.content} />
+        <div className="w-full h-[1px] bg-text4 mt-20" />
+        <PostFooter next={next} prev={prev} />
+      </div>
+      <h2 className="text-text1 text-2xl my-20 text-center">
+        이 게시물과 관련된 글
+      </h2>
+      <InfiniteScrollProvider
+        type="relatedPosts"
+        staleTime={0}
+        gcTime={0}
+        queryKey={[
+          "relatedPosts",
+          { tags: current.tag.map((v) => v.body), excludeId: postId },
+        ]}
       />
-      <PostSide headRef={headRef} headings={extractHeadings(current.content)} />
-      <PostBody content={current.content} />
-      <div className="w-full h-[1px] bg-text4 mt-20" />
-      <PostFooter next={next} prev={prev} />
-    </div>
+    </>
   );
 }
 
@@ -166,6 +196,7 @@ interface HeadProps {
 const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
   ({ tag, title, createdAt, postId, mutate }, ref) => {
     const { data: session } = useSession();
+    const route = useRouter();
     const { openModal } = useUI();
 
     const removeEvt = async () => {
@@ -176,6 +207,10 @@ const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
       });
       if (result) mutate();
     };
+
+    const tagItemClick = useCallback((body: string) => {
+      route.push(`/?tag=${body}`);
+    }, []);
     return (
       <div id="post-head" className="mt-20">
         <h1 ref={ref} className="font-bold text-5xl leading-[1.5] mb-8">
@@ -198,7 +233,16 @@ const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
           {tag.length <= 0 ? (
             <span className="text-text3">등록된 태그가 없습니다.</span>
           ) : (
-            tag.map((v, i) => <TagItem id={v.id} key={i} text={v.body} />)
+            tag.map((v, i) => (
+              <TagItem
+                clickEvt={tagItemClick}
+                clickValueType="body"
+                body={v.body}
+                id={""}
+                key={v.body}
+                text={v.body}
+              />
+            ))
           )}
         </div>
       </div>
@@ -212,7 +256,7 @@ interface PostFooterProps {
 function PostFooter({ next, prev }: PostFooterProps) {
   return (
     <div className="mt-30">
-      <div className="w-full flex justify-between flex-auto">
+      <div className="w-full grid grid-cols-2 gap-8">
         <div className={`${next ? "" : "invisible"}`}>
           <FooterItem slug={next?.slug} title={next?.title} dir={0} />
         </div>

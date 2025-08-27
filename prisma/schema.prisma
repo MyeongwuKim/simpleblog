@@ -26,6 +26,7 @@ model Post {
 model Tag {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   body      String   @unique
+  isTemp    Boolean  @default(false)
   posts     Post[]   @relation(fields: [postIds], references: [id])
   postIds   String[] @db.ObjectId
   createdAt DateTime @default(now())

@@ -74,6 +74,7 @@
   --color-caret: black;
   --color-border1: #dee2e6;
   --color-button1: #fff;
+  --breakpoint-xs: 360px;
   --breakpoint-sm: 768px;
   --breakpoint-md: 1056px;
   --breakpoint-xl: 1366px;

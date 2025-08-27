@@ -37,19 +37,28 @@ export default function CustomTabs() {
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
-    if (activeIndex !== -1 && tabRefs.current[activeIndex]) {
-      const el = tabRefs.current[activeIndex]!;
-      setUnderline({
-        left: el.offsetLeft,
-        width: el.offsetWidth,
-      });
+    function updateUnderline() {
+      if (activeIndex !== -1 && tabRefs.current[activeIndex]) {
+        const el = tabRefs.current[activeIndex]!;
+        setUnderline({
+          left: el.offsetLeft,
+          width: el.offsetWidth,
+        });
+      }
     }
+
+    updateUnderline(); // 처음 실행
+    window.addEventListener("resize", updateUnderline);
+
+    return () => {
+      window.removeEventListener("resize", updateUnderline);
+    };
   }, [activeIndex, pathname]);
 
   return (
     <div className="flex flex-col gap-2 relative">
       {/* Tab List */}
-      <div className="flex text-center relative">
+      <div className="flex text-center relative sm:justify-center">
         {tabList.map((tab, i) => {
           const Icon = tab.icon;
           const isActive = i === activeIndex;
@@ -61,7 +70,7 @@ export default function CustomTabs() {
                 tabRefs.current[i] = el as HTMLButtonElement | null;
               }}
               onClick={() => router.push(tab.pathname)}
-              className={`flex items-center  justify-center rounded-t-lg p-4 text-sm font-medium focus:outline-none
+              className={`flex items-center max-sm:w-1/3 w-1/6  justify-center rounded-t-lg p-4 text-sm  focus:outline-none
                 ${
                   isActive
                     ? "text-text1 font-bold "
@@ -69,7 +78,7 @@ export default function CustomTabs() {
                 }`}
             >
               <Icon className="mr-2 h-5 w-5" />
-              {tab.title}
+              <span className="max-xs:hidden"> {tab.title}</span>
             </button>
           );
         })}
@@ -77,7 +86,7 @@ export default function CustomTabs() {
 
       {/* Underline */}
       <div
-        className="ease-in-out duration-200 absolute border-b-2 border-text1"
+        className="ease-in-out duration-200 absolute border-b-2 "
         style={{
           bottom: 0,
           left: underline.left,

@@ -224,6 +224,12 @@ export default function Write() {
     queryClient.invalidateQueries({ queryKey: ["post"] });
     updateTagCache(res.tag);
     queryClient.invalidateQueries({ queryKey: ["tag"] }); // 태그 카운트도 최신화
+    //관련글 무효화
+    queryClient.invalidateQueries({
+      queryKey: ["relatedPosts"],
+      exact: false,
+    });
+
     openToast(false, "글 작성을 완료하였습니다.", 1);
   };
 

@@ -119,21 +119,19 @@ export const POST = async (req: NextRequest) => {
           where: { body },
           create: {
             body,
+            isTemp: post.isTemp, // 새로 생성되는 태그는 post.isTemp 따라감
             posts: {
-              connect: {
-                id: post.id,
-              },
+              connect: { id: post.id },
             },
           },
           update: {
+            // 이미 있는 태그라면 isTemp는 건드리지 않음
             posts: {
-              connect: {
-                id: post.id,
-              },
+              connect: { id: post.id },
             },
           },
         });
-        tags.push(_tag);
+        if (!_tag.isTemp) tags.push(_tag);
       }
       return { post, tags };
     });

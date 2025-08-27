@@ -162,7 +162,7 @@ export default function IntroCard() {
       </div>
 
       <div className="border-r-[1px] border-border1 max-sm:border-b-[1px] max-sm:mt-6 max-sm:mb-6" />
-      <div className="px-8 flex flex-auto flex-col gap-2">
+      <div className="sm:px-8 flex flex-auto flex-col gap-2">
         {isEdit ? renderMap.edit : renderMap.read}
       </div>
     </div>

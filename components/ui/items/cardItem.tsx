@@ -5,16 +5,10 @@ import { Post } from "@prisma/client";
 import { Card } from "flowbite-react";
 import Image from "next/image";
 import Link from "next/link";
+import React from "react";
 import { MdImageNotSupported } from "react-icons/md";
 
-export function CardItem({
-  createdAt,
-  id,
-  preview,
-  thumbnail,
-  title,
-  slug,
-}: Post) {
+function CardItem({ createdAt, id, preview, thumbnail, title, slug }: Post) {
   return (
     <Link
       href={`/post/${slug}`}
@@ -30,7 +24,7 @@ export function CardItem({
         }}
         className="w-full h-full"
         renderImage={() => (
-          <div className="relative w-full h-full flex justify-center items-center">
+          <div className="relative bg-background2 w-full h-full flex justify-center items-center">
             {thumbnail ? (
               <Image
                 objectFit="cover"
@@ -58,3 +52,5 @@ export function CardItem({
     </Link>
   );
 }
+
+export default React.memo(CardItem);

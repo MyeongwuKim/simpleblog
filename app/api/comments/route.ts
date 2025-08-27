@@ -28,8 +28,30 @@ export const GET = async (req: NextRequest) => {
 
 export const POST = async (req: NextRequest) => {
   try {
-    let { content, name, isMe } = (await req.json()) as Comment;
-    console.log(isMe);
+    let { content, name, isMe, token } = (await req.json()) as Comment & {
+      token: any;
+    };
+
+    //  reCAPTCHA 검증
+    const secret = process.env.RECAPTCHA_SECRET_KEY!;
+    const verifyRes = await fetch(
+      "https://www.google.com/recaptcha/api/siteverify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `secret=${secret}&response=${token}`,
+      }
+    );
+
+    const verification = await verifyRes.json();
+
+    if (!verification.success) {
+      return NextResponse.json(
+        { ok: false, error: "reCAPTCHA 인증 실패" },
+        { status: 400 }
+      );
+    }
+
     const commentData = await db.comment.create({
       data: {
         content,

@@ -10,7 +10,6 @@ interface ProfileProps extends DropdownType {
   profileImg?: string | null;
 }
 export function DropdownProfile({ items, clickEvt, profileImg }: ProfileProps) {
-  console.log(profileImg);
   return (
     <Dropdown
       applyTheme={{

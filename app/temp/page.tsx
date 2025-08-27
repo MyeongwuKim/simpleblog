@@ -15,7 +15,6 @@ export default async function Temp() {
       return pages.length;
     },
     pages: 0,
-    staleTime: 0,
   });
 
   return (

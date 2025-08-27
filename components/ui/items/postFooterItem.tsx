@@ -10,7 +10,7 @@ export default function FooterItem({ dir, title, slug }: FooterItemType) {
   return (
     <Link
       href={`/post/${slug}`}
-      className={`w-[360px] h-[64px] cursor-pointer bg-background5 rounded-md flex px-4 py-1.5 i
+      className={`w-full h-[64px] cursor-pointer bg-background5 rounded-md flex px-4 py-1.5 i
       tems-center justify-center ${
         dir ? "right-moveBox flex-row-reverse" : "left-moveBox"
       }`}

@@ -6,15 +6,19 @@ export const GET = async (req: NextRequest) => {
   try {
     const page = req.nextUrl.searchParams.get("page");
     let tagData = await db.tag.findMany({
+      where: {
+        isTemp: false,
+      },
       select: {
         id: true,
         body: true,
         _count: {
-          select: { posts: true },
+          select: {
+            posts: true,
+          },
         },
       },
     });
-
     // 전체 글 수 합계
     const totalCount = await db.post.count({
       where: {

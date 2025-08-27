@@ -34,13 +34,16 @@ export const GET = async (
     });
     if (!postData) {
       return NextResponse.json(
-        { ok: false, data: null, error: "존재하지 않는 포스트" },
+        { ok: false, data: null, error: "존재하지 않는 글입니다" },
         { status: 200 }
       );
     }
     // 이전 글 (더 오래된 글)
     const prevPost = await db.post.findFirst({
       where: {
+        NOT: {
+          isTemp: true,
+        },
         createdAt: { lt: postData?.createdAt }, // 현재 글보다 이전
       },
       orderBy: { createdAt: "desc" }, // 가장 가까운 이전 글
@@ -54,6 +57,9 @@ export const GET = async (
     // 다음 글 (더 최신 글)
     const nextPost = await db.post.findFirst({
       where: {
+        NOT: {
+          isTemp: true,
+        },
         createdAt: { gt: postData?.createdAt }, // 현재 글보다 이후
       },
       orderBy: { createdAt: "asc" }, // 가장 가까운 다음 글
@@ -108,21 +114,19 @@ export const POST = async (
           where: { body },
           create: {
             body,
+            isTemp: post.isTemp, // 새로 생성되는 태그는 post.isTemp 따라감
             posts: {
-              connect: {
-                id: postId,
-              },
+              connect: { id: post.id },
             },
           },
           update: {
+            // 이미 있는 태그라면 isTemp는 건드리지 않음
             posts: {
-              connect: {
-                id: postId,
-              },
+              connect: { id: post.id },
             },
           },
         });
-        tags.push(_tag);
+        if (!_tag.isTemp) tags.push(_tag);
       }
       return { post, tags };
     });
@@ -153,12 +157,41 @@ export const DELETE = async (
   const { postId } = await params;
 
   try {
-    const postData = await db.post.delete({
-      where: {
-        id: postId,
-      },
+    const result = await db.$transaction(async (tx) => {
+      // 1. 삭제할 post와 관련 태그들 가져오기
+      const deletedPost = await tx.post.delete({
+        where: { id: postId },
+        select: { id: true, tagIds: true, imageIds: true },
+      });
+
+      let tags = [];
+      // 2. 태그별로 postIds 갱신
+      for (const tagId of deletedPost.tagIds) {
+        const tag = await tx.tag.findUnique({ where: { id: tagId } });
+
+        if (!tag) continue;
+
+        const newPostIds = tag.postIds.filter((pid) => pid !== deletedPost.id);
+
+        let removeTag;
+        if (newPostIds.length === 0) {
+          // 연결된 post 없으면 태그 삭제
+          removeTag = await tx.tag.delete({ where: { id: tagId } });
+        } else {
+          // 남은 postIds 업데이트
+          removeTag = await tx.tag.update({
+            where: { id: tagId },
+            data: { postIds: { set: newPostIds } },
+          });
+        }
+        tags.push(removeTag);
+      }
+      return {
+        deletedPost,
+        tags,
+      };
     });
-    postData.imageIds.forEach((id) => {
+    result.deletedPost.imageIds.forEach((id) => {
       fetch(
         `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/images/v1/${id}`,
         {
@@ -171,7 +204,10 @@ export const DELETE = async (
     });
     return NextResponse.json({
       ok: true,
-      data: postData,
+      data: {
+        post: result.deletedPost,
+        tag: result.tags,
+      },
     });
   } catch (e: any) {
     let error = e?.code

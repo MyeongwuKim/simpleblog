@@ -18,6 +18,7 @@ interface UseInfiniteScrollDataProps<TPageData, TPageParam, TError = unknown> {
     queryKey: QueryKey
   ) => Promise<ApiResponse<TPageData>>;
   gcTime?: number;
+  staleTime?: number;
   initialPageParam: TPageParam;
   getNextPageParam?: (
     lastPage: ApiResponse<TPageData>,
@@ -35,7 +36,8 @@ export function useInfiniteScrollData<
   const {
     queryKey,
     queryFn,
-    gcTime = 1000 * 60 * 5,
+    gcTime,
+    staleTime,
     initialPageParam,
     getNextPageParam,
   } = props;
@@ -59,6 +61,7 @@ export function useInfiniteScrollData<
       return loadedCount < totalCount ? pages.length : undefined;
     },
     initialPageParam,
+    staleTime,
     gcTime,
   });
 }

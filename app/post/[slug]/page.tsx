@@ -1,6 +1,8 @@
 import { db } from "@/app/lib/db";
-import { fetchPostIdBySlug } from "@/app/lib/fetchers/post";
+import { fetchAllPostContentByPostId } from "@/app/lib/fetchers/post";
+import NotFound from "@/app/not-found";
 import CommonPost from "@/components/layout/commonPost";
+import InfiniteScrollProvider from "@/components/layout/InfiniteScroll/infiniteScrollProvider";
 
 import {
   dehydrate,
@@ -15,48 +17,50 @@ interface PageProps {
   params: { slug: string };
 }
 
-// export async function generateMetadata({
-//   params,
-// }: PageProps): Promise<Metadata> {
-//   const decodedSlug = decodeURIComponent(params.slug); // ← 여기서 디코딩
-//   let post = await db.post.findUnique({
-//     where: {
-//       slug: decodedSlug,
-//     },
-//     select: {
-//       title: true,
-//     },
-//   });
-//   return {
-//     title: post?.title,
-//     openGraph: {
-//       title: post?.title,
-//     },
-//   };
-// }
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug); // ← 여기서 디코딩
+  let post = await db.post.findUnique({
+    where: {
+      slug: decodedSlug,
+    },
+    select: {
+      title: true,
+    },
+  });
+  return {
+    title: post?.title ?? "404",
+    openGraph: {
+      title: post?.title,
+    },
+  };
+}
 
 export default async function Post({ params }: PageProps) {
   const queryClient = new QueryClient();
   const { slug } = await params;
 
+  const postData = await db.post.findUnique({
+    where: { slug: decodeURIComponent(slug) },
+    select: {
+      id: true,
+      tag: true,
+    },
+  });
+
+  if (!postData) {
+    return <NotFound />;
+  }
   await queryClient.prefetchQuery({
-    queryKey: ["post", slug],
-    queryFn: () => fetchPostIdBySlug(slug),
+    queryKey: ["post", postData.id],
+    queryFn: () => fetchAllPostContentByPostId(postData.id),
   });
 
   return (
-    <div>
-      <div className="w-[768px] mt-20 ml-auto mr-auto  h-full relative">
-        <HydrationBoundary state={dehydrate(queryClient)}>
-          <CommonPost />
-          {/* <div className="mt-20 flex gap-16 flex-col justify-center">
-            <div className="text-2xl text-text1 text-center font-bold">
-              관련있는 피드
-            </div>
-            <div className="min-h-[600px]"></div>
-          </div> */}
-        </HydrationBoundary>
-      </div>
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <CommonPost postId={postData?.id} />
+    </HydrationBoundary>
   );
 }

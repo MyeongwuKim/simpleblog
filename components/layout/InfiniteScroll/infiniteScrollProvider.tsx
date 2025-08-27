@@ -2,9 +2,15 @@
 
 import { useInfiniteScrollData } from "@/app/hooks/useInfiniteQuery";
 import { fetchComments } from "@/app/lib/fetchers/comments";
-import { fetchPosts, fetchTempPosts } from "@/app/lib/fetchers/post";
+import {
+  FetchParams,
+  fetchPosts,
+  fetchRelatedPosts,
+  fetchTempPosts,
+} from "@/app/lib/fetchers/post";
 import NoPostIcon from "@/components/ui/icon/noPostIcon";
-import { CardItem } from "@/components/ui/items/cardItem";
+import CardItem from "@/components/ui/items/cardItem";
+
 import CommentItem from "@/components/ui/items/commentItem";
 import TempItem from "@/components/ui/items/tempItem";
 
@@ -15,11 +21,7 @@ import { useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
 
 // 타입 정의
-type DataType = "post" | "temp" | "comments";
-type FetcherType = (
-  page: number,
-  params: { tag?: string; datetype?: string }
-) => Promise<any>;
+type DataType = "post" | "temp" | "comments" | "relatedPosts";
 
 interface Page<T = any> {
   ok: boolean;
@@ -29,15 +31,14 @@ interface Page<T = any> {
 interface InfiniteScrollProviderProps {
   queryKey: readonly unknown[];
   type: DataType;
-  pageSize?: number; // skeleton 갯수
+  pageSize?: number;
+  gcTime?: number;
+  staleTime?: number;
 }
 
 interface RendererMap {
   layout: string;
-  fetcher: (
-    pageParam: number,
-    params: { tag?: string; datetype?: string }
-  ) => Promise<any>;
+  fetcher: (pageParam: number, params: FetchParams) => Promise<any>;
   renderContent: (item: any) => React.ReactNode;
   renderSkeleton: (i: number) => React.ReactNode;
 }
@@ -86,12 +87,29 @@ const rendererMap: Record<DataType, RendererMap> = {
       </div>
     ),
   },
+  relatedPosts: {
+    layout:
+      "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4",
+    fetcher: fetchRelatedPosts,
+    renderContent: (item: Post) => (
+      <div key={item.id} className="h-[300px] floatBox">
+        <CardItem {...item} />
+      </div>
+    ),
+    renderSkeleton: (i) => (
+      <div className="h-[300px]" key={i}>
+        <CardItemSkeleton />
+      </div>
+    ),
+  },
 };
 
 export default function InfiniteScrollProvider({
   queryKey,
   type,
   pageSize = 12,
+  gcTime = 1000 * 60 * 10,
+  staleTime = 1000 * 60 * 5,
 }: InfiniteScrollProviderProps) {
   const {
     data,
@@ -102,10 +120,17 @@ export default function InfiniteScrollProvider({
     isError,
   } = useInfiniteScrollData({
     queryKey,
+    gcTime,
+    staleTime,
     queryFn: (page) => {
       const [, params] = queryKey as [
         string,
-        { tag?: string; datetype?: string }?
+        {
+          tag?: string;
+          tags?: string[];
+          datetype?: string;
+          excludeId?: string;
+        }?
       ];
       return rendererMap[type].fetcher(page ?? 0, params ?? {});
     },
@@ -135,6 +160,9 @@ export default function InfiniteScrollProvider({
       case "comments":
         content = "작성된 댓글이 없습니다.";
         break;
+      default:
+        content = "관련된 글이 없습니다.";
+        break;
     }
     return content;
   };
@@ -147,7 +175,6 @@ export default function InfiniteScrollProvider({
 
     // 오버플로우 없으면 스킵
     if (!hasBodyOverflow()) return;
-
     fetchNextPage();
   }, [inView, isLoading, isFetchingNextPage, hasNextPage]);
 

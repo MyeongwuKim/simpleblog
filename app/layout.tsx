@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   title: "포스트",
 };
 
+import Script from "next/script";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -16,6 +18,12 @@ export default function RootLayout({
   return (
     <html className="h-full">
       <body className={`ease-linear h-full bg-bg-page2`}>
+        <Script
+          src={`https://www.google.com/recaptcha/api.js`}
+          strategy="afterInteractive"
+          async
+          defer
+        />
         <MyProvider>
           <CommonBody>{children}</CommonBody>
         </MyProvider>

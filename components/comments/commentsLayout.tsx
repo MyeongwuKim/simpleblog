@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useUI } from "../providers/uiProvider";
 import { Comment } from "@prisma/client";
 import { useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
 
 export default function CommentsLayout() {
   const queryClient = useQueryClient();
@@ -19,7 +20,7 @@ export default function CommentsLayout() {
   const { mutate } = useMutation<
     QueryResponse<Comment>,
     Error,
-    Omit<Comment, "id" | "createdAt">
+    Omit<Comment, "id" | "createdAt"> & { token: any }
   >({
     mutationFn: async (data) => {
       const result = await (
@@ -34,7 +35,7 @@ export default function CommentsLayout() {
     onSuccess: (res) => {
       setName("");
       setContent("");
-
+      (window as any).grecaptcha.reset();
       queryClient.setQueryData(["comments"], (oldData: any) => {
         if (!oldData) return oldData;
 
@@ -50,6 +51,7 @@ export default function CommentsLayout() {
           ),
         };
       });
+      queryClient.invalidateQueries({ queryKey: ["comments"] });
     },
     onError: (error) => {
       openToast(true, error.message, 1);
@@ -67,7 +69,6 @@ export default function CommentsLayout() {
         break;
     }
   }, []);
-
   const rules = [
     // 로그인 안 했을 때만 이름 체크
     ...(!session
@@ -83,12 +84,16 @@ export default function CommentsLayout() {
       check: content.trim().length > 0,
       message: "내용을 입력해주세요.",
     },
+    {
+      check: content.trim().length >= 10,
+      message: "내용은 최소 10자 이상 입력해주세요.",
+    },
   ];
 
   const validate = () => {
     for (const rule of rules) {
       if (!rule.check) {
-        openToast(true, rule.message, 2);
+        openToast(true, rule.message, 1);
         return false;
       }
     }
@@ -100,7 +105,13 @@ export default function CommentsLayout() {
       onSubmit={(e) => {
         e.preventDefault();
         if (!validate()) return;
-        mutate({ content, name, isMe: session ? true : false });
+        const token = (window as any).grecaptcha.getResponse();
+        if (!token) {
+          openToast(true, "로봇이 아님을 인증해주세요.", 1);
+          return;
+        }
+
+        mutate({ content, name, isMe: session ? true : false, token });
       }}
       className="flex flex-col gap-4 mb-20"
     >
@@ -125,7 +136,12 @@ export default function CommentsLayout() {
           onChange={onChangeText}
         />
       </div>
+
       <div className="w-full  h-[45px]">
+        <div
+          className="g-recaptcha absolute"
+          data-sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+        />
         <div className="w-[120px] h-[45px]  absolute right-0">
           <DefButton
             type="submit"

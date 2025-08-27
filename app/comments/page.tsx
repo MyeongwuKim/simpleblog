@@ -20,7 +20,6 @@ export default async function Comments() {
     getNextPageParam: (lastPage, pages) => {
       return pages.length;
     },
-    staleTime: 0,
     pages: 0,
   });
 
