@@ -9,11 +9,7 @@ export default async function Comments() {
   const queryKey = ["comments"];
   await queryClient.prefetchInfiniteQuery({
     queryKey,
-    queryFn: ({ pageParam, queryKey }) => {
-      const [, params] = queryKey as [
-        string,
-        { tag?: string; datetype?: string }
-      ];
+    queryFn: ({ pageParam }) => {
       return fetchComments(pageParam ?? 0);
     },
     initialPageParam: 0,

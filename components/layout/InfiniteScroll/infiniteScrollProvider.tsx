@@ -1,6 +1,5 @@
 "use client";
 
-import { useInfiniteScrollData } from "@/app/hooks/useInfiniteQuery";
 import { fetchComments } from "@/app/lib/fetchers/comments";
 import {
   FetchParams,
@@ -15,15 +14,19 @@ import CommentItem from "@/components/ui/items/commentItem";
 import TempItem from "@/components/ui/items/tempItem";
 
 import { CardItemSkeleton, TempItemSkeleton } from "@/components/ui/skeleton";
-import { Post } from "@prisma/client";
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { Comment, Post } from "@prisma/client";
+import {
+  InfiniteData,
+  useInfiniteQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { useInView } from "react-intersection-observer";
 
 // 타입 정의
 type DataType = "post" | "temp" | "comments" | "relatedPosts";
 
-interface Page<T = any> {
+interface Page<T> {
   ok: boolean;
   data: T[];
   error?: string; // 실패 시만 존재
@@ -36,18 +39,30 @@ interface InfiniteScrollProviderProps {
   staleTime?: number;
 }
 
-interface RendererMap {
+// fetcher 시그니처 통일
+interface RendererMap<T = unknown> {
   layout: string;
-  fetcher: (pageParam: number, params: FetchParams) => Promise<any>;
-  renderContent: (item: any) => React.ReactNode;
+  fetcher: (pageParam: number, params: FetchParams) => Promise<Page<T>>;
+  renderContent: (item: T) => React.ReactNode;
   renderSkeleton: (i: number) => React.ReactNode;
 }
 
-const rendererMap: Record<DataType, RendererMap> = {
+// DataType → 실제 타입 매핑
+type DataTypeMap = {
+  post: Post;
+  temp: Post; // temp도 Post 타입임
+  comments: Comment;
+  relatedPosts: Post;
+};
+
+// rendererMap 타입 좁히기
+const rendererMap: {
+  [K in keyof DataTypeMap]: RendererMap<DataTypeMap[K]>;
+} = {
   post: {
     layout:
       "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4",
-    fetcher: fetchPosts,
+    fetcher: fetchPosts, // Promise<Page<Post>>
     renderContent: (item: Post) => (
       <div key={item.id} className="h-[300px] floatBox">
         <CardItem {...item} />
@@ -61,8 +76,8 @@ const rendererMap: Record<DataType, RendererMap> = {
   },
   temp: {
     layout: "flex flex-wrap flex-col gap-4",
-    fetcher: fetchTempPosts,
-    renderContent: (item: any) => (
+    fetcher: fetchTempPosts, // Promise<Page<Post>>
+    renderContent: (item: Post) => (
       <div key={item.id} className="h-[170px]">
         <TempItem {...item} />
       </div>
@@ -75,8 +90,8 @@ const rendererMap: Record<DataType, RendererMap> = {
   },
   comments: {
     layout: "flex flex-wrap flex-col gap-4",
-    fetcher: fetchComments,
-    renderContent: (item: any) => (
+    fetcher: fetchComments, // Promise<Page<Comment>>
+    renderContent: (item: Comment) => (
       <div key={item.id} className="h-[170px]">
         <CommentItem {...item} />
       </div>
@@ -90,7 +105,7 @@ const rendererMap: Record<DataType, RendererMap> = {
   relatedPosts: {
     layout:
       "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4",
-    fetcher: fetchRelatedPosts,
+    fetcher: fetchRelatedPosts, // Promise<Page<Post>>
     renderContent: (item: Post) => (
       <div key={item.id} className="h-[300px] floatBox">
         <CardItem {...item} />
@@ -104,13 +119,13 @@ const rendererMap: Record<DataType, RendererMap> = {
   },
 };
 
-export default function InfiniteScrollProvider({
+export default function InfiniteScrollProvider<T extends DataType>({
   queryKey,
   type,
   pageSize = 12,
   gcTime = 1000 * 60 * 10,
   staleTime = 1000 * 60 * 5,
-}: InfiniteScrollProviderProps) {
+}: InfiniteScrollProviderProps & { type: T }) {
   const {
     data,
     isLoading,
@@ -118,11 +133,18 @@ export default function InfiniteScrollProvider({
     hasNextPage,
     isFetchingNextPage,
     isError,
-  } = useInfiniteScrollData({
+  } = useInfiniteQuery<
+    Page<DataTypeMap[T]>, // 👉 queryFn이 반환하는 값
+    Error, // 👉 에러 타입
+    InfiniteData<Page<DataTypeMap[T]>, number>, // 👉 data 타입
+    typeof queryKey, // 👉 queryKey 타입
+    number
+  >({
     queryKey,
     gcTime,
     staleTime,
-    queryFn: (page) => {
+    initialPageParam: 0,
+    queryFn: ({ pageParam = 0 }) => {
       const [, params] = queryKey as [
         string,
         {
@@ -132,11 +154,14 @@ export default function InfiniteScrollProvider({
           excludeId?: string;
         }?
       ];
-      return rendererMap[type].fetcher(page ?? 0, params ?? {});
+      return rendererMap[type].fetcher(pageParam, params ?? {}) as Promise<
+        Page<DataTypeMap[T]>
+      >; // ✅ 여기서 단언
     },
-
-    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.ok && lastPage.data.length > 0 ? allPages.length : undefined,
   });
+
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
   const { ref, inView } = useInView({
@@ -178,10 +203,10 @@ export default function InfiniteScrollProvider({
     fetchNextPage();
   }, [inView, isLoading, isFetchingNextPage, hasNextPage]);
 
-  const flatData = data?.pages.flatMap((page) => page.data) ?? [];
-  const pageErrors: Page[] =
+  const flatData: DataTypeMap[T][] =
+    data?.pages.flatMap((page) => page.data) ?? [];
+  const pageErrors: Page<DataTypeMap[T]>[] =
     data?.pages.filter((page) => page.ok === false) ?? [];
-
   const failedPages = data?.pages
     .map((page, index) => (!page.ok ? index : null))
     .filter((i) => i !== null) as number[];
@@ -222,12 +247,18 @@ export default function InfiniteScrollProvider({
           <button
             className="px-4 py-2 bg-red-500 text-white rounded mt-2"
             onClick={() => {
-              queryClient.setQueryData([type], (oldData: any) => ({
-                ...oldData,
-                pages: oldData.pages.filter(
-                  (_: any, index: number) => index !== failedPages[0]
-                ),
-              }));
+              queryClient.setQueryData<
+                InfiniteData<Page<DataTypeMap[T]>, number>
+              >([type], (oldData) => {
+                if (!oldData) return oldData; // 캐시 없음
+
+                return {
+                  ...oldData,
+                  pages: oldData.pages.filter(
+                    (_page, index) => index !== failedPages[0]
+                  ),
+                };
+              });
             }}
           >
             다시 시도

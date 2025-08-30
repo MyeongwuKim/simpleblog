@@ -2,7 +2,7 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import getQueryClient from "./hooks/useQueryClient";
 import { fetchPosts } from "./lib/fetchers/post";
 import InfiniteScrollProvider from "@/components/layout/InfiniteScroll/infiniteScrollProvider";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { db } from "./lib/db";
 
 interface SearchParams {

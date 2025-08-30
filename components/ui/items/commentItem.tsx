@@ -8,11 +8,15 @@ import { Comment } from "@prisma/client";
 import { formatRelativeTime } from "@/app/hooks/useUtil";
 import { useUI } from "@/components/providers/uiProvider";
 import React from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  InfiniteData,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 
 function CommentItem({ content, createdAt, id, name, isMe }: Comment) {
-  const { openModal, openToast } = useUI();
+  const { openConfirm, openToast } = useUI();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
@@ -28,16 +32,19 @@ function CommentItem({ content, createdAt, id, name, isMe }: Comment) {
         return result;
       },
       onSuccess: (res) => {
-        queryClient.setQueryData(["comments"], (oldData: any) => {
+        queryClient.setQueryData<
+          InfiniteData<{
+            data: Comment[];
+            nextCursor?: string;
+          }>
+        >(["comments"], (oldData) => {
           if (!oldData) return oldData;
 
           return {
             ...oldData,
-            pages: oldData.pages.map((page: any) => ({
+            pages: oldData.pages.map((page) => ({
               ...page,
-              data: page.data.filter(
-                (comment: any) => comment.id !== res.data.id // ✅ 해당 아이디만 제거
-              ),
+              data: page.data.filter((comment) => comment.id !== res.data.id),
             })),
           };
         });
@@ -48,7 +55,7 @@ function CommentItem({ content, createdAt, id, name, isMe }: Comment) {
     }
   );
   const deleteCommentItem = async () => {
-    const result = await openModal("ALERT", {
+    const result = await openConfirm({
       title: "삭제",
       msg: "댓글을 삭제하시겠습니까?",
       btnMsg: ["취소", "확인"],

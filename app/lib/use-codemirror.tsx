@@ -1,4 +1,5 @@
-import { EditorState, Compartment } from "@codemirror/state";
+import { useEffect, useRef } from "react";
+import { EditorState } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { defaultKeymap } from "@codemirror/commands";
 import { history, historyKeymap } from "@codemirror/history";
@@ -11,67 +12,40 @@ import {
 } from "@codemirror/highlight";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
-import { useEffect, useRef, useState } from "react";
 
 interface Props {
-  initialDoc: string;
+  initialDoc: string; // 보통 "" (빈 문자열)
   onChange?: (doc: string) => void;
 }
+
 const useCodeMirror = <T extends Element>(
   props: Props
-): [React.MutableRefObject<T | null>, EditorView?] => {
-  const refContainer = useRef<T>(null);
-  const [editorView, setEditorView] = useState<EditorView>();
-  const { onChange } = props;
+): [
+  React.MutableRefObject<T | null>,
+  React.MutableRefObject<EditorView | null>
+] => {
+  const refContainer = useRef<T>(null); // 에디터 컨테이너 DOM
+  const editorViewRef = useRef<EditorView | null>(null); // CodeMirror 인스턴스
+  const { onChange, initialDoc } = props;
 
-  const transparentTheme = EditorView.theme(
-    {
-      "&": {
-        backgroundColor: "rgb(255,255,255); !important",
-        height: "100%",
-      },
-      ".cm-line": {
-        fontSize: "20px",
-        color: "white",
-      },
-      ".cm-content": {},
-    },
-    { dark: false }
-  );
-
+  // ✅ 최초 1회만 EditorView 생성
   useEffect(() => {
     if (!refContainer.current) return;
+    if (editorViewRef.current) return; // 이미 있으면 재생성 안 함
 
     const baseTheme = EditorView.baseTheme({
-      ".cm-scroller": {
-        "font-family": "font-sans",
-      },
-
-      ".cm-content": {
-        "caret-color": "caret-caret",
-      },
+      ".cm-scroller": { fontFamily: "font-sans" },
+      ".cm-content": { caretColor: "caret-caret" },
     });
 
     const syntaxHighlighting = HighlightStyle.define([
-      {
-        tag: tags.heading1,
-        fontSize: "2.0em",
-        fontWeight: "bold",
-      },
-      {
-        tag: tags.heading2,
-        fontSize: "1.8em",
-        fontWeight: "bold",
-      },
-      {
-        tag: tags.heading3,
-        fontSize: "1.6em",
-        fontWeight: "bold",
-      },
+      { tag: tags.heading1, fontSize: "2.0em", fontWeight: "bold" },
+      { tag: tags.heading2, fontSize: "1.8em", fontWeight: "bold" },
+      { tag: tags.heading3, fontSize: "1.6em", fontWeight: "bold" },
     ]);
-    const editorTheme = new Compartment();
+
     const startState = EditorState.create({
-      doc: props.initialDoc,
+      doc: "", // 항상 빈 문자열로 초기화
       extensions: [
         keymap.of([...defaultKeymap, ...historyKeymap]),
         history(),
@@ -88,23 +62,39 @@ const useCodeMirror = <T extends Element>(
         EditorView.lineWrapping,
         EditorView.updateListener.of((update) => {
           if (update.changes) {
-            onChange && onChange(update.state.doc.toString());
+            onChange?.(update.state.doc.toString());
           }
         }),
       ],
     });
-    // let tr = startState.update(startState.replaceSelection("!"));
-    // console.log(tr.state.doc.toString()); // "!o!"
-    //view.focus();
+
     const view = new EditorView({
       state: startState,
       parent: refContainer.current,
     });
 
-    setEditorView(view);
-  }, [refContainer, onChange]);
+    editorViewRef.current = view;
 
-  return [refContainer, editorView];
+    return () => {
+      view.destroy();
+      editorViewRef.current = null;
+    };
+  }, []); // 👈 mount 시 딱 1회만
+
+  // ✅ API 데이터 들어오면 반영
+  useEffect(() => {
+    const view = editorViewRef.current;
+    if (!view) return;
+
+    const currentDoc = view.state.doc.toString();
+    if (initialDoc && initialDoc !== currentDoc) {
+      view.dispatch({
+        changes: { from: 0, to: currentDoc.length, insert: initialDoc },
+      });
+    }
+  }, [initialDoc]);
+
+  return [refContainer, editorViewRef];
 };
 
 export default useCodeMirror;

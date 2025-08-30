@@ -6,13 +6,12 @@ import React, {
   ReactNode,
   useCallback,
   useContext,
-  useState,
 } from "react";
 
 import { v4 as uuidv4 } from "uuid";
 import AlertModal from "../popup/alertModal";
 import { addToast, removeToast } from "@/redux/reducer/toastReducer";
-import { addModal, ModalType, removeModal } from "@/redux/reducer/modalReducer";
+import { addConfirm, removeConfirm } from "@/redux/reducer/confirmReducer";
 import { modalManager } from "@/app/lib/modalManager";
 import Toast from "../popup/toast";
 
@@ -31,39 +30,22 @@ export const showGlobalToast = (
   }
 };
 
-type ModalPropsMap = {
-  ALERT: { msg: string; btnMsg: string[]; title?: string };
-};
-
 type PopupContextType = {
   openToast: (isWarning: boolean, msg: string, time: number) => void;
-  openModal: (
-    type: "ALERT",
-    props: { msg: string; btnMsg: string[]; title?: string }
-  ) => Promise<any>;
-};
-
-const MODAL_MAP: {
-  [K in ModalType]: (
-    props: ModalPropsMap[K],
-    onClose: (result?: any) => void
-  ) => ReactNode;
-} = {
-  ALERT: (props, onClose) => (
-    <AlertModal
-      msg={props.msg}
-      btnMsg={props.btnMsg}
-      title={props.title}
-      onClose={onClose}
-    />
-  ),
+  openConfirm: (props: {
+    msg: string;
+    btnMsg: string[];
+    title?: string;
+  }) => Promise<number>;
 };
 
 const PopupContext = createContext<PopupContextType | undefined>(undefined);
 
 export const UIProvider = ({ children }: { children: ReactNode }) => {
   const toastItems = useAppSelector((state) => state.toastReducer.toastItem);
-  const modalItems = useAppSelector((state) => state.modalReducer.modalItem);
+  const modalItems = useAppSelector(
+    (state) => state.confirmReducer.confirmItem
+  );
   const dispatch = useAppDispatch();
 
   const openToast = useCallback(
@@ -75,19 +57,23 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
 
   globalToast = openToast;
 
-  const openModal = async (type: ModalType, props?: any): Promise<any> => {
+  const openConfirm = async (props: {
+    msg: string;
+    btnMsg: string[];
+    title?: string;
+  }): Promise<number> => {
     const id = uuidv4();
-    dispatch(addModal({ type, id, props }));
+    dispatch(addConfirm({ id, props }));
     const result = await modalManager.openModal(id);
     return result;
   };
 
-  const handleClose = (id: string) => (result?: any) => {
-    dispatch(removeModal(id));
+  const handleClose = (id: string) => (result?: number) => {
+    dispatch(removeConfirm(id));
     modalManager.closeModal(id, result);
   };
 
-  const value = { openToast, openModal };
+  const value = { openToast, openConfirm };
 
   return (
     <PopupContext.Provider value={value}>
@@ -96,16 +82,12 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
       {/* 모달 렌더링 */}
       {modalItems.map((v) => {
         const onClose = handleClose(v.id);
-        let content = null;
-        switch (v.type) {
-          case "ALERT":
-            content = MODAL_MAP.ALERT(
-              v.props as { msg: string; btnMsg: string[] },
-              onClose
-            );
-            break;
-        }
-        return <div key={v.id}>{content}</div>;
+
+        return (
+          <div key={v.id}>
+            <AlertModal {...v.props} onClose={onClose} />
+          </div>
+        );
       })}
 
       {/* toast 렌더링 */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import TagItem from "../items/tagItem";
 
 const TagInput = ({
@@ -56,10 +56,10 @@ const TagInput = ({
         id="tagInputItem"
         onCompositionEnd={() => setIsComposit(false)}
         onCompositionStart={() => setIsComposit(true)}
-        onKeyDown={(e: any) => {
+        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
           if (isComposit) return;
           if (e.key == "Backspace") {
-            if (e.target?.value?.length! <= 0 && tags.length > 0) {
+            if (e.currentTarget.value.length <= 0 && tags.length > 0) {
               removeTag(tags.length - 1);
               e.preventDefault();
             }

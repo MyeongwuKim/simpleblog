@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 type ProfileFormType = "profileimg" | "intro" | "social" | "content";
 type ProfileMutationVariables = Partial<Profile> & { form: ProfileFormType };
 
-export function profileQuery() {
+export function useProfileQuery() {
   return useQuery<QueryResponse<Profile>>({
     queryKey: ["profile"],
     queryFn: fetchProfile,
@@ -14,12 +14,12 @@ export function profileQuery() {
   });
 }
 
-export function profileMutate({
+export function useProfileMutate({
   onSuccessCallback,
   onError,
 }: {
   onSuccessCallback?: (data: QueryResponse<Profile>) => void;
-  onError: (error: Error) => void;
+  onError?: (error: Error) => void;
 }) {
   const queryClient = useQueryClient();
   return useMutation<QueryResponse<Profile>, Error, ProfileMutationVariables>({

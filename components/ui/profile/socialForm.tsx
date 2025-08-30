@@ -5,12 +5,12 @@ import { RiNotionFill } from "react-icons/ri";
 import LabelButton from "../buttons/labelButton";
 import InputField from "../input/inputField";
 import DefButton from "../buttons/defButton";
-import { profileMutate, profileQuery } from "./query";
+import { useProfileMutate, useProfileQuery } from "./query";
 import { useUI } from "@/components/providers/uiProvider";
 
 export default function SocialForm() {
   const [isEdit, setIsEdit] = useState(false);
-  const { data: profileResult, isLoading: profileLoading } = profileQuery();
+  const { data: profileResult, isLoading: profileLoading } = useProfileQuery();
 
   if (profileLoading) return <div></div>;
 
@@ -61,7 +61,7 @@ function EditSocialForm({
   const [insta, setInsta] = useState(instagram);
   const [nt, setNt] = useState(notion);
 
-  const { mutate } = profileMutate({
+  const { mutate } = useProfileMutate({
     onError: (error) => {
       openToast(true, error.message, 1);
     },

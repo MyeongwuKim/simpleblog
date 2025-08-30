@@ -3,9 +3,8 @@
 import { Card, createTheme } from "flowbite-react";
 import { FaGithub, FaInstagram } from "react-icons/fa6";
 import { RiNotionFill } from "react-icons/ri";
-import { profileQuery } from "../profile/query";
+import { useProfileQuery } from "../profile/query";
 import { getDeliveryDomain } from "@/app/hooks/useUtil";
-import Link from "next/link";
 import Image from "next/image";
 
 const mainTheme = createTheme({
@@ -30,7 +29,7 @@ const mainTheme = createTheme({
 });
 
 export function ProfileItem() {
-  const { data: profileResult, isLoading: profileLoading } = profileQuery();
+  const { data: profileResult } = useProfileQuery();
   const normalizedUrl = (url: string) => {
     return url.startsWith("http") ? url : `https://${url}`;
   };

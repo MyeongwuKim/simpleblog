@@ -1,11 +1,10 @@
 import { getToken } from "next-auth/jwt";
-import { getSession } from "next-auth/react";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
   const { pathname, origin, href } = request.nextUrl;
   const token = await getToken({ req: request, secret: process.env.SECRET });
-  console.log("middle");
+
   // 로그인 필요 페이지들
   const protectedPages = ["/write", "/setting", "/temp"];
 

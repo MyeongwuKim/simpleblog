@@ -3,28 +3,32 @@ import ReactMD from "@/components/write/reactMD";
 import DefButton from "../buttons/defButton";
 import { useCallback, useState } from "react";
 import { TextAreaField } from "../input/textAreaField";
-import { profileMutate, profileQuery } from "./query";
+
 import { useUI } from "@/components/providers/uiProvider";
 import { useSession } from "next-auth/react";
+import { useProfileMutate, useProfileQuery } from "./query";
 
 export default function IntroContentForm() {
   const { openToast } = useUI();
   const { data: session } = useSession();
   const [isModify, setIsModify] = useState<boolean>(false);
-  const { data: profileResult, isLoading: profileLoading } = profileQuery();
+  const { data: profileResult, isLoading: profileLoading } = useProfileQuery();
   const [introContent, setIntroContent] = useState<string>(
     profileResult?.data.content ?? ""
   );
-  const { mutate } = profileMutate({
+  const { mutate } = useProfileMutate({
     onError: (error) => {
       openToast(true, error.message, 1);
     },
   });
-  const onTextAreaChange = useCallback((e: any) => {
-    console.log(e.target.value);
-    setIntroContent(e.target.value);
-  }, []);
-
+  const onTextAreaChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      console.log(e.target.value);
+      setIntroContent(e.target.value);
+    },
+    []
+  );
+  if (profileLoading) return;
   return (
     <div className="w-full h-full">
       <div className="w-full  h-[45px] relative mb-4">

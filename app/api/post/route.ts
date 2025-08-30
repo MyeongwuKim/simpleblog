@@ -83,16 +83,25 @@ export const GET = async (req: NextRequest) => {
       data: postData,
       totalCount,
     });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
-  } finally {
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
 };
 
 export const POST = async (req: NextRequest) => {
-  let jsonData = await req.json();
-  let { content, tag, title, imageIds, preview, thumbnail, isTemp, slug } =
+  const jsonData = await req.json();
+  const { content, tag, title, imageIds, preview, thumbnail, isTemp, slug } =
     jsonData as PostType;
+  let newSlug = slug;
   try {
     const result = await db.$transaction(async (tx) => {
       const existing = await db.post.findUnique({
@@ -100,7 +109,7 @@ export const POST = async (req: NextRequest) => {
       });
 
       if (existing) {
-        slug = await createUniqueSlug(slug);
+        newSlug = await createUniqueSlug(slug);
       }
       const post = await tx.post.create({
         data: {
@@ -110,10 +119,10 @@ export const POST = async (req: NextRequest) => {
           preview,
           thumbnail,
           isTemp,
-          slug,
+          slug: newSlug,
         },
       });
-      let tags = [];
+      const tags = [];
       for (const body of tag) {
         const _tag = await tx.tag.upsert({
           where: { body },
@@ -142,9 +151,16 @@ export const POST = async (req: NextRequest) => {
         tag: result.tags,
       },
     });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
-  } finally {
-    await db.$disconnect();
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
 };

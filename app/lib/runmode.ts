@@ -1,54 +1,45 @@
 import { highlightTree } from "@codemirror/highlight";
+import { customHighlightStyle } from "./customHighlightStyle";
+import { Language, LanguageDescription } from "@codemirror/language";
 import { languages } from "@codemirror/language-data";
-import type { Language, LanguageDescription } from "@codemirror/language";
-
-type RunModeCallback = (
-  text: string,
-  style: string | null,
-  from: number,
-  to: number
-) => void;
 
 function runmode(
   textContent: string,
   language: Language,
-  callback: RunModeCallback
+  callback: (
+    text: string,
+    style: string | null,
+    from: number,
+    to: number
+  ) => void
 ): void {
-  // const tree = language.parser.parse(textContent);
-  // let pos = 0;
-  // highlightTree(tree, oneDarkHighlightStyle.match, (from, to, classes) => {
-  //   if (from > pos) {
-  //     callback(textContent.slice(pos, from), null, pos, from);
-  //   }
-  //   callback(textContent.slice(from, to), classes, from, to);
-  //   pos = to;
-  // });
-  // if (pos !== tree.length) {
-  //   callback(textContent.slice(pos, tree.length), null, pos, tree.length);
-  // }
-}
+  const tree = language.parser.parse(textContent);
+  let pos = 0;
 
-export function findLanguage(langName: string): LanguageDescription | null {
-  const i = languages.findIndex((lang: LanguageDescription) => {
-    if (lang.alias.indexOf(langName) >= 0) {
-      return true;
+  highlightTree(tree, customHighlightStyle.match, (from, to, classes) => {
+    if (from > pos) {
+      callback(textContent.slice(pos, from), null, pos, from);
     }
+    callback(textContent.slice(from, to), classes, from, to);
+    pos = to;
   });
-  if (i >= 0) {
-    return languages[i];
-  } else {
-    return null;
+
+  if (pos !== tree.length) {
+    callback(textContent.slice(pos, tree.length), null, pos, tree.length);
   }
 }
 
-export async function getLanguage(langName: string): Promise<Language | null> {
+// 언어 찾기
+export function findLanguage(langName: string): LanguageDescription | null {
+  return languages.find((lang) => lang.alias.includes(langName)) ?? null;
+}
+
+// 언어 로드
+export async function getLanguage(langName: string) {
   const desc = findLanguage(langName);
-  if (desc) {
-    const langSupport = await desc.load();
-    return langSupport.language;
-  } else {
-    return null;
-  }
+  if (!desc) return null;
+  const langSupport = await desc.load();
+  return langSupport.language;
 }
 
 export default runmode;

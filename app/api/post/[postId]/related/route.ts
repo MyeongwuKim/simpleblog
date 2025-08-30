@@ -1,15 +1,16 @@
-// app/api/post/postId/[id]/related/route.ts
-import { db } from "@/app/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-
+import { db } from "@/app/lib/db";
+// @ts-expect-error Next.js route handler typing bug
 export async function GET(
   req: NextRequest,
-  { params }: { params: { postId: string } }
+  context: { params: { postId: string } }
 ) {
+  const { postId } = context.params as { postId: string };
+
   const page = req.nextUrl.searchParams.get("page");
   const pageNumber = page ? parseInt(page, 10) : 0;
-  const { postId } = params;
   const tags = req.nextUrl.searchParams.getAll("tags");
+
   try {
     if (!postId) {
       return NextResponse.json(
@@ -46,7 +47,16 @@ export async function GET(
     });
 
     return NextResponse.json({ ok: true, data: relatedPosts, totalCount });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
 }

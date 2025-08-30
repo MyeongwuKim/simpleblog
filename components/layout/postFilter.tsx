@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import TagItem from "../ui/items/tagItem";
 import { Tag } from "@prisma/client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import DropdownBox from "../ui/dropdown/dropdownBox";
@@ -19,11 +19,9 @@ export default function Postfilter() {
     searchParams.get("datetype") ?? "all"
   );
 
-  const {
-    isLoading,
-    isError,
-    data: tagResult,
-  } = useQuery<QueryResponse<(Tag & { _count: { posts: number } })[]>>({
+  const { isLoading, data: tagResult } = useQuery<
+    QueryResponse<(Tag & { _count: { posts: number } })[]>
+  >({
     queryKey: ["tag"],
     queryFn: fetchTagList,
   });
@@ -32,8 +30,8 @@ export default function Postfilter() {
     const el = scrollRef.current;
     if (!el) return;
 
-    let startX = e.pageX - el.offsetLeft;
-    let scrollLeft = el.scrollLeft;
+    const startX = e.pageX - el.offsetLeft;
+    const scrollLeft = el.scrollLeft;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const x = moveEvent.pageX - el.offsetLeft;
@@ -109,7 +107,7 @@ export default function Postfilter() {
             ? Array.from({ length: 8 }, (_, i) => (
                 <Skeleton key={i} className="h-5 w-14" />
               ))
-            : tagResult?.data.map((v, i) => (
+            : tagResult?.data.map((v) => (
                 <div key={v.body} className="flex-none">
                   <TagItem
                     id={v.id}

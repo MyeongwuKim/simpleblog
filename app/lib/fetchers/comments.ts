@@ -1,6 +1,6 @@
 export async function fetchComments(page: number) {
   const baseUrl = process.env.NEXTAUTH_URL ?? "";
-  let url = `${baseUrl}/api/comments?page=${page}`;
+  const url = `${baseUrl}/api/comments?page=${page}`;
 
   const res = await fetch(url);
 

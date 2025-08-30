@@ -1,47 +1,48 @@
+import { FC, useEffect, useState } from "react";
 import { CodeProps } from "react-markdown/lib/ast-to-react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { materialDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
-import runmode, { getLanguage } from "./runmode";
-import { useEffect, useState } from "react";
+import runmode, { getLanguage } from "./runmode"; // ✅ 가져오기
 
-type Tokens = {
-  text: string;
-  style: string | null;
-}[];
+type Token = { text: string; style: string | null };
 
-const RemarkCode:
-  | React.ComponentClass<CodeProps, any>
-  | React.FunctionComponent<CodeProps> = (props) => {
-  const [spans, setSpans] = useState<Tokens>([]);
-  const { className, children } = props;
-  const langName = (className || "").substr(9);
+const RemarkCode: FC<CodeProps> = ({ className, children }) => {
+  const [tokens, setTokens] = useState<Token[]>([]);
+  const langName = className?.replace("language-", "") || "";
 
   useEffect(() => {
-    getLanguage(langName).then((language) => {
-      if (language) {
-        const body = props.children instanceof Array ? props.children[0] : null;
-        const tokens: Tokens = [];
-        runmode(
-          body as string,
-          language,
-          (text: string, style: string | null, _from: number, _to: number) => {
-            tokens.push({ text, style });
-          }
-        );
+    if (!langName) return;
 
-        setSpans(tokens);
-      }
+    getLanguage(langName).then((language) => {
+      if (!language) return;
+
+      const body =
+        Array.isArray(children) && typeof children[0] === "string"
+          ? children[0]
+          : typeof children === "string"
+          ? children
+          : "";
+
+      if (!body) return;
+
+      const newTokens: Token[] = [];
+      runmode(body, language, (text, style) => {
+        newTokens.push({ text, style });
+      });
+      setTokens(newTokens);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.children]);
+  }, [children, langName]);
 
   return (
-    <SyntaxHighlighter
-      language={className?.replace("language-", "")}
-      style={materialDark}
-    >
-      {children.toString()}
-    </SyntaxHighlighter>
+    <pre className="bg-background1 p-4 rounded overflow-x-auto whitespace-pre-wrap break-words">
+      {tokens.length > 0
+        ? tokens.map((t, i) => (
+            <span key={i} className={t.style ?? "text-text3"}>
+              {t.text}
+            </span>
+          ))
+        : Array.isArray(children)
+        ? children.join("")
+        : (children as string)}
+    </pre>
   );
 };
 

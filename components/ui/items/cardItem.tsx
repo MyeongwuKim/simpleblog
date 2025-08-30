@@ -8,7 +8,7 @@ import Link from "next/link";
 import React from "react";
 import { MdImageNotSupported } from "react-icons/md";
 
-function CardItem({ createdAt, id, preview, thumbnail, title, slug }: Post) {
+function CardItem({ createdAt, preview, thumbnail, title, slug }: Post) {
   return (
     <Link
       href={`/post/${slug}`}

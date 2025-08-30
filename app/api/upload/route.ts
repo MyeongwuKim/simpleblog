@@ -1,9 +1,8 @@
-import { NextApiRequest, NextApiResponse } from "next";
 import { NextRequest, NextResponse } from "next/server";
 
 export const POST = async (req: NextRequest) => {
   try {
-    let fetchUrl = `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/images/v1/direct_upload`;
+    const fetchUrl = `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/images/v1/direct_upload`;
     const response = await (
       await fetch(fetchUrl, {
         method: req.method,
@@ -47,8 +46,17 @@ export const DELETE = async (req: NextRequest) => {
     return NextResponse.json({
       ok: true,
     });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
 };
 // async function handler(req: NextApiRequest, res: NextApiResponse) {

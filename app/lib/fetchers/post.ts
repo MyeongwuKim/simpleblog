@@ -15,6 +15,7 @@ export async function fetchPosts(page: number, params: FetchParams) {
   if (!res.ok) {
     return { ok: false, data: [], error: `HTTP ${res.status}` };
   }
+
   return res.json();
 }
 
@@ -35,7 +36,7 @@ export const fetchTempPosts = async (pageNumber: number) => {
 //current단독으로만 가져옴
 export const fetchPostContentByPostId = async (postId: string) => {
   const baseUrl = process.env.NEXTAUTH_URL ?? ""; // undefined면 빈 문자열
-  const url = `${baseUrl}/api/post/postId/${postId}`;
+  const url = `${baseUrl}/api/post/${postId}`;
   const res = await fetch(url, { cache: "no-store" });
 
   if (!res.ok) throw new Error("글 정보를 데이터를 가져오지 못했습니다.");
@@ -47,7 +48,7 @@ export const fetchPostContentByPostId = async (postId: string) => {
 //prev,next,current 다 가져옴
 export const fetchAllPostContentByPostId = async (postId: string) => {
   const baseUrl = process.env.NEXTAUTH_URL ?? ""; // undefined면 빈 문자열
-  const url = `${baseUrl}/api/post/postId/${postId}?type=all`;
+  const url = `${baseUrl}/api/post/${postId}?type=all`;
 
   const res = await fetch(url, { cache: "no-store" });
 
@@ -63,7 +64,7 @@ export async function fetchRelatedPosts(page: number, params: FetchParams) {
   params.tags?.forEach((t) => query.append("tags", t));
 
   const res = await fetch(
-    `/api/post/postId/${params.excludeId}/related?${query.toString()}`
+    `/api/post/${params.excludeId}/related?${query.toString()}`
   );
   if (!res.ok) throw new Error("관련 글 불러오기 실패");
 

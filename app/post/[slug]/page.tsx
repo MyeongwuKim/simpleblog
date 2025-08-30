@@ -2,13 +2,11 @@ import { db } from "@/app/lib/db";
 import { fetchAllPostContentByPostId } from "@/app/lib/fetchers/post";
 import NotFound from "@/app/not-found";
 import CommonPost from "@/components/layout/commonPost";
-import InfiniteScrollProvider from "@/components/layout/InfiniteScroll/infiniteScrollProvider";
 
 import {
   dehydrate,
   HydrationBoundary,
   QueryClient,
-  useQuery,
 } from "@tanstack/react-query";
 import { Metadata } from "next";
 
@@ -22,7 +20,7 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug); // ← 여기서 디코딩
-  let post = await db.post.findUnique({
+  const post = await db.post.findUnique({
     where: {
       slug: decodedSlug,
     },

@@ -2,11 +2,12 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { HiUserCircle } from "react-icons/hi";
+import { IconType } from "react-icons/lib";
 import { MdDashboard, MdInsertComment } from "react-icons/md";
 
 type TabItemType = {
   title: string;
-  icon: React.ComponentType<any>;
+  icon: IconType;
   pathname: string;
 };
 

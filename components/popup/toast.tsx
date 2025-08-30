@@ -1,6 +1,6 @@
 "use client";
 import { NextPage } from "next";
-import { Dispatch, useEffect, SetStateAction, useState } from "react";
+import { useEffect, useState } from "react";
 import { HiOutlineExclamationCircle } from "react-icons/hi2";
 
 interface ToastProps {
@@ -12,7 +12,7 @@ interface ToastProps {
 }
 
 type stoargeType = { [id: string]: NodeJS.Timeout };
-let timerStorage: stoargeType = {};
+const timerStorage: stoargeType = {};
 
 const Toast: NextPage<ToastProps> = ({
   msg,
@@ -21,34 +21,39 @@ const Toast: NextPage<ToastProps> = ({
   id,
   time,
 }) => {
-  const [fixedTime, setFixedTime] = useState<number>(time);
+  const [fixedTime] = useState<number>(time);
 
   useEffect(() => {
     timeoutLogic();
   }, []);
 
   const timeoutLogic = () => {
-    const fixedWidth = document.getElementById(`_toastView${id}`)?.clientWidth!;
+    const toastEl = document.getElementById(`_toastView${id}`);
+    const timeBarEl = document.getElementById(`_toastTime${id}`);
 
-    let timeBar = document.getElementById(`_toastTime${id}`)!;
-    timeBar.style.width = fixedWidth.toString();
-    +"px";
-    let rate = Number((fixedWidth / fixedTime).toFixed(2));
+    if (!toastEl || !timeBarEl) return; // ✅ 안전하게 null 체크
+
+    const fixedWidth = toastEl.clientWidth;
+    const timeBar = timeBarEl as HTMLElement;
+    timeBar.style.width = fixedWidth + "px";
+
+    const rate = Number((fixedWidth / fixedTime).toFixed(2));
     let currentTime = fixedTime;
-    let _timer = setInterval(() => {
+
+    const _timer = setInterval(() => {
       if (currentTime <= 0) {
         clearInterval(timerStorage[id]);
         delete timerStorage[id];
         toastArrHandler();
+      } else {
+        currentTime -= 0.1;
+        timeBar.style.width =
+          (rate * Number(currentTime.toFixed(2))).toString() + "px";
       }
-      currentTime -= 0.1;
-      timeBar.style.width =
-        (rate * Number(currentTime.toFixed(2))).toString() + "px";
     }, 100);
 
     timerStorage[id] = _timer;
   };
-
   return (
     <div
       id={`_toastContainer${id}`}

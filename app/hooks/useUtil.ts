@@ -52,8 +52,8 @@ export const formateDate = (dateData: Date, type: "US" | "NOR"): string => {
 };
 
 export const timeStamp = () => {
-  let today = new Date();
-  let timeStamp = [
+  const today = new Date();
+  const timeStamp = [
     today.getFullYear(),
     today.getMonth() + 1,
     today.getDate(),

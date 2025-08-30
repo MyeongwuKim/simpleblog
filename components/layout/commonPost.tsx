@@ -3,14 +3,10 @@ import TagItem from "../ui/items/tagItem";
 import ReactMD from "../write/reactMD";
 import FooterItem from "../ui/items/postFooterItem";
 import LabelButton from "../ui/buttons/labelButton";
-import {
-  useParams,
-  usePathname,
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
+  InfiniteData,
   UseMutateFunction,
   useMutation,
   useQuery,
@@ -19,7 +15,7 @@ import {
 import { Post, Tag } from "@prisma/client";
 import { formateDate } from "@/app/hooks/useUtil";
 import Slugger from "github-slugger";
-
+import { Node, Parent } from "unist";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -28,6 +24,7 @@ import { fetchAllPostContentByPostId } from "@/app/lib/fetchers/post";
 import { useUI } from "../providers/uiProvider";
 import { useSession } from "next-auth/react";
 import InfiniteScrollProvider from "./InfiniteScroll/infiniteScrollProvider";
+import { Root, Heading, Text } from "mdast";
 
 export default function CommonPost({ postId }: { postId: string }) {
   const queryClient = useQueryClient();
@@ -48,7 +45,7 @@ export default function CommonPost({ postId }: { postId: string }) {
     QueryResponse<{ post: Post; tag: Tag[] }>,
     Error
   >({
-    mutationFn: async (data) => {
+    mutationFn: async () => {
       const result = await (
         await fetch(`/api/post/postId/${postId}`, {
           method: "DELETE",
@@ -59,18 +56,25 @@ export default function CommonPost({ postId }: { postId: string }) {
       return result;
     },
     onSuccess: (res) => {
-      queryClient.setQueryData(["post"], (oldData: any) => {
+      queryClient.setQueryData<
+        InfiniteData<{
+          data: Post[];
+          nextCursor?: string;
+        }>
+      >(["post"], (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
-          pages: oldData.pages.map((page: QueryResponse<Post[]>) => ({
+          pages: oldData.pages.map((page) => ({
             ...page,
             data: page.data.filter((p) => p.id !== postId),
           })),
         };
       });
       //태그 캐시 업데이트(삭제)
-      queryClient.setQueryData(["tag"], (old: any) => {
+      queryClient.setQueryData<
+        QueryResponse<(Tag & { _count: { posts: number } })[]>
+      >(["tag"], (old) => {
         if (!old) return old;
 
         let data = [...old.data];
@@ -108,21 +112,25 @@ export default function CommonPost({ postId }: { postId: string }) {
   const headRef = useRef<HTMLDivElement>(null);
 
   function extractHeadings(markdown: string) {
-    const tree = unified().use(remarkParse).parse(markdown);
+    const tree = unified().use(remarkParse).parse(markdown) as Root;
     const headings: { level: number; text: string; id: string }[] = [];
     const slugger = new Slugger();
 
-    const visit = (node: any) => {
+    const visit = (node: Node) => {
       if (node.type === "heading") {
-        const text = node.children
-          .filter((child: any) => child.type === "text")
-          .map((child: any) => child.value)
+        const heading = node as Heading;
+
+        const text = heading.children
+          .filter((child): child is Text => child.type === "text")
+          .map((child) => child.value)
           .join("");
+
         const id = slugger.slug(text);
-        headings.push({ level: node.depth, text, id });
+        headings.push({ level: heading.depth, text, id });
       }
-      if (node.children) {
-        node.children.forEach(visit);
+
+      if ("children" in node) {
+        (node as Parent).children.forEach(visit);
       }
     };
 
@@ -136,7 +144,6 @@ export default function CommonPost({ postId }: { postId: string }) {
 
   const {
     data: { current, next, prev },
-    ok,
   } = result as QueryResponse<{
     current: Post & { tag: Tag[] };
     prev: Post;
@@ -197,14 +204,15 @@ const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
   ({ tag, title, createdAt, postId, mutate }, ref) => {
     const { data: session } = useSession();
     const route = useRouter();
-    const { openModal } = useUI();
+    const { openConfirm } = useUI();
 
     const removeEvt = async () => {
-      const result = await openModal("ALERT", {
+      const result = await openConfirm({
         title: "글 삭제",
         msg: "글을 지우시겠습니까?",
         btnMsg: ["취소", "확인"],
       });
+
       if (result) mutate();
     };
 
@@ -233,7 +241,7 @@ const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
           {tag.length <= 0 ? (
             <span className="text-text3">등록된 태그가 없습니다.</span>
           ) : (
-            tag.map((v, i) => (
+            tag.map((v) => (
               <TagItem
                 clickEvt={tagItemClick}
                 clickValueType="body"
@@ -337,3 +345,5 @@ function PostSide({ headings, headRef }: PostSide) {
     </div>
   );
 }
+
+PostHead.displayName = "PostHead";

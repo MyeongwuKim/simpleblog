@@ -6,7 +6,7 @@ import LabelButton from "../buttons/labelButton";
 import { getDeliveryDomain, timeStamp } from "@/app/hooks/useUtil";
 import { useUI } from "@/components/providers/uiProvider";
 import InputField from "../input/inputField";
-import { profileMutate, profileQuery } from "./query";
+import { useProfileMutate, useProfileQuery } from "./query";
 
 export default function IntroCard() {
   const { openToast } = useUI();
@@ -15,9 +15,9 @@ export default function IntroCard() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: profileResult, isLoading: profileLoading } = profileQuery();
+  const { data: profileResult, isLoading: profileLoading } = useProfileQuery();
 
-  const { mutate } = profileMutate({
+  const { mutate } = useProfileMutate({
     onSuccessCallback: (result) => {
       setUploading(false);
       if (result?.data?.profileImg) {
@@ -69,7 +69,7 @@ export default function IntroCard() {
         method: "DELETE",
       });
       if (fileInputRef.current) fileInputRef.current.value = "";
-      mutate({ form: "profileimg", profileImg: null as any });
+      mutate({ form: "profileimg", profileImg: null });
       setProfileImg(null);
     }
   }, [profileResult?.data.profileImg]);
@@ -90,7 +90,7 @@ export default function IntroCard() {
         const form = new FormData();
         form.append(
           "file",
-          file as any,
+          file as File,
           `${process.env.NODE_ENV}_simpleblog_profile_${timeStamp()}`
         );
 

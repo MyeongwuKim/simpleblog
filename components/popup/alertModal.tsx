@@ -1,10 +1,8 @@
-import { ReactNode } from "react";
-
 interface AlertModalProps {
   msg: string;
   title?: string;
   btnMsg: string[];
-  onClose: (value: unknown) => void;
+  onClose: (value: number) => void;
 }
 
 import { Modal, ModalBody, ModalHeader } from "flowbite-react";

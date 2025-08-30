@@ -2,10 +2,9 @@ import { Textarea } from "flowbite-react";
 
 import { TextareaHTMLAttributes } from "react";
 
-interface TextAreaProps
-  extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "size"> {}
-
-export function TextAreaField({ ...rest }: TextAreaProps) {
+export function TextAreaField({
+  ...rest
+}: Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "size">) {
   return (
     <Textarea
       {...rest}

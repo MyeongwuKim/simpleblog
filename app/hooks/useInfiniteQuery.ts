@@ -11,7 +11,7 @@ export interface ApiResponse<T> {
   totalCount?: number;
 }
 
-interface UseInfiniteScrollDataProps<TPageData, TPageParam, TError = unknown> {
+interface UseInfiniteScrollDataProps<TPageData, TPageParam> {
   queryKey: QueryKey;
   queryFn: (
     pageParam: TPageParam,
@@ -31,16 +31,9 @@ export function useInfiniteScrollData<
   TPageParam = number,
   TError = unknown
 >(
-  props: UseInfiniteScrollDataProps<TPageData, TPageParam, TError>
+  props: UseInfiniteScrollDataProps<TPageData, TPageParam>
 ): UseInfiniteQueryResult<InfiniteData<ApiResponse<TPageData>>, TError> {
-  const {
-    queryKey,
-    queryFn,
-    gcTime,
-    staleTime,
-    initialPageParam,
-    getNextPageParam,
-  } = props;
+  const { queryKey, queryFn, gcTime, staleTime, initialPageParam } = props;
 
   return useInfiniteQuery<
     ApiResponse<TPageData>,

@@ -1,4 +1,3 @@
-import { createUniqueSlug } from "@/app/hooks/useUtil";
 import { db } from "@/app/lib/db";
 import { Tag } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
@@ -74,12 +73,20 @@ export const GET = async (
       ok: true,
       data: {
         current: postData,
-        ...(type ? { prev: prevPost, next: nextPost } : {}),
+        ...(type == "all" ? { prev: prevPost, next: nextPost } : {}),
       },
     });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
-  } finally {
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
 };
 
@@ -88,10 +95,18 @@ export const POST = async (
   { params }: { params: { postId: string } }
 ) => {
   const { postId } = await params;
-  let jsonData = await req.json();
+  const jsonData = await req.json();
 
-  let { content, tag, title, imageIds, preview, thumbnail, isTemp, createdAt } =
-    jsonData as PostType & { createdAt: Date };
+  const {
+    content,
+    tag,
+    title,
+    imageIds,
+    preview,
+    thumbnail,
+    isTemp,
+    createdAt,
+  } = jsonData as PostType & { createdAt: Date };
 
   try {
     const result = await db.$transaction(async (tx) => {
@@ -108,7 +123,7 @@ export const POST = async (
           ...(createdAt ? { createdAt } : {}),
         },
       });
-      let tags: Tag[] = [];
+      const tags: Tag[] = [];
       for (const body of tag) {
         const _tag = await tx.tag.upsert({
           where: { body },
@@ -138,15 +153,17 @@ export const POST = async (
         tag: result.tags,
       },
     });
-  } catch (e: any) {
-    let error = e?.code
-      ? `Prisma errorCode:${e.code}, Prisma Error ${JSON.stringify(e.meta)}`
-      : `일시적 오류입니다. 다시 시도해주세요.`;
-    return NextResponse.json({
-      ok: false,
-      error,
-    });
-  } finally {
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
 };
 
@@ -164,7 +181,7 @@ export const DELETE = async (
         select: { id: true, tagIds: true, imageIds: true },
       });
 
-      let tags = [];
+      const tags: Tag[] = [];
       // 2. 태그별로 postIds 갱신
       for (const tagId of deletedPost.tagIds) {
         const tag = await tx.tag.findUnique({ where: { id: tagId } });
@@ -209,14 +226,16 @@ export const DELETE = async (
         tag: result.tags,
       },
     });
-  } catch (e: any) {
-    let error = e?.code
-      ? `Prisma errorCode:${e.code}, Prisma Error ${JSON.stringify(e.meta)}`
-      : `일시적 오류입니다. 다시 시도해주세요.`;
-    return NextResponse.json({
-      ok: false,
-      error,
-    });
-  } finally {
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
 };

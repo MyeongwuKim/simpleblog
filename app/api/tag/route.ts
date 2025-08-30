@@ -2,10 +2,9 @@ import { db } from "@/app/lib/db";
 
 import { NextResponse, NextRequest } from "next/server";
 
-export const GET = async (req: NextRequest) => {
+export const GET = async () => {
   try {
-    const page = req.nextUrl.searchParams.get("page");
-    let tagData = await db.tag.findMany({
+    const tagData = await db.tag.findMany({
       where: {
         isTemp: false,
       },
@@ -36,9 +35,17 @@ export const GET = async (req: NextRequest) => {
       ok: true,
       data: result,
     });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
-  } finally {
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
 };
 
@@ -57,9 +64,9 @@ export const DELETE = async (req: NextRequest) => {
       where: { tagIds: { has: id } }, // 배열 안에 id 포함 여부
       select: { id: true, tagIds: true },
     });
-    let updatedPosts = [];
+    const updatedPosts = [];
     for (const post of posts) {
-      let updated = await db.post.update({
+      const updated = await db.post.update({
         where: { id: post.id },
         data: {
           tagIds: post.tagIds.filter((tagId) => tagId !== id),
@@ -79,7 +86,16 @@ export const DELETE = async (req: NextRequest) => {
         post: updatedPosts,
       },
     });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
 };

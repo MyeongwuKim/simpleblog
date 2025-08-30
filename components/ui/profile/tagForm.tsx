@@ -1,6 +1,5 @@
 "use client";
-import { useCallback, useState } from "react";
-import { FaTrash } from "react-icons/fa";
+import { useCallback } from "react";
 import TagItem from "../items/tagItem";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchTagList } from "@/app/lib/fetchers/tag";
@@ -16,12 +15,10 @@ interface Tag {
 
 export function TagForm() {
   const queryClient = useQueryClient();
-  const { openModal, openToast } = useUI();
-  const {
-    isLoading,
-    isError,
-    data: tagResult,
-  } = useQuery<QueryResponse<(Tag & { _count: { posts: number } })[]>>({
+  const { openConfirm, openToast } = useUI();
+  const { isLoading, data: tagResult } = useQuery<
+    QueryResponse<(Tag & { _count: { posts: number } })[]>
+  >({
     queryKey: ["tag"],
     queryFn: fetchTagList,
   });
@@ -43,16 +40,19 @@ export function TagForm() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["tag"] });
       for (const post of result.data.post) {
-        queryClient.setQueryData(["post", post.id], (old: any) => {
-          if (!old) return old;
-          return {
-            ...old,
-            data: {
-              ...old.data,
-              tagIds: post.tagIds, // []로 업데이트됨
-            },
-          };
-        });
+        queryClient.setQueryData(
+          ["post", post.id],
+          (old: QueryResponse<Post>) => {
+            if (!old) return old;
+            return {
+              ...old,
+              data: {
+                ...old.data,
+                tagIds: post.tagIds, // []로 업데이트됨
+              },
+            };
+          }
+        );
       }
       console.log(result.data);
     },
@@ -62,7 +62,7 @@ export function TagForm() {
   });
 
   const handleDelete = useCallback(async (id: string) => {
-    const result = await openModal("ALERT", {
+    const result = await openConfirm({
       title: "",
       msg: "해당 태그를 삭제하시겠습니까?",
       btnMsg: ["취소", "확인"],

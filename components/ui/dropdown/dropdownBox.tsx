@@ -3,9 +3,9 @@ import { Dropdown, DropdownItem } from "flowbite-react";
 import { DropdownType } from "./dropdownType";
 import { memo } from "react";
 
-interface BoxProps extends DropdownType {
+interface BoxProps<T = string> extends DropdownType<T> {
   boxSize?: string;
-  value: any;
+  value: T;
 }
 
 const DropdownBox = ({ items, clickEvt, value }: BoxProps) => {

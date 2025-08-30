@@ -1,14 +1,17 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  InfiniteData,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import DefButton from "../ui/buttons/defButton";
 import InputField from "../ui/input/inputField";
 import { TextAreaField } from "../ui/input/textAreaField";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useUI } from "../providers/uiProvider";
 import { Comment } from "@prisma/client";
 import { useSession } from "next-auth/react";
-import { useTheme } from "next-themes";
 
 export default function CommentsLayout() {
   const queryClient = useQueryClient();
@@ -20,7 +23,7 @@ export default function CommentsLayout() {
   const { mutate } = useMutation<
     QueryResponse<Comment>,
     Error,
-    Omit<Comment, "id" | "createdAt"> & { token: any }
+    Omit<Comment, "id" | "createdAt"> & { token: unknown }
   >({
     mutationFn: async (data) => {
       const result = await (
@@ -35,13 +38,19 @@ export default function CommentsLayout() {
     onSuccess: (res) => {
       setName("");
       setContent("");
-      (window as any).grecaptcha.reset();
-      queryClient.setQueryData(["comments"], (oldData: any) => {
+      window.grecaptcha.reset();
+
+      queryClient.setQueryData<
+        InfiniteData<{
+          data: Comment[];
+          nextCursor?: string;
+        }>
+      >(["comments"], (oldData) => {
         if (!oldData) return oldData;
 
         return {
           ...oldData,
-          pages: oldData.pages.map((page: any, idx: number) =>
+          pages: oldData.pages.map((page, idx) =>
             idx === 0
               ? {
                   ...page,
@@ -51,24 +60,29 @@ export default function CommentsLayout() {
           ),
         };
       });
+
       queryClient.invalidateQueries({ queryKey: ["comments"] });
     },
     onError: (error) => {
       openToast(true, error.message, 1);
     },
   });
-  const onChangeText = useCallback((e: any) => {
-    const { id, value } = e.target;
 
-    switch (id) {
-      case "name":
-        setName(value);
-        break;
-      case "content":
-        setContent(value);
-        break;
-    }
-  }, []);
+  const onChangeText = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { id, value } = e.target;
+
+      switch (id) {
+        case "name":
+          setName(value);
+          break;
+        case "content":
+          setContent(value);
+          break;
+      }
+    },
+    []
+  );
   const rules = [
     // 로그인 안 했을 때만 이름 체크
     ...(!session
@@ -105,7 +119,7 @@ export default function CommentsLayout() {
       onSubmit={(e) => {
         e.preventDefault();
         if (!validate()) return;
-        const token = (window as any).grecaptcha.getResponse();
+        const token = window.grecaptcha.getResponse();
         if (!token) {
           openToast(true, "로봇이 아님을 인증해주세요.", 1);
           return;

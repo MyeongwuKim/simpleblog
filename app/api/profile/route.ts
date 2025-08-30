@@ -17,14 +17,23 @@ export const GET = async () => {
       ok: true,
       data: profile,
     });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
 };
 
 export const POST = async (req: NextRequest) => {
   try {
-    let {
+    const {
       title,
       content,
       introduce,
@@ -53,7 +62,7 @@ export const POST = async (req: NextRequest) => {
       });
     }
 
-    let updateData: Partial<Profile> = {};
+    const updateData: Partial<Profile> = {};
 
     switch (form) {
       case "profileimg":
@@ -84,7 +93,16 @@ export const POST = async (req: NextRequest) => {
     });
 
     return NextResponse.json({ ok: true, data: updated });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
 };

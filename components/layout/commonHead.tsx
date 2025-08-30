@@ -10,10 +10,9 @@ import { HiCog, HiLogout } from "react-icons/hi";
 import { DropdownProfile } from "../ui/dropdown/dropdownProfile";
 import { FaBookBookmark } from "react-icons/fa6";
 import { FaSave } from "react-icons/fa";
-import { profileQuery } from "../ui/profile/query";
+import { useProfileQuery } from "../ui/profile/query";
 import { signIn, signOut, useSession } from "next-auth/react";
 import DefButton from "../ui/buttons/defButton";
-import Signin from "@/app/auth/signin/page";
 
 const showList = ["/", "/profile", "/comments"];
 
@@ -24,7 +23,7 @@ export default function Head() {
   const route = useRouter();
   const pathname = usePathname();
 
-  const { data } = profileQuery();
+  const { data } = useProfileQuery();
   useEffect(() => {
     setTheme(myTheme!);
   }, [myTheme]);

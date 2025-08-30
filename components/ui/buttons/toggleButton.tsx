@@ -5,7 +5,7 @@ interface ToggleButtonType {
   isCheck: boolean;
   clickCallback: (state: boolean) => void;
 }
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useState } from "react";
 
 export default function ToggleButton({
   checkIcon,

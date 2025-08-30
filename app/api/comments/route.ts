@@ -1,4 +1,3 @@
-import { createUniqueSlug } from "@/app/hooks/useUtil";
 import { db } from "@/app/lib/db";
 import { Comment } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
@@ -20,16 +19,24 @@ export const GET = async (req: NextRequest) => {
       data: commentsData,
       totalCount,
     });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
-  } finally {
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
 };
 
 export const POST = async (req: NextRequest) => {
   try {
-    let { content, name, isMe, token } = (await req.json()) as Comment & {
-      token: any;
+    const { content, name, isMe, token } = (await req.json()) as Comment & {
+      token: unknown;
     };
 
     //  reCAPTCHA 검증
@@ -60,8 +67,17 @@ export const POST = async (req: NextRequest) => {
       },
     });
     return NextResponse.json({ ok: true, data: commentData });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
 };
 
@@ -85,7 +101,16 @@ export const DELETE = async (req: NextRequest) => {
       ok: true,
       data: deleteComment,
     });
-  } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
 };

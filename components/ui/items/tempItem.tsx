@@ -3,14 +3,18 @@ import { Post } from "@prisma/client";
 import LabelButton from "../buttons/labelButton";
 import { formatRelativeTime } from "@/app/hooks/useUtil";
 import Link from "next/link";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  InfiniteData,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useUI } from "@/components/providers/uiProvider";
 import { useCallback } from "react";
 
 export default function TempItem({ preview, title, updatedAt, id }: Post) {
   const queryClient = useQueryClient();
-  const { openToast, openModal } = useUI();
-  const { mutate, isPending } = useMutation<QueryResponse<Post>, Error>({
+  const { openToast, openConfirm } = useUI();
+  const { mutate } = useMutation<QueryResponse<Post>, Error>({
     mutationFn: async () => {
       const result = await (
         await fetch(`/api/post/postId/${id}`, {
@@ -21,16 +25,21 @@ export default function TempItem({ preview, title, updatedAt, id }: Post) {
       if (!result.ok) throw new Error(result.error);
       return result;
     },
-    onSuccess: (res) => {
-      queryClient.setQueryData(["temp"], (old: any) => {
+    onSuccess: () => {
+      queryClient.setQueryData<
+        InfiniteData<{
+          data: Post[];
+          nextCursor?: string;
+        }>
+      >(["temp"], (old) => {
         if (!old) return old;
 
         return {
           ...old,
-          pages: old.pages.map((page: any) => {
+          pages: old.pages.map((page) => {
             return {
               ...page,
-              data: page.data.filter((post: any) => post.id !== id),
+              data: page.data.filter((post) => post.id !== id),
             };
           }),
         };
@@ -40,7 +49,7 @@ export default function TempItem({ preview, title, updatedAt, id }: Post) {
     onError: (error) => openToast(true, error.message, 1),
   });
   const deleteTempPost = useCallback(async () => {
-    const result = await openModal("ALERT", {
+    const result = await openConfirm({
       title: "임시글 삭제",
       msg: "임시글을 지우시겠습니까?",
       btnMsg: ["취소", "확인"],

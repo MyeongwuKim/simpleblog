@@ -1,12 +1,11 @@
 import { NextPage } from "next";
-import { EditorSelection, EditorState, Text } from "@codemirror/state";
+import { EditorSelection } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { SearchCursor } from "@codemirror/search";
 import { getDeliveryDomain, timeStamp } from "@/app/hooks/useUtil";
 import { useUI } from "../providers/uiProvider";
-import { useWrite } from "@/app/write/page";
 
 interface IToolBar {
   theme: string | undefined;
@@ -15,31 +14,31 @@ interface IToolBar {
 
 const ToolBar: NextPage<IToolBar> = (props) => {
   const { editorView } = props;
-  const { dispatch, state: reducerState } = useWrite();
   const { openToast } = useUI();
   const { watch, register, setValue } = useForm();
   const imageFile = watch("image");
 
   //이미지 송신, 완료하면 url 변경
   const onUploadImgEvt = useCallback(
-    async (file: any) => {
+    async (file: File) => {
+      if (!editorView) return;
       editorView?.focus();
       const imgURL = URL.createObjectURL(file);
 
-      let line = editorView?.state.doc.lineAt(
-        editorView?.state.selection.main.from
+      const line = editorView.state.doc.lineAt(
+        editorView.state.selection.main.from
       )!;
-      let startCaret = editorView!.state.selection.ranges[0].from - line.from;
-      let endCaret =
-        editorView!.state.selection.ranges[0].to -
-        editorView!.state.selection.ranges[0].from;
+      const startCaret = editorView!.state.selection.ranges[0].from - line.from;
+      const endCaret =
+        editorView.state.selection.ranges[0].to -
+        editorView.state.selection.ranges[0].from;
 
-      let cutStr = line?.text.substring(startCaret, startCaret + endCaret);
+      const cutStr = line?.text.substring(startCaret, startCaret + endCaret);
 
-      let link = `![${cutStr!.length > 0 ? cutStr : "업로드중"}](${imgURL})`;
+      const link = `![${cutStr!.length > 0 ? cutStr : "업로드중"}](${imgURL})`;
 
-      let state = editorView?.state!;
-      let tr = state.update(state.replaceSelection(link));
+      const state = editorView.state;
+      const tr = state.update(state.replaceSelection(link));
 
       editorView?.dispatch(tr);
 
@@ -52,7 +51,7 @@ const ToolBar: NextPage<IToolBar> = (props) => {
 
         form.append(
           "file",
-          file as any,
+          file as File,
           `${process.env.NODE_ENV}_simpleblog_${timeStamp()}`
         );
         const {
@@ -64,7 +63,7 @@ const ToolBar: NextPage<IToolBar> = (props) => {
           })
         ).json();
 
-        let cursor = new SearchCursor(editorView.state.doc, link);
+        const cursor = new SearchCursor(editorView.state.doc, link);
         cursor.next();
 
         editorView?.dispatch({
@@ -83,7 +82,7 @@ const ToolBar: NextPage<IToolBar> = (props) => {
 
   useEffect(() => {
     if (imageFile && imageFile.length > 0) {
-      const file: any = imageFile[0];
+      const file: File = imageFile[0];
       onUploadImgEvt(file);
       setValue("image", "");
       //URL.revokeObjectURL(url);
@@ -91,26 +90,27 @@ const ToolBar: NextPage<IToolBar> = (props) => {
   }, [imageFile, onUploadImgEvt]);
 
   const onLinkEvt = () => {
-    editorView?.focus();
+    if (!editorView) return;
+    editorView.focus();
 
-    let line = editorView?.state.doc.lineAt(
-      editorView?.state.selection.main.from
+    const line = editorView.state.doc.lineAt(
+      editorView.state.selection.main.from
     )!;
-    let startCaret = editorView!.state.selection.ranges[0].from - line.from;
-    let endCaret =
-      editorView!.state.selection.ranges[0].to -
-      editorView!.state.selection.ranges[0].from;
+    const startCaret = editorView.state.selection.ranges[0].from - line.from;
+    const endCaret =
+      editorView.state.selection.ranges[0].to -
+      editorView.state.selection.ranges[0].from;
 
-    let cutStr = line?.text.substring(startCaret, startCaret + endCaret);
+    const cutStr = line.text.substring(startCaret, startCaret + endCaret);
 
-    let link = `[${cutStr!.length > 0 ? cutStr : "NAME"}](https://)`;
-    let state = editorView?.state!;
-    let tr = state.update(state.replaceSelection(link));
+    const link = `[${cutStr.length > 0 ? cutStr : "NAME"}](https://)`;
+    const state = editorView.state!;
+    const tr = state.update(state.replaceSelection(link));
 
     editorView?.dispatch(tr);
 
-    let newFrom = state.selection.main.from + 1;
-    let newTo = state.selection.main.from + link.indexOf("]");
+    const newFrom = state.selection.main.from + 1;
+    const newTo = state.selection.main.from + link.indexOf("]");
 
     editorView?.dispatch({
       selection: EditorSelection.create(
@@ -221,12 +221,13 @@ const ToolBar: NextPage<IToolBar> = (props) => {
     }
   };
   const onOneSymbolEvt = (evtName: string) => {
-    editorView?.focus();
+    if (!editorView) return;
+    editorView.focus();
 
-    let state = editorView?.state!;
-    let line = state.doc.lineAt(state.selection.main.from); //current selection line Info
+    const state = editorView.state!;
+    const line = state.doc.lineAt(state.selection.main.from); //current selection line Info
 
-    let tr = state.update({
+    const tr = state.update({
       changes: {
         from: line.from,
         to: line.to,
@@ -235,7 +236,7 @@ const ToolBar: NextPage<IToolBar> = (props) => {
     });
 
     editorView?.dispatch(tr); // dispatch new doc state
-    let endLine = tr.state.doc.toString().length;
+    const endLine = tr.state.doc.toString().length;
     editorView?.dispatch({
       selection: EditorSelection.create(
         [

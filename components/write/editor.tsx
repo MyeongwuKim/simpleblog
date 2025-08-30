@@ -1,27 +1,26 @@
 import { EditorView } from "@codemirror/view";
-import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useRef } from "react";
 import ToolBar from "./toolbar";
 import TagInput from "../ui/input/tagInput";
 import { useWrite } from "@/app/write/page";
 
-interface Props {
-  refContainer: React.RefObject<HTMLDivElement> | null;
-  editorView: EditorView;
+interface EditorProps {
+  editorView: EditorView | null; // ✅ null 허용
+  refContainer: React.MutableRefObject<HTMLDivElement | null>;
 }
 
-const Editor: React.FC<Props> = ({ editorView, refContainer }) => {
+const Editor: React.FC<EditorProps> = ({ editorView, refContainer }) => {
   const { dispatch, state } = useWrite();
-  const titleArea = useRef<any>("");
+  const titleArea = useRef<HTMLTextAreaElement>(null);
 
-  const onTitleChange = (e: any) => {
+  const onTitleChange = () => {
     const { current } = titleArea;
 
     dispatch({
       type: "SET_FORM",
       payload: {
         ...state,
-        title: current.value,
+        title: current?.value,
       },
     });
     current!.style.height = "auto";
@@ -85,8 +84,9 @@ const Editor: React.FC<Props> = ({ editorView, refContainer }) => {
               >
                 <span
                   className={`${
-                    editorView?.contentDOM.innerText.trim().length > 0 ||
-                    editorView?.contentDOM.children.length > 1
+                    editorView &&
+                    (editorView.contentDOM.innerText.trim().length > 0 ||
+                      editorView.contentDOM.children.length > 1)
                       ? "hidden"
                       : "inline-block"
                   }`}

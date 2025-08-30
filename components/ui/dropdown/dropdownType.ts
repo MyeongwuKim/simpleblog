@@ -1,10 +1,10 @@
 import { ComponentProps, FC } from "react";
 
-export type DropdownType = {
+export type DropdownType<T = string> = {
   items: {
     content: string;
-    value: any;
+    value: T;
     icon?: FC<ComponentProps<"svg">>;
   }[];
-  clickEvt?: (value: any) => void;
+  clickEvt?: (value: T) => void;
 };

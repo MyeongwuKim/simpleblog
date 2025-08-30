@@ -1,9 +1,4 @@
-import React, { createElement, useEffect, useState } from "react";
-
-type Tokens = {
-  text: string;
-  style: string | null;
-}[];
+import React, { useEffect } from "react";
 
 const RemarkP: React.FC<
   React.DetailedHTMLProps<

@@ -48,21 +48,21 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
     <>
       <ReactMarkDown
         components={{
-          a({ node, children, ...props }) {
+          a({ children, ...props }) {
             return (
               <a className="mb-[1em]" target="_blank" {...props}>
                 {children}
               </a>
             );
           },
-          h1({ node, children, ...props }) {
+          h1({ children, ...props }) {
             return (
               <h1 className="text-4xl font-bold leading-snug my-8" {...props}>
                 {children}
               </h1>
             );
           },
-          h2({ node, children, ...props }) {
+          h2({ children, ...props }) {
             return (
               <h2
                 className="text-2xl font-semibold leading-snug my-4"
@@ -72,7 +72,7 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
               </h2>
             );
           },
-          h3({ node, children, ...props }) {
+          h3({ children, ...props }) {
             return (
               <h3
                 className="appendix font-sans mb-[1em] text-[20px] font-bold"
@@ -82,16 +82,16 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
               </h3>
             );
           },
-          blockquote({ node, children, ...props }) {
+          blockquote({ children, ...props }) {
             return (
               <blockquote
                 className="font-sans mb-[1em] font-semibold border-l-4 whitespace-pre-line dark:bg-zinc-600 bg-gray-100 text-black dark:text-white border-emerald-500 px-4"
                 {...props}
               >
                 {children.map((child, i) => {
-                  let reactElement = child as JSX.Element;
+                  const reactElement = child as JSX.Element;
                   if (reactElement.props) {
-                    let div = React.createElement(
+                    const div = React.createElement(
                       "div",
                       { key: i },
                       reactElement.props?.children
@@ -103,7 +103,7 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
               </blockquote>
             );
           },
-          p({ node, children, ...props }) {
+          p({ children, ...props }) {
             return (
               <p
                 className="text-base leading-relaxed my-4 text-text1"
@@ -113,7 +113,7 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
               </p>
             );
           },
-          img({ node, children, ...props }) {
+          img({ ...props }) {
             return (
               <Image
                 width="0"
@@ -125,7 +125,7 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
               />
             );
           },
-          ol({ node, children, ...props }) {
+          ol({ children }) {
             return <div className="mb-[1em] list-decimal">{children}</div>;
           },
           code: RemarkCode,

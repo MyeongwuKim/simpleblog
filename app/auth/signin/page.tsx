@@ -1,25 +1,18 @@
 "use client";
 
-import {
-  ClientSafeProvider,
-  signIn,
-  signOut,
-  useSession,
-} from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
 
 const Signin = () => {
   const { data } = useSession();
-  useEffect(() => {}, [data]);
+
   return (
     <div className="flex flex-col ">
       <div className="font-semibold text-2xl text-center mb-4"> 로그인 </div>
       <button
         className="bg-[#fee500] rounded-lg p-4 font-semibold text-[#111] flex items-center gap-2 text-lg"
         onClick={async () => {
-          const result = await signIn("kakao", {
+          await signIn("kakao", {
             redirect: true,
             callbackUrl: "/",
           });

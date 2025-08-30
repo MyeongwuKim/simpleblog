@@ -2,7 +2,6 @@
 import Editor from "@/components/write/editor";
 import {
   createContext,
-  RefObject,
   useCallback,
   useContext,
   useEffect,
@@ -12,10 +11,15 @@ import {
 import useCodeMirror from "../lib/use-codemirror";
 import DefButton from "@/components/ui/buttons/defButton";
 import { useUI } from "@/components/providers/uiProvider";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  InfiniteData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { getFormatImagesId } from "../hooks/useUtil";
 import Preview from "@/components/write/preview";
-import { notFound, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Slugger from "github-slugger";
 import { Post, Tag } from "@prisma/client";
 import { fetchPostContentByPostId } from "../lib/fetchers/post";
@@ -48,18 +52,18 @@ type ContextType = {
   dispatch: React.Dispatch<Action>;
 };
 
-const toPostType = (data: any): PostType => ({
-  title: data.title ?? "",
-  tag: data.tag?.length
-    ? data.tag.map((item: any) => (item.body ? item.body : item))
-    : [],
-  content: data.content ?? "",
-  imageIds: data.imageIds ?? [],
-  isTemp: data.isTemp ?? false,
-  preview: data.preview ?? null,
-  slug: data.slug ?? "",
-  thumbnail: data.thumbnail ?? null,
-});
+const toPostType = (data: Post & { tag: Tag[] }): PostType => {
+  return {
+    title: data.title ?? "",
+    tag: data.tag?.length > 0 ? data.tag.map((item) => item.body) : [],
+    content: data.content ?? "",
+    imageIds: data.imageIds ?? [],
+    isTemp: data.isTemp ?? false,
+    preview: data.preview ?? null,
+    slug: data.slug ?? "",
+    thumbnail: data.thumbnail ?? null,
+  };
+};
 
 const WriteContext = createContext<ContextType | undefined>(undefined);
 
@@ -73,90 +77,63 @@ export default function Write() {
   const previewRef = useRef<HTMLDivElement>(null);
   const { openToast } = useUI();
 
-  const {
-    data: result,
-    isLoading,
-    isError,
-  } = useQuery<QueryResponse<{ current: Post & { tag: Tag[] } }>>({
+  const { data: result } = useQuery<
+    QueryResponse<{ current: Post & { tag: Tag[] } }>
+  >({
     queryKey: ["post", postId],
     queryFn: () => fetchPostContentByPostId(postId!),
     enabled: isValidPostId,
   });
 
-  // temp 캐시 업데이트 (삭제,추가)
-  const updateTempPostCache = (oldData: any, res: Post) => {
-    if (!oldData) return oldData;
-
-    let found = false;
-
-    const newPages = oldData.pages.map((page: any) => ({
-      ...page,
-      data: page.data
-        .map((item: any) => {
-          if (item.id === res.id) {
-            found = true;
-            return res.isTemp ? { ...item, ...res } : null;
-          }
-          return item;
-        })
-        .filter(Boolean),
-    }));
-
-    // 새 임시글이면 맨 앞에 추가
-    if (res.isTemp && !found) {
-      if (newPages.length === 0) {
-        newPages.push({ data: [res] });
-      } else {
-        newPages[0].data.unshift(res);
-      }
-    }
-
-    return {
-      ...oldData,
-      pages: newPages,
-    };
-  };
   //새글 작성일시 post 캐시에 아이템 추가
   const insertNewPostCache = (queryKey: string[], item: Post) => {
-    queryClient.setQueryData(queryKey, (oldData: any) => {
-      // 캐시가 없으면 새 페이지 생성
-      if (!oldData) return oldData; // 없으면 fetch에 맡김
+    queryClient.setQueryData<InfiniteData<InfiniteResponse<Post>>>(
+      queryKey,
+      (oldData) => {
+        // 캐시가 없으면 새 페이지 생성
+        if (!oldData) return oldData; // 없으면 fetch에 맡김
 
-      return {
-        ...oldData,
-        pages: oldData.pages.map((page: any, i: number) =>
-          i === 0 ? { ...page, data: [item, ...page.data] } : page
-        ),
-        // pageParams는 그대로 유지
-        pageParams: oldData.pageParams,
-      };
-    });
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page, i: number) =>
+            i === 0 ? { ...page, data: [item, ...page.data] } : page
+          ),
+          // pageParams는 그대로 유지
+          pageParams: oldData.pageParams,
+        };
+      }
+    );
   };
   //게시된 글 수정했을때 post페이지에 반영
   const updateExistingPostCache = (queryKey: string[], item: Post) => {
-    queryClient.setQueryData(queryKey, (oldData: any) => {
-      if (!oldData) return oldData;
-      return {
-        ...oldData,
-        pages: oldData.pages.map((page: any) => ({
-          ...page,
-          data: page.data.map((pItem: any) =>
-            pItem.id === item.id ? item : pItem
-          ),
-        })),
-      };
-    });
+    queryClient.setQueryData<InfiniteData<InfiniteResponse<Post>>>(
+      queryKey,
+      (oldData) => {
+        if (!oldData) return oldData;
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            data: page.data.map((pItem) =>
+              pItem.id === item.id ? item : pItem
+            ),
+          })),
+        };
+      }
+    );
   };
 
   const updateTagCache = (tags: Tag[]) => {
-    queryClient.setQueryData(
+    queryClient.setQueryData<
+      QueryResponse<(Tag & { _count: { posts: number } })[]>
+    >(
       ["tag"], // 태그 목록 캐시 key
-      (old: any) => {
+      (old) => {
         if (!old) return old;
 
         let data = [...old.data];
 
-        // "전체" 카운트 업데이트
         data = data.map((t) =>
           t.body === "전체"
             ? {
@@ -166,7 +143,6 @@ export default function Write() {
             : t
         );
 
-        // 작성된 글의 태그 처리
         for (const newTag of tags) {
           const existing = data.find((t) => t.body === newTag.body);
           if (existing) {
@@ -184,28 +160,83 @@ export default function Write() {
     );
   };
 
-  const handleTempPost = (res: Post) => {
-    queryClient.setQueryData(["temp"], (oldData: any) =>
-      updateTempPostCache(oldData, res)
+  const insertTempPost = (res: Post) => {
+    queryClient.setQueryData<InfiniteData<InfiniteResponse<Post>>>(
+      ["temp"],
+      (oldData) => {
+        if (!oldData) {
+          return {
+            pages: [{ ok: true, data: [res] }],
+            pageParams: [0],
+          };
+        }
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page, i) =>
+            i === 0 ? { ...page, data: [res, ...page.data] } : page
+          ),
+        };
+      }
     );
     queryClient.invalidateQueries({ queryKey: ["temp"], exact: true });
-
-    if (isValidPostId) {
-      queryClient.setQueryData(["post", postId], (oldData: any) =>
-        oldData ? { ...oldData, data: { ...oldData.data, ...res } } : oldData
-      );
-    }
-
     openToast(false, "임시저장을 완료하였습니다.", 1);
   };
 
-  const handleUpdatePost = (res: Post, prevIsTemp: boolean) => {
-    queryClient.setQueryData(["temp"], (oldData: any) =>
-      updateTempPostCache(oldData, res)
+  const updateTempPost = (res: Post) => {
+    queryClient.setQueryData<InfiniteData<InfiniteResponse<Post>>>(
+      ["temp"],
+      (oldData) => {
+        if (!oldData) return oldData;
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            data: page.data.map((item) =>
+              item.id === res.id ? { ...item, ...res } : item
+            ),
+          })),
+        };
+      }
     );
 
-    queryClient.setQueryData(["post", postId], (oldData: any) =>
-      oldData ? { ...oldData, data: { ...oldData.data, ...res } } : oldData
+    if (isValidPostId) {
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
+    }
+    queryClient.invalidateQueries({ queryKey: ["temp"], exact: true });
+    openToast(false, "임시저장을 완료하였습니다.", 1);
+  };
+
+  const deleteTempPostCache = (res: Post) => {
+    queryClient.setQueryData<InfiniteData<InfiniteResponse<Post>>>(
+      ["temp"],
+      (oldData) => {
+        if (!oldData) return oldData;
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            data: page.data.filter((item) => item.id !== res.id),
+          })),
+        };
+      }
+    );
+  };
+
+  const handleUpdatePost = (res: Post, prevIsTemp: boolean) => {
+    if (prevIsTemp) {
+      deleteTempPostCache(res);
+    }
+
+    queryClient.setQueryData<QueryResponse<{ current: Post & { tag: Tag[] } }>>(
+      ["post", postId],
+      (oldData) => {
+        return oldData
+          ? { ...oldData, data: { ...oldData.data, ...res } }
+          : oldData;
+      }
     );
 
     //임시글 -> 추가했을때..
@@ -213,7 +244,7 @@ export default function Write() {
     //게시글 -> 수정했을때..
     else updateExistingPostCache(["post"], res);
 
-    queryClient.invalidateQueries({ queryKey: ["post"] });
+    queryClient.invalidateQueries({ queryKey: ["post"], exact: true });
     router.push(`/post/${res.slug}`);
     if (prevIsTemp) openToast(false, "글 작성을 완료하였습니다.", 1);
   };
@@ -249,9 +280,9 @@ export default function Write() {
       return result;
     },
     onSuccess: (res) => {
-      if (res.data.post.isTemp) handleTempPost(res.data.post); //임시글 수정
-      else if (isValidPostId)
-        handleUpdatePost(res.data.post, result?.data.current.isTemp!);
+      if (res.data.post.isTemp) updateTempPost(res.data.post); //임시글 수정
+      else if (isValidPostId && result)
+        handleUpdatePost(res.data.post, result.data.current.isTemp);
       //임시글 -> 작성, 게시글 -> 수정
       else handleNewPost(res.data);
     },
@@ -274,7 +305,7 @@ export default function Write() {
       return result;
     },
     onSuccess: (res) => {
-      if (res.data.post.isTemp) handleTempPost(res.data.post);
+      if (res.data.post.isTemp) insertTempPost(res.data.post);
       else {
         handleNewPost(res.data);
       }
@@ -332,38 +363,40 @@ export default function Write() {
     [state]
   );
 
-  let [refContainer, editorView] = useCodeMirror<HTMLDivElement>({
+  const handleChange = useCallback((content: string) => {
+    dispatch({ type: "SET_FORM", payload: { content } });
+  }, []);
+
+  const [refContainer, editorViewRef] = useCodeMirror<HTMLDivElement>({
     initialDoc: state.content,
-    onChange: useCallback((content: string) => {
-      dispatch({ type: "SET_FORM", payload: { content } });
-    }, []),
+    onChange: handleChange,
   });
 
   useEffect(() => {
-    if (previewRef.current && editorView) {
-      const editor = editorView.dom;
+    if (previewRef.current && editorViewRef.current) {
+      const editor = editorViewRef.current.dom;
       const preview = previewRef.current;
       const isEditorAtBottom =
         editor.scrollHeight - editor.scrollTop === editor.clientHeight;
       if (isEditorAtBottom) preview.scrollTop = preview.scrollHeight;
     }
-  }, [state.content, editorView]);
+  }, [state.content, editorViewRef]);
 
   useEffect(() => {
-    if (editorView && state.content !== editorView.state.doc.toString()) {
-      editorView.dispatch({
+    const view = editorViewRef.current;
+    if (!view) return;
+
+    const currentDoc = view.state.doc.toString();
+    if (state.content !== currentDoc) {
+      view.dispatch({
         changes: {
           from: 0,
-          to: editorView.state.doc.length,
+          to: currentDoc.length,
           insert: state.content,
         },
       });
     }
-  }, [state.content, editorView]);
-
-  if (isLoading) {
-    return <div></div>;
-  }
+  }, [state.content]);
 
   if (result && !result?.data && !result?.ok) {
     return <NotFound />;
@@ -377,8 +410,8 @@ export default function Write() {
             className="flex w-full flex-col h-full relative"
           >
             <Editor
-              editorView={editorView!}
-              refContainer={refContainer as RefObject<HTMLDivElement>}
+              editorView={editorViewRef.current}
+              refContainer={refContainer}
             />
             <div
               id="editor_footer"
@@ -428,7 +461,7 @@ export default function Write() {
           </div>
           <div
             id="previewWrapper"
-            className={`sm:z-[99] sm:top-0 sm:left-0 w-full h-full sm:flex justify-center items-center `}
+            className={`w-full h-full justify-center items-center max-md:hidden`}
           >
             <div
               id="previewContainer"

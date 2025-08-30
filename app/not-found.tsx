@@ -1,7 +1,6 @@
 "use client";
 import DefButton from "@/components/ui/buttons/defButton";
 import NotFoundIcon from "@/components/ui/icon/notFoundIcon";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function NotFound() {

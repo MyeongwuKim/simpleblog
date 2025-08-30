@@ -1,6 +1,6 @@
 "use client";
 
-import { Dropdown, DropdownDivider, DropdownItem } from "flowbite-react";
+import { Dropdown, DropdownItem } from "flowbite-react";
 import Image from "next/image";
 import { IoIosArrowDown } from "react-icons/io";
 import { DropdownType } from "./dropdownType";
