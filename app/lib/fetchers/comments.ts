@@ -2,7 +2,9 @@ export async function fetchComments(page: number) {
   const baseUrl = process.env.NEXTAUTH_URL ?? "";
   const url = `${baseUrl}/api/comments?page=${page}`;
 
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    next: { revalidate: 60 },
+  });
 
   if (!res.ok) {
     return { ok: false, data: [], error: `HTTP ${res.status}` };

@@ -123,6 +123,7 @@ export default function IntroCard() {
               src={profileImg}
               alt="profile"
               fill
+              priority
             />
           ) : uploading ? (
             <span className="text-gray-500 text-sm">업로드 중...</span>

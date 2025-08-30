@@ -51,6 +51,7 @@ export function ProfileItem() {
                 alt="profile"
                 fill // 부모 크기에 맞춤
                 className="object-cover  rounded-t-lg  max-sm:rounded-none rounded-l-lg "
+                priority
               />
             ) : (
               <div

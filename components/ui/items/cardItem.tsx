@@ -12,7 +12,7 @@ function CardItem({ createdAt, preview, thumbnail, title, slug }: Post) {
   return (
     <Link
       href={`/post/${slug}`}
-      className="w-full h-full relative flex flex-col"
+      className="w-full h-[300px] floatBox relative flex flex-col"
     >
       <Card
         theme={{
@@ -24,13 +24,14 @@ function CardItem({ createdAt, preview, thumbnail, title, slug }: Post) {
         }}
         className="w-full h-full"
         renderImage={() => (
-          <div className="relative bg-background2 w-full h-full flex justify-center items-center">
+          <div className="relative bg-background2 w-full h-[200px] flex justify-center items-center">
             {thumbnail ? (
               <Image
-                objectFit="cover"
                 fill
                 src={getDeliveryDomain(thumbnail, "thumbnail")}
-                alt="thumbnail"
+                alt={title}
+                priority
+                className="object-cover"
               />
             ) : (
               <MdImageNotSupported className="w-14 h-14" />
@@ -43,9 +44,9 @@ function CardItem({ createdAt, preview, thumbnail, title, slug }: Post) {
             className="text-[1rem] text-box
     font-bold tracking-tight text-gray-900 dark:text-white"
           >
-            {title};
+            {title}
           </h4>
-          <p className="line-clamp-3 text-text2 leading-[1.5em]">{preview}</p>
+          <p className="line-clamp-2 text-text2 leading-[1.5em]">{preview}</p>
         </div>
         <div className="text-text3">{formatRelativeTime(createdAt)}</div>
       </Card>

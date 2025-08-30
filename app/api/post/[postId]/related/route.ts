@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/lib/db";
-// @ts-expect-error Next.js route handler typing bug
+
 export async function GET(
   req: NextRequest,
   context: { params: { postId: string } }
 ) {
-  const { postId } = context.params as { postId: string };
+  const { postId } = (await context.params) as { postId: string };
 
   const page = req.nextUrl.searchParams.get("page");
   const pageNumber = page ? parseInt(page, 10) : 0;

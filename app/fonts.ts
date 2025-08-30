@@ -1,20 +1,24 @@
 // app/fonts.ts
-import { Inter } from "next/font/google";
+
 import localFont from "next/font/local";
 
-// Google 폰트
+import { Inter } from "next/font/google";
+
 export const inter = Inter({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-inter",
+  fallback: ["system-ui", "Arial"],
 });
-
 export const pretendard = localFont({
-  src: "../public/fonts/PretendardVariable.woff2", // 보통 public/fonts 밑에 둠
+  src: "../public/fonts/PretendardVariable.woff2",
   variable: "--font-pretendard",
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 });
 
 export const jetbrainsMono = localFont({
-  src: "../public/fonts/JetBrainsMono[wght].ttf",
+  src: "../public/fonts/JetBrainsMono-Regular.woff2",
   variable: "--font-jetbrains-mono",
+  display: "swap",
+  fallback: ["monospace"], // ⬅️ 코드 글꼴은 monospace fallback
 });

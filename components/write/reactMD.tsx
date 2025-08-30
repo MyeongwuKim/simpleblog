@@ -122,6 +122,7 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
                 src={props.src}
                 alt="public"
                 style={{ width: "100%", height: "auto" }}
+                priority
               />
             );
           },

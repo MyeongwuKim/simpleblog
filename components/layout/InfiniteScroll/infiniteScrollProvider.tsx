@@ -29,6 +29,7 @@ type DataType = "post" | "temp" | "comments" | "relatedPosts";
 interface Page<T> {
   ok: boolean;
   data: T[];
+  totalCount: number; // 전체 게시물 수
   error?: string; // 실패 시만 존재
 }
 interface InfiniteScrollProviderProps {
@@ -63,11 +64,7 @@ const rendererMap: {
     layout:
       "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4",
     fetcher: fetchPosts, // Promise<Page<Post>>
-    renderContent: (item: Post) => (
-      <div key={item.id} className="h-[300px] floatBox">
-        <CardItem {...item} />
-      </div>
-    ),
+    renderContent: (item: Post) => <CardItem key={item.id} {...item} />,
     renderSkeleton: (i) => (
       <div className="h-[300px]" key={i}>
         <CardItemSkeleton />
@@ -156,10 +153,17 @@ export default function InfiniteScrollProvider<T extends DataType>({
       ];
       return rendererMap[type].fetcher(pageParam, params ?? {}) as Promise<
         Page<DataTypeMap[T]>
-      >; // ✅ 여기서 단언
+      >;
     },
-    getNextPageParam: (lastPage, allPages) =>
-      lastPage.ok && lastPage.data.length > 0 ? allPages.length : undefined,
+    getNextPageParam: (lastPage, pages) => {
+      if (!lastPage.ok || lastPage.data.length === 0) return undefined;
+      const loadedCount = pages.reduce(
+        (acc, page) => acc + page.data.length,
+        0
+      );
+      const totalCount = lastPage.totalCount ?? 0;
+      return loadedCount < totalCount ? pages.length : undefined;
+    },
   });
 
   const queryClient = useQueryClient();

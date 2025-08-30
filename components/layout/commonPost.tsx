@@ -174,8 +174,6 @@ export default function CommonPost({ postId }: { postId: string }) {
       </h2>
       <InfiniteScrollProvider
         type="relatedPosts"
-        staleTime={0}
-        gcTime={0}
         queryKey={[
           "relatedPosts",
           { tags: current.tag.map((v) => v.body), excludeId: postId },

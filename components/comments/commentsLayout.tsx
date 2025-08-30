@@ -12,6 +12,7 @@ import { useCallback, useState } from "react";
 import { useUI } from "../providers/uiProvider";
 import { Comment } from "@prisma/client";
 import { useSession } from "next-auth/react";
+import Script from "next/script";
 
 export default function CommentsLayout() {
   const queryClient = useQueryClient();
@@ -115,56 +116,62 @@ export default function CommentsLayout() {
   };
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (!validate()) return;
-        const token = window.grecaptcha.getResponse();
-        if (!token) {
-          openToast(true, "로봇이 아님을 인증해주세요.", 1);
-          return;
-        }
+    <>
+      <Script
+        src="https://www.google.com/recaptcha/api.js?hl=ko"
+        strategy="afterInteractive"
+      />
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!validate()) return;
+          const token = window.grecaptcha.getResponse();
+          if (!token) {
+            openToast(true, "로봇이 아님을 인증해주세요.", 1);
+            return;
+          }
 
-        mutate({ content, name, isMe: session ? true : false, token });
-      }}
-      className="flex flex-col gap-4 mb-20"
-    >
-      {!session && (
-        <div className="flex flex-auto">
-          <InputField
-            value={name}
+          mutate({ content, name, isMe: session ? true : false, token });
+        }}
+        className="flex flex-col gap-4 mb-20"
+      >
+        {!session && (
+          <div className="flex flex-auto">
+            <InputField
+              value={name}
+              onChange={onChangeText}
+              size="md"
+              id="name"
+              placeholder="이름"
+              type="text"
+            />
+          </div>
+        )}
+        <div className="h-[98px]">
+          <TextAreaField
+            value={content}
+            maxLength={300}
+            id="content"
+            placeholder="댓글 입력"
             onChange={onChangeText}
-            size="md"
-            id="name"
-            placeholder="이름"
-            type="text"
           />
         </div>
-      )}
-      <div className="h-[98px]">
-        <TextAreaField
-          value={content}
-          maxLength={300}
-          id="content"
-          placeholder="댓글 입력"
-          onChange={onChangeText}
-        />
-      </div>
 
-      <div className="w-full  h-[45px]">
-        <div
-          className="g-recaptcha absolute"
-          data-sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
-        />
-        <div className="w-[120px] h-[45px]  absolute right-0">
-          <DefButton
-            type="submit"
-            className="text-button1"
-            btnColor="cyan"
-            innerItem={"댓글 작성"}
+        <div className="w-full  h-[45px]">
+          <div
+            className="g-recaptcha absolute"
+            data-sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
           />
+          <div className="w-[120px] h-[45px]  absolute right-0">
+            <DefButton
+              type="submit"
+              className="text-button1"
+              btnColor="cyan"
+              innerItem={"댓글 작성"}
+            />
+          </div>
         </div>
-      </div>
-    </form>
+      </form>
+    </>
   );
 }

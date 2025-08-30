@@ -32,14 +32,14 @@ export function DropdownProfile({ items, clickEvt, profileImg }: ProfileProps) {
       dismissOnClick={true}
       renderTrigger={() => (
         <div className="h-full flex relative items-center gap-2">
-          <div className="w-[45px] h-[45px]  rounded-full bg-background3 relative">
+          <div className="relative w-[45px] h-[45px] rounded-full bg-background3 overflow-hidden">
             {profileImg ? (
               <Image
-                objectFit="cover"
                 src={getDeliveryDomain(profileImg, "thumbnail")}
-                fill
                 alt="profile"
-                className="w-full h-full rounded-full relative"
+                fill
+                className="object-cover "
+                priority
               />
             ) : (
               ""
