@@ -24,6 +24,7 @@ export default function Head() {
   const pathname = usePathname();
 
   const { data } = useProfileQuery();
+
   useEffect(() => {
     setTheme(myTheme!);
   }, [myTheme]);
@@ -68,7 +69,7 @@ export default function Head() {
           ) : (
             <div className="w-auto h-[45px]">
               <DropdownProfile
-                profileImg={data?.data.profileImg}
+                profileImg={data?.data && data?.data.profileImg}
                 clickEvt={async (content: string) => {
                   switch (content) {
                     case "설정":

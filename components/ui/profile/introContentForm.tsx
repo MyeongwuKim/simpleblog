@@ -23,7 +23,6 @@ export default function IntroContentForm() {
   });
   const onTextAreaChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      console.log(e.target.value);
       setIntroContent(e.target.value);
     },
     []

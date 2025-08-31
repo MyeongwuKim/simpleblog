@@ -8,7 +8,7 @@ import Link from "next/link";
 import React from "react";
 import { MdImageNotSupported } from "react-icons/md";
 
-function CardItem({ createdAt, preview, thumbnail, title, slug }: Post) {
+function PostCardItem({ createdAt, preview, thumbnail, title, slug }: Post) {
   return (
     <Link
       href={`/post/${slug}`}
@@ -24,11 +24,11 @@ function CardItem({ createdAt, preview, thumbnail, title, slug }: Post) {
         }}
         className="w-full h-full"
         renderImage={() => (
-          <div className="relative bg-background2 w-full h-[200px] flex justify-center items-center">
+          <div className="relative bg-background2 w-full h-[240px] flex justify-center items-center">
             {thumbnail ? (
               <Image
                 fill
-                src={getDeliveryDomain(thumbnail, "thumbnail")}
+                src={getDeliveryDomain(thumbnail, "public")}
                 alt={title}
                 priority
                 className="object-cover"
@@ -54,4 +54,4 @@ function CardItem({ createdAt, preview, thumbnail, title, slug }: Post) {
   );
 }
 
-export default React.memo(CardItem);
+export default React.memo(PostCardItem);

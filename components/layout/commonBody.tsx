@@ -39,7 +39,7 @@ export default function CommonBody({ children }: CommonBodyType) {
 
   return (
     <>
-      {pathname.includes("/write") ? (
+      {pathname.startsWith("/write") || pathname.startsWith("/auth") ? (
         <>{children}</>
       ) : (
         <>

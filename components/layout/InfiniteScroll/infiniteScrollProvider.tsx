@@ -8,7 +8,7 @@ import {
   fetchTempPosts,
 } from "@/app/lib/fetchers/post";
 import NoPostIcon from "@/components/ui/icon/noPostIcon";
-import CardItem from "@/components/ui/items/cardItem";
+import PostCardItem from "@/components/ui/items/postCardItem";
 
 import CommentItem from "@/components/ui/items/commentItem";
 import TempItem from "@/components/ui/items/tempItem";
@@ -64,7 +64,7 @@ const rendererMap: {
     layout:
       "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4",
     fetcher: fetchPosts, // Promise<Page<Post>>
-    renderContent: (item: Post) => <CardItem key={item.id} {...item} />,
+    renderContent: (item: Post) => <PostCardItem key={item.id} {...item} />,
     renderSkeleton: (i) => (
       <div className="h-[300px]" key={i}>
         <CardItemSkeleton />
@@ -105,7 +105,7 @@ const rendererMap: {
     fetcher: fetchRelatedPosts, // Promise<Page<Post>>
     renderContent: (item: Post) => (
       <div key={item.id} className="h-[300px] floatBox">
-        <CardItem {...item} />
+        <PostCardItem {...item} />
       </div>
     ),
     renderSkeleton: (i) => (

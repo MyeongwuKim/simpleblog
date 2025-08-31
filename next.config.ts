@@ -28,6 +28,10 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**", // velog의 모든 경로 허용
       },
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+      },
     ],
   },
 };

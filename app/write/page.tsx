@@ -234,11 +234,20 @@ export default function Write() {
       ["post", postId],
       (oldData) => {
         return oldData
-          ? { ...oldData, data: { ...oldData.data, ...res } }
+          ? {
+              ...oldData,
+              data: {
+                ...oldData.data,
+                current: {
+                  ...oldData.data.current,
+                  ...res, // ← res 안의 수정된 필드를 current에 병합
+                },
+              },
+            }
           : oldData;
       }
     );
-
+    queryClient.invalidateQueries({ queryKey: ["post", postId] });
     //임시글 -> 추가했을때..
     if (prevIsTemp) insertNewPostCache(["post"], res);
     //게시글 -> 수정했을때..
@@ -271,7 +280,7 @@ export default function Write() {
   >({
     mutationFn: async (data) => {
       const result = await (
-        await fetch(`/api/post/postId/${postId}`, {
+        await fetch(`/api/post/${postId}`, {
           method: "POST",
           body: JSON.stringify({ ...data, createdAt: new Date() }),
         })

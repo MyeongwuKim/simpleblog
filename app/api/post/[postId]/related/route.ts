@@ -43,6 +43,7 @@ export async function GET(
         preview: true,
         title: true,
         createdAt: true,
+        thumbnail: true,
       },
     });
 

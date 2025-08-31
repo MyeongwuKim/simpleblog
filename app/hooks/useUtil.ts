@@ -70,7 +70,9 @@ export const getDeliveryDomain = (
   fileId: string,
   type: "public" | "avatar" | "thumbnail"
 ) => {
-  return `https://imagedelivery.net/0VaIqAONZ2vq2gejAGX7Sw/${fileId}/${type}`;
+  return process.env.NEXT_PUBLIC_DEMO
+    ? fileId
+    : `https://imagedelivery.net/0VaIqAONZ2vq2gejAGX7Sw/${fileId}/${type}`;
 };
 
 export const getFormatImagesId = (content: string): string[] => {
