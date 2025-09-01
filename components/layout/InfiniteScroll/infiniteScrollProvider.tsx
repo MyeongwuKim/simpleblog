@@ -26,12 +26,6 @@ import { useInView } from "react-intersection-observer";
 // 타입 정의
 type DataType = "post" | "temp" | "comments" | "relatedPosts";
 
-interface Page<T> {
-  ok: boolean;
-  data: T[];
-  totalCount: number; // 전체 게시물 수
-  error?: string; // 실패 시만 존재
-}
 interface InfiniteScrollProviderProps {
   queryKey: readonly unknown[];
   type: DataType;
@@ -43,7 +37,10 @@ interface InfiniteScrollProviderProps {
 // fetcher 시그니처 통일
 interface RendererMap<T = unknown> {
   layout: string;
-  fetcher: (pageParam: number, params: FetchParams) => Promise<Page<T>>;
+  fetcher: (
+    cursor: string | undefined,
+    params: FetchParams
+  ) => Promise<InfiniteResponse<T>>;
   renderContent: (item: T) => React.ReactNode;
   renderSkeleton: (i: number) => React.ReactNode;
 }
@@ -131,17 +128,17 @@ export default function InfiniteScrollProvider<T extends DataType>({
     isFetchingNextPage,
     isError,
   } = useInfiniteQuery<
-    Page<DataTypeMap[T]>, // 👉 queryFn이 반환하는 값
-    Error, // 👉 에러 타입
-    InfiniteData<Page<DataTypeMap[T]>, number>, // 👉 data 타입
-    typeof queryKey, // 👉 queryKey 타입
-    number
+    InfiniteResponse<DataTypeMap[T]>, // queryFn이 반환하는 값
+    Error, // 에러 타입
+    InfiniteData<InfiniteResponse<DataTypeMap[T]>>, // data 타입
+    typeof queryKey, // queryKey 타입
+    string | undefined // pageParam 타입 (cursor)
   >({
     queryKey,
     gcTime,
     staleTime,
-    initialPageParam: 0,
-    queryFn: ({ pageParam = 0 }) => {
+    initialPageParam: undefined, // ✅ 첫 요청에는 cursor 없음
+    queryFn: ({ pageParam }) => {
       const [, params] = queryKey as [
         string,
         {
@@ -151,18 +148,11 @@ export default function InfiniteScrollProvider<T extends DataType>({
           excludeId?: string;
         }?
       ];
-      return rendererMap[type].fetcher(pageParam, params ?? {}) as Promise<
-        Page<DataTypeMap[T]>
-      >;
+      return rendererMap[type].fetcher(pageParam, params ?? {});
     },
-    getNextPageParam: (lastPage, pages) => {
+    getNextPageParam: (lastPage) => {
       if (!lastPage.ok || lastPage.data.length === 0) return undefined;
-      const loadedCount = pages.reduce(
-        (acc, page) => acc + page.data.length,
-        0
-      );
-      const totalCount = lastPage.totalCount ?? 0;
-      return loadedCount < totalCount ? pages.length : undefined;
+      return lastPage.nextCursor ?? undefined;
     },
   });
 
@@ -209,7 +199,7 @@ export default function InfiniteScrollProvider<T extends DataType>({
 
   const flatData: DataTypeMap[T][] =
     data?.pages.flatMap((page) => page.data) ?? [];
-  const pageErrors: Page<DataTypeMap[T]>[] =
+  const pageErrors: InfiniteResponse<DataTypeMap[T]>[] =
     data?.pages.filter((page) => page.ok === false) ?? [];
   const failedPages = data?.pages
     .map((page, index) => (!page.ok ? index : null))
@@ -252,7 +242,7 @@ export default function InfiniteScrollProvider<T extends DataType>({
             className="px-4 py-2 bg-red-500 text-white rounded mt-2"
             onClick={() => {
               queryClient.setQueryData<
-                InfiniteData<Page<DataTypeMap[T]>, number>
+                InfiniteData<InfiniteResponse<DataTypeMap[T]>, number>
               >([type], (oldData) => {
                 if (!oldData) return oldData; // 캐시 없음
 

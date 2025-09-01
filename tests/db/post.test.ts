@@ -1,4 +1,4 @@
-import { prisma } from "../../jest.setup"; // ← 이걸로
+import { prisma } from "../jest.setup"; // ← 이걸로
 
 describe("Post 생성", () => {
   it("Post를 생성하고 조회한다", async () => {

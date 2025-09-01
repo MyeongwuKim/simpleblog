@@ -77,34 +77,35 @@ export default function Write() {
   const previewRef = useRef<HTMLDivElement>(null);
   const { openToast } = useUI();
 
-  const { data: result } = useQuery<
-    QueryResponse<{ current: Post & { tag: Tag[] } }>
-  >({
+  const { data: result } = useQuery<QueryResponse<Post & { tag: Tag[] }>>({
     queryKey: ["post", postId],
     queryFn: () => fetchPostContentByPostId(postId!),
     enabled: isValidPostId,
   });
 
-  //새글 작성일시 post 캐시에 아이템 추가
   const insertNewPostCache = (queryKey: string[], item: Post) => {
     queryClient.setQueryData<InfiniteData<InfiniteResponse<Post>>>(
       queryKey,
       (oldData) => {
-        // 캐시가 없으면 새 페이지 생성
-        if (!oldData) return oldData; // 없으면 fetch에 맡김
+        if (!oldData) return oldData;
 
         return {
           ...oldData,
-          pages: oldData.pages.map((page, i: number) =>
-            i === 0 ? { ...page, data: [item, ...page.data] } : page
+          pages: oldData.pages.map(
+            (page, i) =>
+              i === 0
+                ? {
+                    ...page,
+                    data: [item, ...page.data.filter((p) => p.id !== item.id)],
+                  }
+                : { ...page } // ✅ 항상 새 객체 반환
           ),
-          // pageParams는 그대로 유지
-          pageParams: oldData.pageParams,
+          pageParams: [...oldData.pageParams], // ✅ 배열도 새로 복사
         };
       }
     );
   };
-  //게시된 글 수정했을때 post페이지에 반영
+  //게시된 글 수정했을때 post페이지에 반영`
   const updateExistingPostCache = (queryKey: string[], item: Post) => {
     queryClient.setQueryData<InfiniteData<InfiniteResponse<Post>>>(
       queryKey,
@@ -165,16 +166,17 @@ export default function Write() {
       ["temp"],
       (oldData) => {
         if (!oldData) {
-          return {
-            pages: [{ ok: true, data: [res] }],
-            pageParams: [0],
-          };
+          return oldData;
         }
-
         return {
           ...oldData,
           pages: oldData.pages.map((page, i) =>
-            i === 0 ? { ...page, data: [res, ...page.data] } : page
+            i === 0
+              ? {
+                  ...page,
+                  data: [res, ...page.data.filter((p) => p.id !== res.id)],
+                }
+              : page
           ),
         };
       }
@@ -230,7 +232,7 @@ export default function Write() {
       deleteTempPostCache(res);
     }
 
-    queryClient.setQueryData<QueryResponse<{ current: Post & { tag: Tag[] } }>>(
+    queryClient.setQueryData<QueryResponse<Post & { tag: Tag[] }>>(
       ["post", postId],
       (oldData) => {
         return oldData
@@ -239,7 +241,7 @@ export default function Write() {
               data: {
                 ...oldData.data,
                 current: {
-                  ...oldData.data.current,
+                  ...oldData.data,
                   ...res, // ← res 안의 수정된 필드를 current에 병합
                 },
               },
@@ -260,8 +262,8 @@ export default function Write() {
 
   const handleNewPost = (res: { post: Post; tag: Tag[] }) => {
     insertNewPostCache(["post"], res.post);
-    router.push(`/post/${res.post.slug}`);
-    queryClient.invalidateQueries({ queryKey: ["post"] });
+
+    queryClient.invalidateQueries({ queryKey: ["post"], exact: true });
     updateTagCache(res.tag);
     queryClient.invalidateQueries({ queryKey: ["tag"] }); // 태그 카운트도 최신화
     //관련글 무효화
@@ -270,6 +272,7 @@ export default function Write() {
       exact: false,
     });
 
+    router.push(`/post/${res.post.slug}`);
     openToast(false, "글 작성을 완료하였습니다.", 1);
   };
 
@@ -291,7 +294,7 @@ export default function Write() {
     onSuccess: (res) => {
       if (res.data.post.isTemp) updateTempPost(res.data.post); //임시글 수정
       else if (isValidPostId && result)
-        handleUpdatePost(res.data.post, result.data.current.isTemp);
+        handleUpdatePost(res.data.post, result.data.isTemp);
       //임시글 -> 작성, 게시글 -> 수정
       else handleNewPost(res.data);
     },
@@ -324,7 +327,7 @@ export default function Write() {
 
   useEffect(() => {
     if (result?.ok)
-      dispatch({ type: "SET_FORM", payload: toPostType(result.data.current) });
+      dispatch({ type: "SET_FORM", payload: toPostType(result.data) });
   }, [result]);
 
   const validate = useCallback(() => {
@@ -340,15 +343,28 @@ export default function Write() {
 
   const extractThumbAndPreview = useCallback(
     (length = 150) => {
-      const thumbnail = state.content.match(
-        /imagedelivery\.net\/[^\/]+\/([^\/]+)/
-      );
+      let thumbnail: string | null = null;
+
+      if (process.env.NEXT_PUBLIC_DEMO) {
+        // ✅ demo 모드: picsum.photos 같은 랜덤 이미지 잡기
+        const demoThumb = state.content.match(
+          /https:\/\/picsum\.photos\/[^\)\s]+/
+        );
+        thumbnail = demoThumb ? demoThumb[0] : null;
+      } else {
+        // ✅ 실제: Cloudflare 이미지
+        const realThumb = state.content.match(
+          /imagedelivery\.net\/[^\/]+\/([^\/]+)/
+        );
+        thumbnail = realThumb ? realThumb[0] : null;
+      }
       const preview = state.content
         .replace(/!\[.*?\]\(.*?\)/g, "")
         .replace(/[#_*`>+\-\[\]\(\)~|]/g, "")
         .replace(/\n/g, " ")
         .trim();
-      return [preview.slice(0, length), thumbnail ? thumbnail[1] : null];
+      console.log(thumbnail);
+      return [preview.slice(0, length), thumbnail];
     },
     [state.content]
   );
@@ -439,7 +455,7 @@ export default function Write() {
               <div className="h-[45px]  w-auto flex gap-4">
                 <div
                   className={`w-[110px]  ${
-                    isValidPostId && !result?.data.current.isTemp && "invisible"
+                    isValidPostId && !result?.data.isTemp && "invisible"
                   }`}
                 >
                   <DefButton
@@ -454,7 +470,7 @@ export default function Write() {
                     className="  text-button1"
                     btnColor="cyan"
                     innerItem={
-                      isValidPostId && !result?.data.current.isTemp
+                      isValidPostId && !result?.data.isTemp
                         ? "수정하기"
                         : "작성하기"
                     }

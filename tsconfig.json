@@ -26,7 +26,7 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "jest.setup.ts",
+    "tests/jest.setup.ts",
     "next-env.d.ts",
     "types/**/*.d.ts",
     ".next/types/**/*.ts"

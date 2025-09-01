@@ -27,6 +27,8 @@ declare global {
   interface InfiniteResponse<T> {
     ok: boolean;
     data: T[];
+    nextCursor: string | null;
+    error?: string; // 실패 시만 존재
   }
 
   interface PostType

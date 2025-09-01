@@ -1,3 +1,5 @@
+import { Post } from "@prisma/client";
+
 export interface FetchParams {
   excludeId?: string;
   tag?: string;
@@ -5,39 +7,60 @@ export interface FetchParams {
   datetype?: string;
 }
 
-export async function fetchPosts(page: number, params: FetchParams) {
+export async function fetchPosts(
+  cursor: string | undefined,
+  params: FetchParams
+): Promise<InfiniteResponse<Post>> {
   const baseUrl = process.env.NEXTAUTH_URL ?? "";
-  let url = `${baseUrl}/api/post?page=${page}`;
-  if (params.tag) url += `&tag=${params.tag}`;
-  if (params.datetype) url += `&datetype=${params.datetype}`;
+  const search = new URLSearchParams();
 
-  const res = await fetch(url, {
-    next: { revalidate: 60 },
-  });
+  if (cursor) search.set("cursor", cursor);
+  if (params.tag) search.set("tag", params.tag);
+  if (params.datetype) search.set("datetype", params.datetype);
+
+  const url = `${baseUrl}/api/post${
+    search.toString() ? `?${search.toString()}` : ""
+  }`;
+
+  const res = await fetch(url, { cache: "no-store" });
+
   if (!res.ok) {
-    return { ok: false, data: [], error: `HTTP ${res.status}` };
+    return {
+      ok: false,
+      data: [],
+      error: `HTTP ${res.status}`,
+      nextCursor: null,
+    };
   }
 
   return res.json();
 }
 
-export const fetchTempPosts = async (pageNumber: number) => {
-  const baseUrl = process.env.NEXTAUTH_URL ?? ""; // undefined면 빈 문자열
-  const url = `${baseUrl}/api/post?type=temp&page=${pageNumber}`;
-  const res = await fetch(url, {
-    next: { revalidate: 60 },
-  });
+export const fetchTempPosts = async (cursor?: string) => {
+  const baseUrl = process.env.NEXTAUTH_URL ?? "";
+  const search = new URLSearchParams();
+
+  // ✅ cursor 있을 때만 붙임
+  if (cursor) search.set("cursor", cursor);
+  search.set("type", "temp");
+
+  const url = `${baseUrl}/api/post?${search.toString()}`;
+
+  const res = await fetch(url, { cache: "no-store" });
 
   if (!res.ok) {
     return { ok: false, data: [], error: `HTTP ${res.status}` };
   }
+
   const jsonData = await res.json();
 
-  if (!jsonData.ok) return { ok: false, data: [], error: jsonData.error };
-  return jsonData;
+  if (!jsonData.ok) {
+    return { ok: false, data: [], error: jsonData.error };
+  }
+
+  return jsonData; // { ok, data, totalCount?, nextCursor? }
 };
 
-//current단독으로만 가져옴
 export const fetchPostContentByPostId = async (postId: string) => {
   const baseUrl = process.env.NEXTAUTH_URL ?? ""; // undefined면 빈 문자열
   const url = `${baseUrl}/api/post/${postId}`;
@@ -51,13 +74,13 @@ export const fetchPostContentByPostId = async (postId: string) => {
 
   return jsonData;
 };
-//prev,next,current 다 가져옴
-export const fetchAllPostContentByPostId = async (postId: string) => {
+
+export const fetchSiblingPost = async (postId: string) => {
   const baseUrl = process.env.NEXTAUTH_URL ?? ""; // undefined면 빈 문자열
-  const url = `${baseUrl}/api/post/${postId}?type=all`;
+  const url = `${baseUrl}/api/post/${postId}/siblings`;
 
   const res = await fetch(url, {
-    next: { revalidate: 60 }, // ✅ ISR 60초
+    cache: "no-store",
   });
 
   if (!res.ok) throw new Error("글 정보를 가져오지 못했습니다.");
@@ -67,17 +90,26 @@ export const fetchAllPostContentByPostId = async (postId: string) => {
   return jsonData;
 };
 
-export async function fetchRelatedPosts(page: number, params: FetchParams) {
+export async function fetchRelatedPosts(
+  cursor?: string,
+  params: FetchParams = {}
+) {
   const query = new URLSearchParams();
+
   params.tags?.forEach((t) => query.append("tags", t));
 
-  const res = await fetch(
-    `/api/post/${params.excludeId}/related?${query.toString()}`,
-    {
-      next: { revalidate: 60 }, // ✅ ISR 60초
-    }
-  );
-  if (!res.ok) throw new Error("관련 글 불러오기 실패");
+  if (cursor) query.set("cursor", cursor);
+
+  const url = `/api/post/${params.excludeId}/related${
+    query.toString() ? `?${query.toString()}` : ""
+  }`;
+
+  const res = await fetch(url, {
+    next: { revalidate: 60 }, // ISR 60초
+  });
+
+  if (!res.ok) {
+    throw new Error("관련 글 불러오기 실패");
+  }
 
   return res.json();
-}

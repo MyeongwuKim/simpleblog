@@ -57,7 +57,7 @@ function DemoPost() {
           preview: `이것은 데모 포스트 #${i}의 프리뷰 텍스트입니다.`,
           thumbnail: `https://picsum.photos/seed/${i}/400/300`,
           slug: `demo-post-${i}`,
-          imageIds: [`img${i}a`, `img${i}b`], // 👉 필요하면 유지, 아니면 생략 가능
+          imageIds: [],
           isTemp,
         },
       });

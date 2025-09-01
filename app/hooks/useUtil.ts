@@ -77,7 +77,7 @@ export const getDeliveryDomain = (
 
 export const getFormatImagesId = (content: string): string[] => {
   const imagesIdArr: string[] = [];
-
+  if (process.env.NEXT_PUBLIC_DEMO) return imagesIdArr;
   // 1. imagedelivery.net 뒤에 오는 계정 id (예: 0VaIqAONZ2vq2gejAGX7Sw)
   // 2. 그 뒤에 오는 UUID 형태의 이미지 id를 캡처
   // 3. 끝에 /public 으로 끝나는 패턴

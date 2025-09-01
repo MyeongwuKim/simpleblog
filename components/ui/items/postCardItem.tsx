@@ -31,6 +31,7 @@ function PostCardItem({ createdAt, preview, thumbnail, title, slug }: Post) {
                 src={getDeliveryDomain(thumbnail, "public")}
                 alt={title}
                 priority
+                sizes="(max-width: 768px) 100vw, 400px"
                 className="object-cover"
               />
             ) : (

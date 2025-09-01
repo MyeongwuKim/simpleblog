@@ -40,6 +40,7 @@ export function DropdownProfile({ items, clickEvt, profileImg }: ProfileProps) {
                 fill
                 className="object-cover "
                 priority
+                sizes="100vw, 45px"
               />
             ) : (
               ""

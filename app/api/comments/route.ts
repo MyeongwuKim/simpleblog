@@ -4,12 +4,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {
   try {
-    const page = req.nextUrl.searchParams.get("page");
-    const pageNumber = page ? parseInt(page, 10) : 0;
-    const totalCount = await db.comment.count({});
+    const cursor = req.nextUrl.searchParams.get("cursor");
     const commentsData = await db.comment.findMany({
       take: 12,
-      skip: pageNumber * 12,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}), // ✅ 수정
       orderBy: {
         createdAt: "desc",
       },
@@ -17,7 +15,10 @@ export const GET = async (req: NextRequest) => {
     return NextResponse.json({
       ok: true,
       data: commentsData,
-      totalCount,
+      nextCursor:
+        commentsData.length > 0
+          ? commentsData[commentsData.length - 1].id
+          : null,
     });
   } catch (e: unknown) {
     if (e instanceof Error) {

@@ -2,13 +2,14 @@ import { createUniqueSlug } from "@/app/hooks/useUtil";
 import { db } from "@/app/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
+import { unstable_cache } from "next/cache";
+
 export const GET = async (req: NextRequest) => {
-  const page = req.nextUrl.searchParams.get("page");
+  const cursor = req.nextUrl.searchParams.get("cursor");
   const tagStr = req.nextUrl.searchParams.get("tag");
   const type = req.nextUrl.searchParams.get("type");
   const datetype = req.nextUrl.searchParams.get("datetype");
 
-  const pageNumber = page ? parseInt(page, 10) : 0;
   const tagFilter = !!tagStr && tagStr !== "undefined";
 
   if (tagFilter) {
@@ -32,22 +33,6 @@ export const GET = async (req: NextRequest) => {
     dateCondition = { gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) };
   }
   try {
-    const totalCount = await db.post.count({
-      where: {
-        NOT: { isTemp: type != "temp" },
-        ...(tagFilter
-          ? {
-              tag: {
-                some: {
-                  body: { equals: tagStr! },
-                },
-              },
-            }
-          : {}),
-        ...(datetype ? { createdAt: dateCondition } : {}),
-      },
-    });
-
     const postData = await db.post.findMany({
       where: {
         isTemp: type === "temp",
@@ -72,16 +57,16 @@ export const GET = async (req: NextRequest) => {
         title: true,
       },
       take: 12,
-      skip: pageNumber * 12,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       orderBy: {
         createdAt: "desc",
       },
     });
-
+    console.log(postData);
     return NextResponse.json({
       ok: true,
       data: postData,
-      totalCount,
+      nextCursor: postData.length > 0 ? postData[postData.length - 1].id : null,
     });
   } catch (e: unknown) {
     if (e instanceof Error) {
@@ -144,6 +129,7 @@ export const POST = async (req: NextRequest) => {
       }
       return { post, tags };
     });
+
     return NextResponse.json({
       ok: true,
       data: {

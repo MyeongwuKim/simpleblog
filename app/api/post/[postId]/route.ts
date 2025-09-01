@@ -37,44 +37,10 @@ export const GET = async (
         { status: 200 }
       );
     }
-    // 이전 글 (더 오래된 글)
-    const prevPost = await db.post.findFirst({
-      where: {
-        NOT: {
-          isTemp: true,
-        },
-        createdAt: { lt: postData?.createdAt }, // 현재 글보다 이전
-      },
-      orderBy: { createdAt: "desc" }, // 가장 가까운 이전 글
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-      },
-    });
-
-    // 다음 글 (더 최신 글)
-    const nextPost = await db.post.findFirst({
-      where: {
-        NOT: {
-          isTemp: true,
-        },
-        createdAt: { gt: postData?.createdAt }, // 현재 글보다 이후
-      },
-      orderBy: { createdAt: "asc" }, // 가장 가까운 다음 글
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-      },
-    });
 
     return NextResponse.json({
       ok: true,
-      data: {
-        current: postData,
-        ...(type == "all" ? { prev: prevPost, next: nextPost } : {}),
-      },
+      data: postData,
     });
   } catch (e: unknown) {
     if (e instanceof Error) {

@@ -7,8 +7,7 @@ export async function GET(
 ) {
   const { postId } = (await context.params) as { postId: string };
 
-  const page = req.nextUrl.searchParams.get("page");
-  const pageNumber = page ? parseInt(page, 10) : 0;
+  const cursor = req.nextUrl.searchParams.get("cursor");
   const tags = req.nextUrl.searchParams.getAll("tags");
 
   try {
@@ -31,12 +30,11 @@ export async function GET(
             isTemp: false,
           };
 
-    const totalCount = await db.post.count({ where });
     const relatedPosts = await db.post.findMany({
       where,
       orderBy: { createdAt: "desc" },
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}), // ✅ 수정
       take: 12,
-      skip: pageNumber * 12,
       select: {
         id: true,
         slug: true,
@@ -47,7 +45,14 @@ export async function GET(
       },
     });
 
-    return NextResponse.json({ ok: true, data: relatedPosts, totalCount });
+    return NextResponse.json({
+      ok: true,
+      data: relatedPosts,
+      nextCursor:
+        relatedPosts.length > 0
+          ? relatedPosts[relatedPosts.length - 1].id
+          : null,
+    });
   } catch (e: unknown) {
     if (e instanceof Error) {
       return NextResponse.json(

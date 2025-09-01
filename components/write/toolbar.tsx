@@ -28,7 +28,7 @@ const ToolBar: NextPage<IToolBar> = (props) => {
       const line = editorView.state.doc.lineAt(
         editorView.state.selection.main.from
       )!;
-      const startCaret = editorView!.state.selection.ranges[0].from - line.from;
+      const startCaret = editorView.state.selection.ranges[0].from - line.from;
       const endCaret =
         editorView.state.selection.ranges[0].to -
         editorView.state.selection.ranges[0].from;
@@ -39,16 +39,30 @@ const ToolBar: NextPage<IToolBar> = (props) => {
 
       const state = editorView.state;
       const tr = state.update(state.replaceSelection(link));
-
       editorView?.dispatch(tr);
 
       try {
+        if (process.env.NEXT_PUBLIC_DEMO) {
+          // ✅ demo 모드 → 랜덤 이미지로 대체
+          const randomImg = `https://picsum.photos/seed/${Date.now()}/600/400`;
+          const cursor = new SearchCursor(editorView.state.doc, link);
+          cursor.next();
+
+          editorView?.dispatch({
+            changes: {
+              from: cursor.value.from,
+              to: cursor.value.to,
+              insert: `![](${randomImg})`,
+            },
+          });
+          return;
+        }
+
         const { uploadURL } = await (
           await fetch(`/api/upload`, { method: "POST" })
         ).json();
 
         const form = new FormData();
-
         form.append(
           "file",
           file as File,

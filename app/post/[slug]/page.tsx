@@ -1,5 +1,5 @@
 import { db } from "@/app/lib/db";
-import { fetchAllPostContentByPostId } from "@/app/lib/fetchers/post";
+import { fetchPostContentByPostId } from "@/app/lib/fetchers/post";
 import NotFound from "@/app/not-found";
 import CommonPost from "@/components/layout/commonPost";
 
@@ -53,7 +53,7 @@ export default async function Post({ params }: PageProps) {
   }
   await queryClient.prefetchQuery({
     queryKey: ["post", postData.id],
-    queryFn: () => fetchAllPostContentByPostId(postData.id),
+    queryFn: () => fetchPostContentByPostId(postData.id),
   });
 
   return (

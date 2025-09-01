@@ -1,7 +1,7 @@
 import { MongoMemoryReplSet } from "mongodb-memory-server";
 import { execSync } from "child_process";
 import { PrismaClient } from "@prisma/client";
-import { startMemoryMongo } from "./tests/utils/memoryMongo";
+import { startMemoryMongo } from "./utils/memoryMongo";
 
 let prisma: PrismaClient;
 let myReplset: MongoMemoryReplSet;
