@@ -1,7 +1,7 @@
 "use client";
 import ReactMD from "@/components/write/reactMD";
 import DefButton from "../buttons/defButton";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { TextAreaField } from "../input/textAreaField";
 
 import { useUI } from "@/components/providers/uiProvider";
@@ -17,7 +17,7 @@ export default function IntroContentForm() {
     profileResult?.data.content ?? ""
   );
   const { mutate } = useProfileMutate({
-    onError: (error) => {
+    onErrorCallback(error) {
       openToast(true, error.message, 1);
     },
   });
@@ -27,6 +27,14 @@ export default function IntroContentForm() {
     },
     []
   );
+
+  useEffect(() => {
+    if (profileResult?.data.content) {
+      setIntroContent(profileResult.data.content);
+    }
+  }, [profileResult?.data.content]);
+
+  console.log(profileResult?.data.content);
   if (profileLoading) return;
   return (
     <div className="w-full h-full">

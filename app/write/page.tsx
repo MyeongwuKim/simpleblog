@@ -181,7 +181,12 @@ export default function Write() {
         };
       }
     );
-    queryClient.invalidateQueries({ queryKey: ["temp"], exact: true });
+    queryClient.invalidateQueries({
+      queryKey: ["temp"],
+      refetchType: "inactive",
+    });
+
+    router.replace(`/write?id=${res.id}`);
     openToast(false, "임시저장을 완료하였습니다.", 1);
   };
 
@@ -285,7 +290,10 @@ export default function Write() {
       const result = await (
         await fetch(`/api/post/${postId}`, {
           method: "POST",
-          body: JSON.stringify({ ...data, createdAt: new Date() }),
+          body: JSON.stringify({
+            ...data,
+            ...(!data.isTemp && state.isTemp ? { createdAt: new Date() } : {}),
+          }),
         })
       ).json();
       if (!result.ok) throw new Error(result.error);
@@ -363,7 +371,7 @@ export default function Write() {
         .replace(/[#_*`>+\-\[\]\(\)~|]/g, "")
         .replace(/\n/g, " ")
         .trim();
-      console.log(thumbnail);
+
       return [preview.slice(0, length), thumbnail];
     },
     [state.content]

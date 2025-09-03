@@ -1,5 +1,4 @@
 import { db } from "@/app/lib/db";
-import { Tag } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 import { ObjectId } from "mongodb";
 
@@ -8,7 +7,6 @@ export const GET = async (
   { params }: { params: { postId: string } }
 ) => {
   const { postId } = await params;
-  const type = req.nextUrl.searchParams.get("type");
 
   if (!ObjectId.isValid(postId)) {
     return NextResponse.json({ ok: false, data: null });

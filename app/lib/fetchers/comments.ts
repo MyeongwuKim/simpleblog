@@ -2,7 +2,6 @@ export async function fetchComments(cursor?: string) {
   const baseUrl = process.env.NEXTAUTH_URL ?? "";
   const search = new URLSearchParams();
 
-  // ✅ cursor 있을 때만 붙임
   if (cursor) search.set("cursor", cursor);
 
   const url = `${baseUrl}/api/comments${
@@ -10,7 +9,7 @@ export async function fetchComments(cursor?: string) {
   }`;
 
   const res = await fetch(url, {
-    next: { revalidate: 60 },
+    cache: "no-store",
   });
 
   if (!res.ok) {

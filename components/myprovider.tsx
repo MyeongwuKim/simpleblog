@@ -7,7 +7,11 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"; // 1. devtools import
 import getQueryClient from "@/app/hooks/useQueryClient";
 import { ReactQueryStreamedHydration } from "@tanstack/react-query-next-experimental";
-import { showGlobalToast, UIProvider } from "./providers/uiProvider";
+import {
+  PopupContainer,
+  showGlobalToast,
+  UIProvider,
+} from "./providers/uiProvider";
 import { SessionProvider } from "next-auth/react";
 
 export function MyProvider({ children }: { children: React.ReactNode }) {
@@ -53,6 +57,7 @@ export function MyProvider({ children }: { children: React.ReactNode }) {
               )}
             </QueryClientProvider>
           </UIProvider>
+          <PopupContainer></PopupContainer>
         </ThemeProvider>
       </SessionProvider>
     </ReduxProvider>

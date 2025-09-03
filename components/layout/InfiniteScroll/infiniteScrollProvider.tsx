@@ -32,6 +32,7 @@ interface InfiniteScrollProviderProps {
   pageSize?: number;
   gcTime?: number;
   staleTime?: number;
+  refetchOnMount?: boolean | "always";
 }
 
 // fetcher 시그니처 통일
@@ -118,7 +119,8 @@ export default function InfiniteScrollProvider<T extends DataType>({
   type,
   pageSize = 12,
   gcTime = 1000 * 60 * 10,
-  staleTime = 1000 * 60 * 5,
+  staleTime = 1000 * 30 * 5,
+  refetchOnMount = true,
 }: InfiniteScrollProviderProps & { type: T }) {
   const {
     data,
@@ -150,10 +152,8 @@ export default function InfiniteScrollProvider<T extends DataType>({
       ];
       return rendererMap[type].fetcher(pageParam, params ?? {});
     },
-    getNextPageParam: (lastPage) => {
-      if (!lastPage.ok || lastPage.data.length === 0) return undefined;
-      return lastPage.nextCursor ?? undefined;
-    },
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    refetchOnMount,
   });
 
   const queryClient = useQueryClient();

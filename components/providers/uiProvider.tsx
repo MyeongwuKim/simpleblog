@@ -1,3 +1,4 @@
+// components/providers/UIProvider.tsx
 "use client";
 
 import { useAppDispatch, useAppSelector } from "@/redux/store/hooks";
@@ -7,7 +8,6 @@ import React, {
   useCallback,
   useContext,
 } from "react";
-
 import { v4 as uuidv4 } from "uuid";
 import AlertModal from "../popup/alertModal";
 import { addToast, removeToast } from "@/redux/reducer/toastReducer";
@@ -42,10 +42,6 @@ type PopupContextType = {
 const PopupContext = createContext<PopupContextType | undefined>(undefined);
 
 export const UIProvider = ({ children }: { children: ReactNode }) => {
-  const toastItems = useAppSelector((state) => state.toastReducer.toastItem);
-  const modalItems = useAppSelector(
-    (state) => state.confirmReducer.confirmItem
-  );
   const dispatch = useAppDispatch();
 
   const openToast = useCallback(
@@ -68,21 +64,29 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
     return result;
   };
 
-  const handleClose = (id: string) => (result?: number) => {
+  const value = { openToast, openConfirm };
+
+  return (
+    <PopupContext.Provider value={value}>{children}</PopupContext.Provider>
+  );
+};
+
+export const PopupContainer = () => {
+  const dispatch = useAppDispatch();
+  const toastItems = useAppSelector((state) => state.toastReducer.toastItem);
+  const modalItems = useAppSelector(
+    (state) => state.confirmReducer.confirmItem
+  );
+
+  const handleClose = (id: string) => (result: number) => {
     dispatch(removeConfirm(id));
     modalManager.closeModal(id, result);
   };
 
-  const value = { openToast, openConfirm };
-
   return (
-    <PopupContext.Provider value={value}>
-      {children}
-
-      {/* 모달 렌더링 */}
+    <>
       {modalItems.map((v) => {
         const onClose = handleClose(v.id);
-
         return (
           <div key={v.id}>
             <AlertModal {...v.props} onClose={onClose} />
@@ -90,10 +94,9 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
         );
       })}
 
-      {/* toast 렌더링 */}
       {toastItems.length > 0 && (
         <div
-          id="toastWrapper"
+          id="popup-wrapper"
           className="pointer-events-none flex-wrap justify-start gap-2
           fixed w-full h-full flex flex-col right-8 top-0 items-end z-99"
         >
@@ -111,7 +114,7 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
           ))}
         </div>
       )}
-    </PopupContext.Provider>
+    </>
   );
 };
 

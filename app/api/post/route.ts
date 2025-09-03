@@ -1,87 +1,87 @@
 import { createUniqueSlug } from "@/app/hooks/useUtil";
 import { db } from "@/app/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag, unstable_cache } from "next/cache";
 
-import { unstable_cache } from "next/cache";
-
-export const GET = async (req: NextRequest) => {
-  const cursor = req.nextUrl.searchParams.get("cursor");
-  const tagStr = req.nextUrl.searchParams.get("tag");
-  const type = req.nextUrl.searchParams.get("type");
-  const datetype = req.nextUrl.searchParams.get("datetype");
-
-  const tagFilter = !!tagStr && tagStr !== "undefined";
-
-  if (tagFilter) {
-    const exist = await db.tag.findUnique({
-      where: { body: tagStr },
-    });
-
-    if (!exist) {
-      return NextResponse.json(
-        { ok: false, error: "존재하지 않는 태그" },
-        { status: 200 }
-      );
-    }
-  }
+// 1) 공통 RAW 쿼리 (id 기준으로 단순·안전 페이징)
+async function getPostsPageRaw(args: {
+  cursor?: string;
+  tag?: string;
+  datetype?: "week" | "month" | "year" | "all";
+  type?: string;
+}) {
+  const { cursor, tag, datetype } = args;
+  console.log(">>> DB 쿼리 실행", args); // ✅ 진짜 DB 접근 시에만 찍힘
+  // 날짜 필터
   let dateCondition = {};
-  if (datetype === "week") {
+  if (datetype === "week")
     dateCondition = { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
-  } else if (datetype === "month") {
+  if (datetype === "month")
     dateCondition = { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) };
-  } else if (datetype === "year") {
+  if (datetype === "year")
     dateCondition = { gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) };
-  }
-  try {
-    const postData = await db.post.findMany({
-      where: {
-        isTemp: type === "temp",
-        ...(tagFilter
-          ? {
-              tag: {
-                some: {
-                  body: { equals: tagStr! },
-                },
-              },
-            }
-          : {}),
-        ...(datetype ? { createdAt: dateCondition } : {}),
-      },
-      select: {
-        ...(type !== "temp"
-          ? { createdAt: true, thumbnail: true }
-          : { updatedAt: true }),
-        id: true,
-        slug: true,
-        preview: true,
-        title: true,
-      },
-      take: 12,
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-    console.log(postData);
-    return NextResponse.json({
-      ok: true,
-      data: postData,
-      nextCursor: postData.length > 0 ? postData[postData.length - 1].id : null,
-    });
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      return NextResponse.json(
-        { ok: false, error: e.message },
-        { status: 500 }
-      );
-    }
-    return NextResponse.json(
-      { ok: false, error: "Unknown error" },
-      { status: 500 }
-    );
-  }
-};
 
+  const take = 12;
+
+  const data = await db.post.findMany({
+    where: {
+      ...(tag !== "all" ? { tag: { some: { body: tag } } } : {}),
+      ...(datetype && datetype !== "all" ? { createdAt: dateCondition } : {}),
+    },
+    // ✅ 페이징은 정렬 필드와 커서 필드가 같아야 안정적 → id 기준으로 통일
+    orderBy: { id: "desc" },
+    take,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    select: {
+      createdAt: true,
+      thumbnail: true,
+      id: true,
+      slug: true,
+      preview: true,
+      title: true,
+    },
+  });
+
+  const nextCursor = data.length === take ? data[data.length - 1].id : null;
+
+  return { ok: true as const, data, nextCursor };
+}
+
+// 2) 캐시 팩토리 함수
+function getPostsPageCached(
+  tag: string,
+  datetype: "week" | "month" | "year" | "all"
+) {
+  return unstable_cache(
+    async () => {
+      return getPostsPageRaw({ tag, datetype, cursor: undefined });
+    },
+    ["posts:v1", tag, datetype], // ✅ 고정 배열, 조합별로 분리
+    { revalidate: 300, tags: ["posts"] }
+  )(); // 즉시 실행
+}
+
+export async function GET(req: NextRequest) {
+  const cursor = req.nextUrl.searchParams.get("cursor") ?? undefined;
+  const tag = req.nextUrl.searchParams.get("tag") ?? "all";
+  const datetype =
+    (req.nextUrl.searchParams.get("datetype") as
+      | "week"
+      | "month"
+      | "year"
+      | "all") ?? "all";
+
+  console.log(">>> cache key", ["posts:v1", tag, datetype]);
+  if (cursor) {
+    const page = await getPostsPageRaw({ cursor, tag, datetype });
+    return NextResponse.json(page);
+  }
+
+  const page = await getPostsPageCached(tag, datetype);
+  return NextResponse.json(page);
+}
+
+//글 작성시 revalidateTag를 통한 서버캐시 업데이트
 export const POST = async (req: NextRequest) => {
   const jsonData = await req.json();
   const { content, tag, title, imageIds, preview, thumbnail, isTemp, slug } =
@@ -130,6 +130,8 @@ export const POST = async (req: NextRequest) => {
       return { post, tags };
     });
 
+    revalidateTag("posts");
+    console.log(">>> revalidated posts cache");
     return NextResponse.json({
       ok: true,
       data: {

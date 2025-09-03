@@ -2,13 +2,13 @@ import { db } from "@/app/lib/db";
 import { Tag } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 import { ObjectId } from "mongodb";
+import { revalidateTag } from "next/cache";
 
 export const GET = async (
   req: NextRequest,
   { params }: { params: { postId: string } }
 ) => {
   const { postId } = await params;
-  const type = req.nextUrl.searchParams.get("type");
 
   if (!ObjectId.isValid(postId)) {
     return NextResponse.json({ ok: false, data: null });
@@ -55,7 +55,7 @@ export const GET = async (
     );
   }
 };
-
+//글 업데이트시 revalidateTag통한 글목록과 해당글 캐시업데이트
 export const POST = async (
   req: NextRequest,
   { params }: { params: { postId: string } }
@@ -95,22 +95,22 @@ export const POST = async (
           where: { body },
           create: {
             body,
-            isTemp: post.isTemp, // 새로 생성되는 태그는 post.isTemp 따라감
-            posts: {
-              connect: { id: post.id },
-            },
+            isTemp: post.isTemp, // 새 태그는 글 상태 따라감
+            posts: { connect: { id: post.id } },
           },
           update: {
-            // 이미 있는 태그라면 isTemp는 건드리지 않음
-            posts: {
-              connect: { id: post.id },
-            },
+            // 정식 글이 달리면 태그는 즉시 영구 태그가 됨
+            ...(post.isTemp === false ? { isTemp: false } : {}),
+            posts: { connect: { id: post.id } },
           },
         });
         if (!_tag.isTemp) tags.push(_tag);
       }
       return { post, tags };
     });
+
+    revalidateTag(`post:${postId}`);
+    revalidateTag(`posts`);
 
     return NextResponse.json({
       ok: true,
@@ -185,6 +185,9 @@ export const DELETE = async (
         }
       ).catch((err) => console.error("삭제 실패:", err));
     });
+
+    revalidateTag(`posts`);
+
     return NextResponse.json({
       ok: true,
       data: {

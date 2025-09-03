@@ -1,6 +1,7 @@
 import { db } from "@/app/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { Profile } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 
 export const GET = async () => {
   try {
@@ -91,6 +92,8 @@ export const POST = async (req: NextRequest) => {
       where: { id: profile.id },
       data: updateData,
     });
+
+    revalidatePath("/profile");
 
     return NextResponse.json({ ok: true, data: updated });
   } catch (e: unknown) {

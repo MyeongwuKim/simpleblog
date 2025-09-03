@@ -22,7 +22,7 @@ export async function fetchPosts(
     search.toString() ? `?${search.toString()}` : ""
   }`;
 
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await fetch(url);
 
   if (!res.ok) {
     return {
@@ -36,15 +36,14 @@ export async function fetchPosts(
   return res.json();
 }
 
-export const fetchTempPosts = async (cursor?: string) => {
+export const fetchTempPosts = async (cursor: string | undefined) => {
   const baseUrl = process.env.NEXTAUTH_URL ?? "";
   const search = new URLSearchParams();
 
   // ✅ cursor 있을 때만 붙임
   if (cursor) search.set("cursor", cursor);
-  search.set("type", "temp");
 
-  const url = `${baseUrl}/api/post?${search.toString()}`;
+  const url = `${baseUrl}/api/temp?${search.toString()}`;
 
   const res = await fetch(url, { cache: "no-store" });
 
@@ -65,7 +64,7 @@ export const fetchPostContentByPostId = async (postId: string) => {
   const baseUrl = process.env.NEXTAUTH_URL ?? ""; // undefined면 빈 문자열
   const url = `${baseUrl}/api/post/${postId}`;
   const res = await fetch(url, {
-    next: { revalidate: 60 },
+    next: { revalidate: 60, tags: [`post:${postId}`] },
   });
 
   if (!res.ok) throw new Error("글 정보를 데이터를 가져오지 못했습니다.");
@@ -103,9 +102,8 @@ export async function fetchRelatedPosts(
   const url = `/api/post/${params.excludeId}/related${
     query.toString() ? `?${query.toString()}` : ""
   }`;
-
   const res = await fetch(url, {
-    next: { revalidate: 60 }, // ISR 60초
+    cache: "no-store",
   });
 
   if (!res.ok) {
@@ -113,3 +111,4 @@ export async function fetchRelatedPosts(
   }
 
   return res.json();
+}

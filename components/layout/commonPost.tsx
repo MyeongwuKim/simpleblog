@@ -60,7 +60,7 @@ export default function CommonPost({ postId }: { postId: string }) {
   >({
     mutationFn: async () => {
       const result = await (
-        await fetch(`/api/post/postId/${postId}`, {
+        await fetch(`/api/post/${postId}`, {
           method: "DELETE",
         })
       ).json();
@@ -270,8 +270,16 @@ function PostFooter({ next, prev }: PostFooterProps) {
   return (
     <div className="mt-30">
       <div className="w-full grid grid-cols-2 gap-8">
-        {prev && <FooterItem slug={prev?.slug} title={prev?.title} dir={0} />}
-        {next && <FooterItem slug={next?.slug} title={next?.title} dir={0} />}
+        {prev ? (
+          <FooterItem slug={prev?.slug} title={prev?.title} dir={0} />
+        ) : (
+          <div></div>
+        )}
+        {next ? (
+          <FooterItem slug={next?.slug} title={next?.title} dir={1} />
+        ) : (
+          <div></div>
+        )}
       </div>
     </div>
   );
