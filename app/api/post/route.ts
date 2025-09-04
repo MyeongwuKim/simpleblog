@@ -62,23 +62,40 @@ function getPostsPageCached(
 }
 
 export async function GET(req: NextRequest) {
-  const cursor = req.nextUrl.searchParams.get("cursor") ?? undefined;
-  const tag = req.nextUrl.searchParams.get("tag") ?? "all";
-  const datetype =
-    (req.nextUrl.searchParams.get("datetype") as
-      | "week"
-      | "month"
-      | "year"
-      | "all") ?? "all";
+  try {
+    const cursor = req.nextUrl.searchParams.get("cursor") ?? undefined;
+    const tag = req.nextUrl.searchParams.get("tag") ?? "all";
 
-  console.log(">>> cache key", ["posts:v1", tag, datetype]);
-  if (cursor) {
-    const page = await getPostsPageRaw({ cursor, tag, datetype });
+    const datetype =
+      (req.nextUrl.searchParams.get("datetype") as
+        | "week"
+        | "month"
+        | "year"
+        | "all") ?? "all";
+
+    console.log(">>> cache key", ["posts:v1", tag, datetype]);
+
+    let page;
+    if (cursor) {
+      page = await getPostsPageRaw({ cursor, tag, datetype });
+    } else {
+      page = await getPostsPageCached(tag, datetype);
+    }
+
     return NextResponse.json(page);
+  } catch (e) {
+    console.error("❌ GET /api/posts 에러:", e);
+    if (e instanceof Error) {
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
-
-  const page = await getPostsPageCached(tag, datetype);
-  return NextResponse.json(page);
 }
 
 //글 작성시 revalidateTag를 통한 서버캐시 업데이트

@@ -156,20 +156,17 @@ export default function CommentsLayout() {
             onChange={onChangeText}
           />
         </div>
-
-        <div className="w-full  h-[45px]">
+        <div className="flex  gap-3 justify-between max-[500px]:flex-col  max-[500px]:place-items-end">
           <div
-            className="g-recaptcha absolute"
+            className="g-recaptcha "
             data-sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
           />
-          <div className="w-[120px] h-[45px]  absolute right-0">
-            <DefButton
-              type="submit"
-              className="text-button1"
-              btnColor="cyan"
-              innerItem={"댓글 작성"}
-            />
-          </div>
+          <DefButton
+            type="submit"
+            className="text-button1 w-[120px] h-[40px] "
+            btnColor="cyan"
+            innerItem="댓글 작성"
+          />
         </div>
       </form>
     </>

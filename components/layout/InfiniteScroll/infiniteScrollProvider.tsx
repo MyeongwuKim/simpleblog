@@ -15,11 +15,7 @@ import TempItem from "@/components/ui/items/tempItem";
 
 import { CardItemSkeleton, TempItemSkeleton } from "@/components/ui/skeleton";
 import { Comment, Post } from "@prisma/client";
-import {
-  InfiniteData,
-  useInfiniteQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useInView } from "react-intersection-observer";
 
@@ -35,7 +31,6 @@ interface InfiniteScrollProviderProps {
   refetchOnMount?: boolean | "always";
 }
 
-// fetcher 시그니처 통일
 interface RendererMap<T = unknown> {
   layout: string;
   fetcher: (
@@ -46,22 +41,20 @@ interface RendererMap<T = unknown> {
   renderSkeleton: (i: number) => React.ReactNode;
 }
 
-// DataType → 실제 타입 매핑
 type DataTypeMap = {
   post: Post;
-  temp: Post; // temp도 Post 타입임
+  temp: Post;
   comments: Comment;
   relatedPosts: Post;
 };
 
-// rendererMap 타입 좁히기
 const rendererMap: {
   [K in keyof DataTypeMap]: RendererMap<DataTypeMap[K]>;
 } = {
   post: {
     layout:
       "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4",
-    fetcher: fetchPosts, // Promise<Page<Post>>
+    fetcher: fetchPosts,
     renderContent: (item: Post) => <PostCardItem key={item.id} {...item} />,
     renderSkeleton: (i) => (
       <div className="h-[300px]" key={i}>
@@ -71,7 +64,7 @@ const rendererMap: {
   },
   temp: {
     layout: "flex flex-wrap flex-col gap-4",
-    fetcher: fetchTempPosts, // Promise<Page<Post>>
+    fetcher: fetchTempPosts,
     renderContent: (item: Post) => (
       <div key={item.id} className="h-[170px]">
         <TempItem {...item} />
@@ -85,12 +78,8 @@ const rendererMap: {
   },
   comments: {
     layout: "flex flex-wrap flex-col gap-4",
-    fetcher: fetchComments, // Promise<Page<Comment>>
-    renderContent: (item: Comment) => (
-      <div key={item.id} className="h-[170px]">
-        <CommentItem {...item} />
-      </div>
-    ),
+    fetcher: fetchComments,
+    renderContent: (item: Comment) => <CommentItem key={item.id} {...item} />,
     renderSkeleton: (i) => (
       <div key={i} className="h-[170px]">
         <TempItemSkeleton />
@@ -100,7 +89,7 @@ const rendererMap: {
   relatedPosts: {
     layout:
       "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4",
-    fetcher: fetchRelatedPosts, // Promise<Page<Post>>
+    fetcher: fetchRelatedPosts,
     renderContent: (item: Post) => (
       <div key={item.id} className="h-[300px] floatBox">
         <PostCardItem {...item} />
@@ -129,17 +118,19 @@ export default function InfiniteScrollProvider<T extends DataType>({
     hasNextPage,
     isFetchingNextPage,
     isError,
+    refetch,
+    isFetching,
   } = useInfiniteQuery<
-    InfiniteResponse<DataTypeMap[T]>, // queryFn이 반환하는 값
-    Error, // 에러 타입
-    InfiniteData<InfiniteResponse<DataTypeMap[T]>>, // data 타입
-    typeof queryKey, // queryKey 타입
-    string | undefined // pageParam 타입 (cursor)
+    InfiniteResponse<DataTypeMap[T]>,
+    Error,
+    InfiniteData<InfiniteResponse<DataTypeMap[T]>>,
+    typeof queryKey,
+    string | undefined
   >({
     queryKey,
     gcTime,
     staleTime,
-    initialPageParam: undefined, // ✅ 첫 요청에는 cursor 없음
+    initialPageParam: undefined,
     queryFn: ({ pageParam }) => {
       const [, params] = queryKey as [
         string,
@@ -152,15 +143,14 @@ export default function InfiniteScrollProvider<T extends DataType>({
       ];
       return rendererMap[type].fetcher(pageParam, params ?? {});
     },
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.nextCursor ?? undefined;
+    },
     refetchOnMount,
   });
 
-  const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
-  const { ref, inView } = useInView({
-    threshold: 0.5,
-  });
+  const { ref, inView } = useInView({ threshold: 0.5 });
 
   const hasBodyOverflow = () => {
     if (typeof window === "undefined") return false;
@@ -168,34 +158,17 @@ export default function InfiniteScrollProvider<T extends DataType>({
   };
 
   const getNoPostContent = () => {
-    let content = "";
     switch (type) {
       case "post":
-        content = "작성된 글이 없습니다.";
-        break;
+        return "작성된 글이 없습니다.";
       case "temp":
-        content = "작성된 임시글이 없습니다.";
-        break;
+        return "작성된 임시글이 없습니다.";
       case "comments":
-        content = "작성된 댓글이 없습니다.";
-        break;
+        return "작성된 댓글이 없습니다.";
       default:
-        content = "관련된 글이 없습니다.";
-        break;
+        return "관련된 글이 없습니다.";
     }
-    return content;
   };
-
-  useEffect(() => {
-    if (!inView) return;
-
-    if (isLoading || isFetchingNextPage) return;
-    if (!hasNextPage) return;
-
-    // 오버플로우 없으면 스킵
-    if (!hasBodyOverflow()) return;
-    fetchNextPage();
-  }, [inView, isLoading, isFetchingNextPage, hasNextPage]);
 
   const flatData: DataTypeMap[T][] =
     data?.pages.flatMap((page) => page.data) ?? [];
@@ -205,9 +178,17 @@ export default function InfiniteScrollProvider<T extends DataType>({
     .map((page, index) => (!page.ok ? index : null))
     .filter((i) => i !== null) as number[];
 
-  if (isError) {
-    return <div>Error</div>;
-  }
+  useEffect(() => {
+    if (!inView) return;
+    if (isLoading || isFetchingNextPage) return;
+    if (!hasNextPage) return;
+
+    // 🚨 실패한 페이지가 있으면 자동 요청 중단
+    if (pageErrors.length > 0) return;
+
+    if (!hasBodyOverflow()) return;
+    fetchNextPage();
+  }, [inView, isLoading, isFetchingNextPage, hasNextPage, pageErrors]);
 
   return (
     <div ref={containerRef} className="relative">
@@ -219,13 +200,14 @@ export default function InfiniteScrollProvider<T extends DataType>({
         ) : flatData.length > 0 ? (
           <>
             {flatData.map(rendererMap[type].renderContent)}
-            {/* sentinel 항상 리스트 끝에 위치 */}
             <div ref={ref} className="h-10 w-full" />
           </>
         ) : (
-          <div className="col-span-full flex flex-col items-center justify-center py-20 text-gray-400 w-full">
-            <NoPostIcon content={getNoPostContent()} />
-          </div>
+          pageErrors.length <= 0 && (
+            <div className="col-span-full flex flex-col items-center justify-center py-20 text-gray-400 w-full">
+              <NoPostIcon content={getNoPostContent()} />
+            </div>
+          )
         )}
       </div>
       {isFetchingNextPage && (
@@ -239,23 +221,21 @@ export default function InfiniteScrollProvider<T extends DataType>({
         <div className="text-red-500 mt-4 text-center">
           <div>{pageErrors[0].error} 😢</div>
           <button
-            className="px-4 py-2 bg-red-500 text-white rounded mt-2"
+            className="w-30 px-4 py-2 bg-red-500 text-white rounded mt-2"
             onClick={() => {
-              queryClient.setQueryData<
-                InfiniteData<InfiniteResponse<DataTypeMap[T]>, number>
-              >([type], (oldData) => {
-                if (!oldData) return oldData; // 캐시 없음
-
-                return {
-                  ...oldData,
-                  pages: oldData.pages.filter(
-                    (_page, index) => index !== failedPages[0]
-                  ),
-                };
-              });
+              if (failedPages[0] === 0) {
+                refetch();
+              } else {
+                const failedCursor = pageErrors[0]?.nextCursor;
+                if (failedCursor) {
+                  fetchNextPage(); // ✅ v5 공식
+                } else {
+                  refetch();
+                }
+              }
             }}
           >
-            다시 시도
+            {isFetching || isFetchingNextPage ? "불러오는 중..." : "다시 시도"}
           </button>
         </div>
       )}

@@ -28,8 +28,8 @@ export async function fetchPosts(
     return {
       ok: false,
       data: [],
-      error: `HTTP ${res.status}`,
-      nextCursor: null,
+      error: `API 오류 ${res.status}`,
+      nextCursor: cursor,
     };
   }
 
@@ -48,7 +48,7 @@ export const fetchTempPosts = async (cursor: string | undefined) => {
   const res = await fetch(url, { cache: "no-store" });
 
   if (!res.ok) {
-    return { ok: false, data: [], error: `HTTP ${res.status}` };
+    return { ok: false, data: [], error: `API 오류입니다.` };
   }
 
   const jsonData = await res.json();
@@ -67,9 +67,11 @@ export const fetchPostContentByPostId = async (postId: string) => {
     next: { revalidate: 60, tags: [`post:${postId}`] },
   });
 
-  if (!res.ok) throw new Error("글 정보를 데이터를 가져오지 못했습니다.");
-
   const jsonData = await res.json();
+
+  if (!jsonData.ok) {
+    throw new Error(`API 오류 (${jsonData.error})`);
+  }
 
   return jsonData;
 };
@@ -82,22 +84,27 @@ export const fetchSiblingPost = async (postId: string) => {
     cache: "no-store",
   });
 
-  if (!res.ok) throw new Error("글 정보를 가져오지 못했습니다.");
-
   const jsonData = await res.json();
+
+  if (!jsonData.ok) {
+    throw new Error(`API 오류 (${jsonData.error})`);
+  }
 
   return jsonData;
 };
 
 export async function fetchRelatedPosts(
   cursor?: string,
-  params: FetchParams = {}
+  params: FetchParams = {},
+  fail?: string
 ) {
   const query = new URLSearchParams();
 
   params.tags?.forEach((t) => query.append("tags", t));
 
   if (cursor) query.set("cursor", cursor);
+
+  if (fail) query.set("fail", fail);
 
   const url = `/api/post/${params.excludeId}/related${
     query.toString() ? `?${query.toString()}` : ""
@@ -107,7 +114,12 @@ export async function fetchRelatedPosts(
   });
 
   if (!res.ok) {
-    throw new Error("관련 글 불러오기 실패");
+    return {
+      ok: false,
+      data: [],
+      error: `API 오류 ${res.status}`,
+      nextCursor: cursor,
+    };
   }
 
   return res.json();

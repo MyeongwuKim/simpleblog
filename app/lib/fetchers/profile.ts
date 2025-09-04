@@ -3,11 +3,10 @@ export async function fetchProfile() {
   const url = `${baseUrl}/api/profile`;
   const res = await fetch(url);
 
-  if (!res.ok) {
-    return { ok: false, data: null, error: `HTTP ${res.status}` };
-  }
   const jsonData = await res.json(); // ← 여기서 한 번만 읽음
 
-  if (!jsonData.ok) return { ok: false, data: null, error: jsonData.error };
+  if (!jsonData.ok) {
+    throw new Error(`API 오류입니다. (${jsonData.error})`);
+  }
   return jsonData;
 }

@@ -8,26 +8,31 @@ import DefButton from "../buttons/defButton";
 import { useProfileMutate, useProfileQuery } from "./query";
 import { useUI } from "@/components/providers/uiProvider";
 
-export default function SocialForm() {
+export default function SocialForm({
+  github,
+  instagram,
+  notion,
+}: {
+  github: string | null;
+  instagram: string | null;
+  notion: string | null;
+}) {
   const [isEdit, setIsEdit] = useState(false);
-  const { data: profileResult, isLoading: profileLoading } = useProfileQuery();
-
-  if (profileLoading) return <div></div>;
 
   const renderMap = {
     edit: (
       <EditSocialForm
-        github={profileResult?.data?.github ?? ""}
-        instagram={profileResult?.data?.instagram ?? ""}
-        notion={profileResult?.data?.notion ?? ""}
+        github={github ?? ""}
+        instagram={instagram ?? ""}
+        notion={notion ?? ""}
         onConfirm={() => setIsEdit(false)}
       />
     ),
     read: (
       <ReadSocialForm
-        github={profileResult?.data?.github ?? ""}
-        instagram={profileResult?.data?.instagram ?? ""}
-        notion={profileResult?.data?.notion ?? ""}
+        github={github ?? ""}
+        instagram={instagram ?? ""}
+        notion={notion ?? ""}
         onEdit={() => setIsEdit(true)}
       />
     ),
@@ -62,7 +67,7 @@ function EditSocialForm({
   const [nt, setNt] = useState(notion);
 
   const { mutate } = useProfileMutate({
-    onError: (error) => {
+    onErrorCallback: (error) => {
       openToast(true, error.message, 1);
     },
   });

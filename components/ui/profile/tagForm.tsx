@@ -13,7 +13,7 @@ interface Tag {
   count: number; // 글 개수
 }
 
-export function TagForm() {
+export default function TagForm() {
   const queryClient = useQueryClient();
   const { openConfirm, openToast } = useUI();
   const { isLoading, data: tagResult } = useQuery<

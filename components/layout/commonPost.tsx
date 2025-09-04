@@ -45,15 +45,14 @@ export default function CommonPost({ postId }: { postId: string }) {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
   });
 
-  const { data: sibData } = useQuery<QueryResponse<{ prev: Post; next: Post }>>(
-    {
-      queryKey: ["post", postId, "siblings"],
-      queryFn: () => fetchSiblingPost(postId),
-      staleTime: 0,
-      gcTime: 5 * 60 * 1000,
-    }
-  );
-
+  const { data: sibData, isError: sibError } = useQuery<
+    QueryResponse<{ prev: Post; next: Post }>
+  >({
+    queryKey: ["post", postId, "siblings"],
+    queryFn: () => fetchSiblingPost(postId),
+    staleTime: 0,
+    gcTime: 5 * 60 * 1000,
+  });
   const { mutate, isPending } = useMutation<
     QueryResponse<{ post: Post; tag: Tag[] }>,
     Error
@@ -152,12 +151,16 @@ export default function CommonPost({ postId }: { postId: string }) {
   }
 
   if (isPostLoading || !postData || isPending || postError) {
-    return <PostSkeleton />;
+    return (
+      <div className="layout mt-20 h-full relative">
+        <PostSkeleton />;
+      </div>
+    );
   }
 
   return (
     <>
-      <div className="layout mt-20 ml-auto mr-auto  h-full relative">
+      <div className="layout mt-20 h-full relative">
         <PostHead
           ref={headRef}
           title={postData.data.title}
@@ -172,9 +175,12 @@ export default function CommonPost({ postId }: { postId: string }) {
         />
         <PostBody content={postData.data.content} />
         <div className="w-full h-[1px] bg-text4 mt-20" />
-        {sibData?.ok && (
-          <PostFooter next={sibData?.data.next} prev={sibData?.data.prev} />
-        )}
+
+        <PostFooter
+          next={sibData?.data.next}
+          prev={sibData?.data.prev}
+          isError={sibError}
+        />
       </div>
       <h2 className="text-text1 text-2xl my-20 text-center">
         이 게시물과 관련된 글
@@ -265,12 +271,13 @@ const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
 interface PostFooterProps {
   next: Post | undefined;
   prev: Post | undefined;
+  isError: boolean;
 }
-function PostFooter({ next, prev }: PostFooterProps) {
+function PostFooter({ next, prev, isError }: PostFooterProps) {
   return (
     <div className="mt-30">
       <div className="w-full grid grid-cols-2 gap-8">
-        {prev ? (
+        {!isError && prev ? (
           <FooterItem slug={prev?.slug} title={prev?.title} dir={0} />
         ) : (
           <div></div>

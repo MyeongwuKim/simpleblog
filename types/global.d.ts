@@ -27,7 +27,7 @@ declare global {
   interface InfiniteResponse<T> {
     ok: boolean;
     data: T[];
-    nextCursor: string | null;
+    nextCursor: string | undefined;
     error?: string; // 실패 시만 존재
   }
 

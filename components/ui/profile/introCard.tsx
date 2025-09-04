@@ -8,14 +8,20 @@ import { useUI } from "@/components/providers/uiProvider";
 import InputField from "../input/inputField";
 import { useProfileMutate, useProfileQuery } from "./query";
 
-export default function IntroCard() {
+export default function IntroCard({
+  title,
+  pImg,
+  introduce,
+}: {
+  title: string | undefined;
+  pImg: string | null;
+  introduce: string | undefined;
+}) {
   const { openToast } = useUI();
   const [isEdit, setIsEdit] = useState(false);
   const [profileImg, setProfileImg] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const { data: profileResult, isLoading: profileLoading } = useProfileQuery();
 
   const { mutate } = useProfileMutate({
     onSuccessCallback: (result) => {
@@ -24,55 +30,52 @@ export default function IntroCard() {
         setProfileImg(getDeliveryDomain(result.data.profileImg, "public"));
       }
     },
-    onError: (error) => {
+    onErrorCallback: (error) => {
       openToast(true, error.message, 1);
       setUploading(false);
     },
   });
 
   useEffect(() => {
-    if (profileResult?.ok && profileResult?.data?.profileImg) {
-      setProfileImg(getDeliveryDomain(profileResult.data.profileImg, "public"));
+    if (pImg) {
+      setProfileImg(getDeliveryDomain(pImg, "public"));
     }
-  }, [profileResult]);
+  }, [pImg]);
 
-  const renderMap = useMemo(
-    () => ({
-      edit: (
-        <EditIntro
-          _title={profileResult?.data?.title || ""}
-          _intro={profileResult?.data?.introduce || ""}
-          onConfirm={({ title, intro }) => {
-            mutate({ form: "intro", title, introduce: intro });
-            setIsEdit(false);
-          }}
-        />
-      ),
-      read: (
-        <ReadIntro
-          title={profileResult?.data?.title || ""}
-          intro={profileResult?.data?.introduce || ""}
-          onEdit={() => setIsEdit(true)}
-        />
-      ),
-    }),
-    [profileResult]
-  );
+  const renderMap = {
+    edit: (
+      <EditIntro
+        _title={title || ""}
+        _intro={introduce || ""}
+        onConfirm={({ title, intro }) => {
+          mutate({ form: "intro", title, introduce: intro });
+          setIsEdit(false);
+        }}
+      />
+    ),
+    read: (
+      <ReadIntro
+        title={title || ""}
+        intro={introduce || ""}
+        onEdit={() => setIsEdit(true)}
+      />
+    ),
+  };
 
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
   const handleRemove = useCallback(async () => {
-    if (profileResult?.data.profileImg) {
-      fetch(`/api/upload?id=${profileResult?.data.profileImg}`, {
+    if (pImg) {
+      fetch(`/api/upload?id=${pImg}`, {
         method: "DELETE",
       });
       if (fileInputRef.current) fileInputRef.current.value = "";
       mutate({ form: "profileimg", profileImg: null });
       setProfileImg(null);
     }
-  }, [profileResult?.data.profileImg]);
+  }, [pImg]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -111,14 +114,13 @@ export default function IntroCard() {
     }
   };
 
-  if (profileLoading) return <div></div>;
-
   return (
     <div className="w-full h-full flex flex-row flex-auto max-sm:flex-col sm:mb-10">
       <div className="flex flex-col items-center pr-8">
         <div className="w-[128px] h-[192px] rounded-md relative mb-4 overflow-hidden flex items-center justify-center ">
           {profileImg ? (
             <Image
+              sizes="100vw, 400px"
               className="w-full h-full object-cover"
               src={profileImg}
               alt="profile"

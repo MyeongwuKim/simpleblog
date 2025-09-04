@@ -116,3 +116,38 @@ export const TagItemSkeleton = () => {
     </div>
   );
 };
+
+export const SettingSkeleton = () => {
+  return (
+    <div className="flex gap-6 flex-col">
+      <div className="w-full h-full flex flex-row flex-auto max-sm:flex-col sm:mb-10">
+        <div className="flex flex-col items-center pr-8">
+          <Skeleton className="w-[128px] h-[192px] rounded-md relative mb-4 overflow-hidden flex items-center justify-center"></Skeleton>
+        </div>
+
+        <div className="border-r-[1px] border-border1 max-sm:border-b-[1px] max-sm:mt-6 max-sm:mb-6" />
+        <div className="sm:px-8 flex flex-auto flex-col gap-2">
+          <Skeleton className="w-1/4 h-[20px]"></Skeleton>
+          <Skeleton className="w-2/3 h-[20px]"></Skeleton>
+        </div>
+      </div>
+      <div className="w-full h-auto">
+        <div className="w-full h-auto relative pb-6 flex border-b-[1px] border-border1">
+          <div className="max-w-[163px] w-full">
+            <h3 className="text-text1 text-xl font-bold w-full">소셜설정</h3>
+          </div>
+          <div
+            id="sub-setting-view"
+            className="flex relative w-full gap-2 justify-items-stretch"
+          >
+            <div className="w-full flex flex-col gap-2">
+              <Skeleton className="w-1/3 h-[20px]"></Skeleton>
+              <Skeleton className="w-2/3 h-[20px]"></Skeleton>
+              <Skeleton className="w-1/4 h-[20px]"></Skeleton>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

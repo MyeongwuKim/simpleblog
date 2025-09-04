@@ -65,7 +65,7 @@ function CommentItem({ content, createdAt, id, name, isMe }: Comment) {
     }
   };
   return (
-    <div className="w-full h-full">
+    <>
       <div className="w-full h-[54px] flex justify-between">
         <div className="flex">
           <div className="rounded-full h-12 w-12 bg-text3  mr-4 flex items-center justify-center">
@@ -95,11 +95,11 @@ function CommentItem({ content, createdAt, id, name, isMe }: Comment) {
           </div>
         )}
       </div>
-      <div className="mt-8">
+      <div className="mt-8 w-full break-all">
         <ReactMD doc={content} />
       </div>
       <div className="border-border1 border-b-[1px] mt-8"></div>
-    </div>
+    </>
   );
 }
 

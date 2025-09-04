@@ -67,6 +67,7 @@ export function ProfileItem({ profile }: { profile: Profile | null }) {
                 <Image
                   src={getDeliveryDomain(localProfile?.profileImg, "public")}
                   alt="profile"
+                  sizes="100vw, 400px"
                   fill // 부모 크기에 맞춤
                   className="object-cover  rounded-t-lg  max-sm:rounded-none rounded-l-lg "
                   priority

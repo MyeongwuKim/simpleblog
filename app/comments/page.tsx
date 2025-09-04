@@ -29,9 +29,17 @@ export default async function Comments() {
       lastPage.nextCursor ?? undefined,
   });
 
+  // console.log(
+  //   "서버 queryClient 상태:",
+  //   queryClient.getQueryCache().find({ queryKey: ["comments"] })
+  // );
+
+  // const state = dehydrate(queryClient);
+  // console.log("dehydrate 결과(JSON):", state);
+
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="max-w-[768px]  w-full ml-auto mr-auto relative">
+      <div className="layout relative">
         <CommentsLayout />
         <InfiniteScrollProvider
           staleTime={30 * 1000}
