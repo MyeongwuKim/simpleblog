@@ -14,9 +14,7 @@ export default async function Profile() {
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <div className="layout h-full relative">
-        <div className="flex gap-6 flex-col">
-          <SettingForm></SettingForm>
-        </div>
+        <SettingForm></SettingForm>
       </div>
     </HydrationBoundary>
   );

@@ -117,7 +117,6 @@ export default function InfiniteScrollProvider<T extends DataType>({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isError,
     refetch,
     isFetching,
   } = useInfiniteQuery<

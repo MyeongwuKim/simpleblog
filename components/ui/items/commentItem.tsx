@@ -16,15 +16,15 @@ import {
 import { useSession } from "next-auth/react";
 
 function CommentItem({ content, createdAt, id, name, isMe }: Comment) {
-  const { openConfirm, openToast } = useUI();
+  const { openModal, openToast } = useUI();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
   const { mutate } = useMutation<QueryResponse<Comment>, Error, { id: string }>(
     {
-      mutationFn: async (id) => {
+      mutationFn: async (data) => {
         const result = await (
-          await fetch(`/api/comments?id=${id}`, {
+          await fetch(`/api/comments?id=${data.id}`, {
             method: "DELETE",
           })
         ).json();
@@ -55,7 +55,7 @@ function CommentItem({ content, createdAt, id, name, isMe }: Comment) {
     }
   );
   const deleteCommentItem = async () => {
-    const result = await openConfirm({
+    const result = await openModal("CONFIRM", {
       title: "삭제",
       msg: "댓글을 삭제하시겠습니까?",
       btnMsg: ["취소", "확인"],

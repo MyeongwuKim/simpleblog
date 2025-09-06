@@ -52,22 +52,22 @@ export function AlertModal({ msg, btnMsg, title, onClose }: AlertModalProps) {
             </div>
 
             <div className="flex justify-end gap-4">
-              <div className={`h-11 ${btnMsg[0].length <= 0 && "invisible"}`}>
-                <DefButton
-                  className="hover:bg-bg-page3 text-cyan-500"
-                  btnColor="black"
-                  innerItem={btnMsg[0]}
-                  onClickEvt={() => onClose(0)}
-                />
-              </div>
-              <div className={`h-11 ${btnMsg[1].length <= 0 && "invisible"}`}>
-                <DefButton
-                  className="  text-button1"
-                  btnColor="cyan"
-                  innerItem={btnMsg[1]}
-                  onClickEvt={() => onClose(1)}
-                />
-              </div>
+              <DefButton
+                className={`h-11 hover:bg-bg-page3 text-cyan-500 ${
+                  btnMsg[0].length <= 0 && "invisible"
+                }`}
+                btnColor="black"
+                innerItem={btnMsg[0]}
+                onClickEvt={() => onClose(0)}
+              />
+              <DefButton
+                className={`text-button1 h-11 ${
+                  btnMsg[1].length <= 0 && "invisible"
+                }`}
+                btnColor="cyan"
+                innerItem={btnMsg[1]}
+                onClickEvt={() => onClose(1)}
+              />
             </div>
           </div>
         </ModalBody>

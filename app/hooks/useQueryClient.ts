@@ -16,9 +16,10 @@ const getQueryClient = cache(
         queries: {
           //캐싱된 데이터를 60초 동안만 사용(유통기한)
           staleTime: 60 * 1000,
-          retry: 1,
-          refetchOnMount: false,
-          refetchOnWindowFocus: false,
+          gcTime: 15 * 60 * 1000, // 15분
+          retry: 3,
+          retryDelay: (attemptIndex) =>
+            Math.min(1000 * 2 ** attemptIndex, 5000),
           //throwOnError: true,
         },
       },

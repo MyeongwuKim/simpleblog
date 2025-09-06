@@ -39,6 +39,7 @@ async function getPostsPageRaw(args: {
       slug: true,
       preview: true,
       title: true,
+      imageIds: true,
     },
   });
 

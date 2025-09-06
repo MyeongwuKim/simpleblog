@@ -75,7 +75,7 @@ export default function Write() {
   const router = useRouter();
   const [state, dispatch] = useReducer(reducer, initialState);
   const previewRef = useRef<HTMLDivElement>(null);
-  const { openToast } = useUI();
+  const { openToast, openModal } = useUI();
 
   const { data: result } = useQuery<QueryResponse<Post & { tag: Tag[] }>>({
     queryKey: ["post", postId],
@@ -237,24 +237,24 @@ export default function Write() {
       deleteTempPostCache(res);
     }
 
-    queryClient.setQueryData<QueryResponse<Post & { tag: Tag[] }>>(
-      ["post", postId],
-      (oldData) => {
-        return oldData
-          ? {
-              ...oldData,
-              data: {
-                ...oldData.data,
-                current: {
-                  ...oldData.data,
-                  ...res, // ← res 안의 수정된 필드를 current에 병합
-                },
-              },
-            }
-          : oldData;
-      }
-    );
-    queryClient.invalidateQueries({ queryKey: ["post", postId] });
+    // queryClient.setQueryData<QueryResponse<Post & { tag: Tag[] }>>(
+    //   ["post", postId],
+    //   (oldData) => {
+    //     return oldData
+    //       ? {
+    //           ...oldData,
+    //           data: {
+    //             ...oldData.data,
+    //             current: {
+    //               ...oldData.data,
+    //               ...res, // ← res 안의 수정된 필드를 current에 병합
+    //             },
+    //           },
+    //         }
+    //       : oldData;
+    //   }
+    // );
+    //queryClient.invalidateQueries({ queryKey: ["post", postId] });
     //임시글 -> 추가했을때..
     if (prevIsTemp) insertNewPostCache(["post"], res);
     //게시글 -> 수정했을때..
@@ -349,30 +349,15 @@ export default function Write() {
     return result;
   }, [state]);
 
-  const extractThumbAndPreview = useCallback(
+  const extractPreview = useCallback(
     (length = 150) => {
-      let thumbnail: string | null = null;
-
-      if (process.env.NEXT_PUBLIC_DEMO) {
-        // ✅ demo 모드: picsum.photos 같은 랜덤 이미지 잡기
-        const demoThumb = state.content.match(
-          /https:\/\/picsum\.photos\/[^\)\s]+/
-        );
-        thumbnail = demoThumb ? demoThumb[0] : null;
-      } else {
-        // ✅ 실제: Cloudflare 이미지
-        const realThumb = state.content.match(
-          /imagedelivery\.net\/[^\/]+\/([^\/]+)/
-        );
-        thumbnail = realThumb ? realThumb[0] : null;
-      }
       const preview = state.content
         .replace(/!\[.*?\]\(.*?\)/g, "")
         .replace(/[#_*`>+\-\[\]\(\)~|]/g, "")
         .replace(/\n/g, " ")
         .trim();
 
-      return [preview.slice(0, length), thumbnail];
+      return preview.slice(0, length);
     },
     [state.content]
   );
@@ -380,16 +365,29 @@ export default function Write() {
   const createSlug = (title: string) => new Slugger().slug(title);
 
   const onMutatProcess = useCallback(
-    (process: number) => {
-      const [preview, thumbnail] = extractThumbAndPreview();
+    async (process: number) => {
+      const preview = extractPreview();
       const imageIds = getFormatImagesId(state.content);
+      let popupResut = null;
+      if (process == 1) {
+        const result = await openModal("WRITE", {
+          preview,
+          thumbnail:
+            state.thumbnail ?? (imageIds.length > 0 ? imageIds[0] : null),
+          title: state.title,
+        });
+        if (result == 0) return;
+        popupResut = result;
+        if (popupResut) imageIds.push(popupResut);
+      }
+
       const mutate = isValidPostId ? updateMuate : writeMutate;
       mutate.mutate({
         ...state,
         isTemp: process === 2,
         preview,
         imageIds,
-        thumbnail,
+        thumbnail: popupResut || null,
         ...(isValidPostId ? {} : { slug: createSlug(state.title) }),
       });
     },
@@ -482,7 +480,7 @@ export default function Write() {
                         ? "수정하기"
                         : "작성하기"
                     }
-                    onClickEvt={() => {
+                    onClickEvt={async () => {
                       const { isOk, msg } = validate();
                       if (!isOk) return openToast(true, msg, 1);
                       onMutatProcess(1);

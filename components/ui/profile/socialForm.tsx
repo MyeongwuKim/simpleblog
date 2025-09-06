@@ -5,7 +5,7 @@ import { RiNotionFill } from "react-icons/ri";
 import LabelButton from "../buttons/labelButton";
 import InputField from "../input/inputField";
 import DefButton from "../buttons/defButton";
-import { useProfileMutate, useProfileQuery } from "./query";
+import { useProfileMutate } from "./query";
 import { useUI } from "@/components/providers/uiProvider";
 
 export default function SocialForm({

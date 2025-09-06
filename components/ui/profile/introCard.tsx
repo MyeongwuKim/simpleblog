@@ -1,12 +1,12 @@
 "use client";
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import DefButton from "../buttons/defButton";
 import LabelButton from "../buttons/labelButton";
 import { getDeliveryDomain, timeStamp } from "@/app/hooks/useUtil";
 import { useUI } from "@/components/providers/uiProvider";
 import InputField from "../input/inputField";
-import { useProfileMutate, useProfileQuery } from "./query";
+import { useProfileMutate } from "./query";
 
 export default function IntroCard({
   title,
@@ -85,6 +85,12 @@ export default function IntroCard({
       setProfileImg(previewUrl);
       setUploading(true);
 
+      if (process.env.NEXT_PUBLIC_DEMO) {
+        const randomImg = `https://picsum.photos/seed/${Date.now()}/600/400`;
+        setProfileImg(randomImg);
+        mutate({ profileImg: randomImg, form: "profileimg" });
+        return;
+      }
       try {
         const { uploadURL } = await (
           await fetch(`/api/upload`, { method: "POST" })

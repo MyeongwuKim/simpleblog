@@ -13,7 +13,7 @@ import { useCallback } from "react";
 
 export default function TempItem({ preview, title, updatedAt, id }: Post) {
   const queryClient = useQueryClient();
-  const { openToast, openConfirm } = useUI();
+  const { openToast, openModal } = useUI();
   const { mutate } = useMutation<QueryResponse<Post>, Error>({
     mutationFn: async () => {
       const result = await (
@@ -49,7 +49,7 @@ export default function TempItem({ preview, title, updatedAt, id }: Post) {
     onError: (error) => openToast(true, error.message, 1),
   });
   const deleteTempPost = useCallback(async () => {
-    const result = await openConfirm({
+    const result = await openModal("CONFIRM", {
       title: "임시글 삭제",
       msg: "임시글을 지우시겠습니까?",
       btnMsg: ["취소", "확인"],

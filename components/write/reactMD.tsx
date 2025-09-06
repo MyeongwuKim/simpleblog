@@ -129,6 +129,9 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
           ol({ children }) {
             return <div className="mb-[1em] list-decimal">{children}</div>;
           },
+          hr({}) {
+            return <hr className="border-border1"></hr>;
+          },
           code: RemarkCode,
         }}
         rehypePlugins={[

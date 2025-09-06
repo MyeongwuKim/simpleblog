@@ -13,7 +13,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { Post, Tag } from "@prisma/client";
-import { formateDate } from "@/app/hooks/useUtil";
+import { formateDate, getDeliveryDomain } from "@/app/hooks/useUtil";
 import Slugger from "github-slugger";
 import { Node, Parent } from "unist";
 import remarkParse from "remark-parse";
@@ -28,6 +28,7 @@ import { useUI } from "../providers/uiProvider";
 import { useSession } from "next-auth/react";
 import InfiniteScrollProvider from "./InfiniteScroll/infiniteScrollProvider";
 import { Root, Heading, Text } from "mdast";
+import Image from "next/image";
 
 export default function CommonPost({ postId }: { postId: string }) {
   const queryClient = useQueryClient();
@@ -41,8 +42,7 @@ export default function CommonPost({ postId }: { postId: string }) {
   } = useQuery<QueryResponse<Post & { tag: Tag[] }>>({
     queryKey: ["post", postId],
     queryFn: () => fetchPostContentByPostId(postId),
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    staleTime: 600 * 1000,
   });
 
   const { data: sibData, isError: sibError } = useQuery<
@@ -51,7 +51,6 @@ export default function CommonPost({ postId }: { postId: string }) {
     queryKey: ["post", postId, "siblings"],
     queryFn: () => fetchSiblingPost(postId),
     staleTime: 0,
-    gcTime: 5 * 60 * 1000,
   });
   const { mutate, isPending } = useMutation<
     QueryResponse<{ post: Post; tag: Tag[] }>,
@@ -173,7 +172,10 @@ export default function CommonPost({ postId }: { postId: string }) {
           headRef={headRef}
           headings={extractHeadings(postData.data.content)}
         />
-        <PostBody content={postData.data.content} />
+        <PostBody
+          content={postData.data.content}
+          thumbnail={postData.data.thumbnail}
+        />
         <div className="w-full h-[1px] bg-text4 mt-20" />
 
         <PostFooter
@@ -196,9 +198,27 @@ export default function CommonPost({ postId }: { postId: string }) {
   );
 }
 
-export function PostBody({ content }: { content: string }) {
+export function PostBody({
+  content,
+  thumbnail,
+}: {
+  content: string;
+  thumbnail: string | null;
+}) {
   return (
     <div id="post-body" className="my-40 min-h-[100px]">
+      {thumbnail && (
+        <div className="max-w-[768px]">
+          <Image
+            width={200}
+            height={200}
+            className="h-auto w-full "
+            src={getDeliveryDomain(thumbnail, "public")}
+            alt="post-thumbnail"
+            priority
+          />
+        </div>
+      )}
       <ReactMD doc={content} />
     </div>
   );
@@ -215,10 +235,10 @@ const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
   ({ tag, title, createdAt, postId, mutate }, ref) => {
     const { data: session } = useSession();
     const route = useRouter();
-    const { openConfirm } = useUI();
+    const { openModal } = useUI();
 
     const removeEvt = async () => {
-      const result = await openConfirm({
+      const result = await openModal("CONFIRM", {
         title: "글 삭제",
         msg: "글을 지우시겠습니까?",
         btnMsg: ["취소", "확인"],
@@ -299,38 +319,67 @@ interface PostSide {
 function PostSide({ headings, headRef }: PostSide) {
   const sideRef = useRef<HTMLDivElement>(null);
   const [isFixed, setIsFixed] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
+  // 사이드바 fixed 처리
   useEffect(() => {
     const handleScroll = () => {
       if (!headRef.current) return;
       const headBottom =
         headRef.current.getBoundingClientRect().bottom + window.scrollY;
-      if (window.scrollY > headBottom) setIsFixed(true);
-      else setIsFixed(false);
+      setIsFixed(window.scrollY > headBottom);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [headRef]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const offset = 20; // scrollToHeading과 동일하게 보정
+      const currentY = window.scrollY + offset;
+
+      const sections = headings
+        .map(({ id }) => {
+          const el = document.getElementById(id);
+          if (!el) return null;
+          return {
+            id,
+            top: el.getBoundingClientRect().top + window.scrollY - offset,
+          };
+        })
+        .filter((v): v is { id: string; top: number } => v !== null);
+
+      // 현재 스크롤과 가장 가까운 heading 찾기
+      let active: string | null = null;
+      for (let i = 0; i < sections.length; i++) {
+        if (currentY >= sections[i].top) {
+          active = sections[i].id;
+        } else {
+          break;
+        }
+      }
+
+      setActiveId(active);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [headings]);
   const scrollToHeading = (id: string) => {
     const target = document.getElementById(id);
     if (!target) return;
-
-    const offset = 40; // 고정 헤더 높이 등
+    const offset = 20;
     const targetY =
       target.getBoundingClientRect().top + window.scrollY - offset;
-
-    window.scrollTo({
-      top: targetY,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: targetY, behavior: "smooth" });
   };
+
   return (
     <div
       ref={sideRef}
       className={`${
         headings.length <= 0 ? "hidden" : "relative mt-2  xl:block hidden"
-      } `}
+      }`}
     >
       <div className="absolute left-full z-50">
         <div
@@ -340,16 +389,19 @@ function PostSide({ headings, headRef }: PostSide) {
         >
           <ul>
             {headings.map(({ level, text, id }, i) => {
+              const isActive = activeId === id;
               return (
                 <li
                   key={i}
                   style={{ marginLeft: (level - 1) * 10 }}
-                  className={`w-full h-auto   overflow-hidden ease-in duration-100 hover:scale-[1.05]`}
+                  className={`w-full h-auto overflow-hidden ease-in duration-100 hover:scale-[1.05]`}
                 >
                   <LabelButton
                     onClickEvt={() => scrollToHeading(id)}
-                    color="gray"
-                    className="text-sm"
+                    color={isActive ? "cyan" : "gray"}
+                    className={`text-sm ${
+                      isActive ? "font-bold text-cyan-500" : ""
+                    }`}
                     innerItem={<span>{text}</span>}
                   />
                 </li>
@@ -361,5 +413,4 @@ function PostSide({ headings, headRef }: PostSide) {
     </div>
   );
 }
-
 PostHead.displayName = "PostHead";

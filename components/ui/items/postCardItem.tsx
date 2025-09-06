@@ -8,7 +8,16 @@ import Link from "next/link";
 import React from "react";
 import { MdImageNotSupported } from "react-icons/md";
 
-function PostCardItem({ createdAt, preview, thumbnail, title, slug }: Post) {
+function PostCardItem({
+  createdAt,
+  preview,
+  thumbnail,
+  title,
+  slug,
+  imageIds,
+}: Post) {
+  const imageSrc = thumbnail ?? (imageIds.length > 0 ? imageIds[0] : null);
+
   return (
     <Link
       href={`/post/${slug}`}
@@ -25,10 +34,10 @@ function PostCardItem({ createdAt, preview, thumbnail, title, slug }: Post) {
         className="w-full h-full"
         renderImage={() => (
           <div className="relative bg-background2 w-full h-[240px] flex justify-center items-center">
-            {thumbnail ? (
+            {imageSrc ? (
               <Image
                 fill
-                src={getDeliveryDomain(thumbnail, "public")}
+                src={getDeliveryDomain(imageSrc, "public")}
                 alt={title}
                 priority
                 sizes="(max-width: 768px) 100vw, 400px"

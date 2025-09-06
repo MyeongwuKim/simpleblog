@@ -15,7 +15,7 @@ interface Tag {
 
 export default function TagForm() {
   const queryClient = useQueryClient();
-  const { openConfirm, openToast } = useUI();
+  const { openModal, openToast } = useUI();
   const { isLoading, data: tagResult } = useQuery<
     QueryResponse<(Tag & { _count: { posts: number } })[]>
   >({
@@ -62,7 +62,7 @@ export default function TagForm() {
   });
 
   const handleDelete = useCallback(async (id: string) => {
-    const result = await openConfirm({
+    const result = await openModal("CONFIRM", {
       title: "",
       msg: "해당 태그를 삭제하시겠습니까?",
       btnMsg: ["취소", "확인"],

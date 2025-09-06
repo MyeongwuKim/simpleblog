@@ -22,6 +22,7 @@ export const GET = async (
         title: true,
         content: true,
         isTemp: true,
+        thumbnail: true,
         createdAt: true,
         slug: true,
         tag: {

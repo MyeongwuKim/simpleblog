@@ -64,7 +64,7 @@ export const fetchPostContentByPostId = async (postId: string) => {
   const baseUrl = process.env.NEXTAUTH_URL ?? ""; // undefined면 빈 문자열
   const url = `${baseUrl}/api/post/${postId}`;
   const res = await fetch(url, {
-    next: { revalidate: 60, tags: [`post:${postId}`] },
+    next: { revalidate: 600, tags: [`post:${postId}`] },
   });
 
   const jsonData = await res.json();

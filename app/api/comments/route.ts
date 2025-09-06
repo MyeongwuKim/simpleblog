@@ -63,7 +63,7 @@ export const POST = async (req: NextRequest) => {
     const commentData = await db.comment.create({
       data: {
         content,
-        name,
+        name: isMe ? "나" : name,
         isMe,
       },
     });

@@ -158,7 +158,7 @@ export default function CommentsLayout() {
         </div>
         <div className="flex  gap-3 justify-between max-[500px]:flex-col  max-[500px]:place-items-end">
           <div
-            className="g-recaptcha "
+            className="g-recaptcha max-[500px]:scale-90 origin-top-right"
             data-sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
           />
           <DefButton

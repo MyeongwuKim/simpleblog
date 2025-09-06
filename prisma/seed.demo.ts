@@ -102,6 +102,165 @@ function DemoPost() {
     },
   });
   console.log("Demo seed 완료: Profile 생성");
+
+  // 최근 7일 랜덤 날짜 생성
+  function getRandomDateWithinDays(days: number) {
+    const now = new Date();
+    const past = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    return new Date(
+      past.getTime() + Math.random() * (now.getTime() - past.getTime())
+    );
+  }
+  const commentsSeed = [
+    {
+      name: "철수",
+      content: "블로그 잘 보고 갑니다! Next.js 내용이 특히 유익했어요.",
+      isMe: false,
+    },
+    {
+      name: "영희",
+      content: "TailwindCSS 설정법 정리해주신 게 도움이 됐습니다 👍",
+      isMe: false,
+    },
+    {
+      name: "민수",
+      content: "Prisma랑 MongoDB 연동 예제가 깔끔하네요.",
+      isMe: false,
+    },
+    {
+      name: "지영",
+      content: "리액트 쿼리 캐싱 설명이 이해 잘 됐어요!",
+      isMe: false,
+    },
+    {
+      name: "동현",
+      content: "블로그 글이 정리가 잘 돼 있어서 자주 참고할 것 같아요.",
+      isMe: false,
+    },
+    {
+      name: "성민",
+      content: "Jest 테스트 코드 예시 덕분에 바로 적용했어요.",
+      isMe: false,
+    },
+    {
+      name: "하늘",
+      content: "UI/UX 디테일 설명이 깔끔해서 좋습니다.",
+      isMe: false,
+    },
+    {
+      name: "유진",
+      content: "SSR/ISR 차이점 정리해주셔서 개념 잡는 데 도움됐습니다.",
+      isMe: false,
+    },
+    {
+      name: "지훈",
+      content: "블로그 디자인도 예쁘고 글도 잘 읽혀요.",
+      isMe: false,
+    },
+    {
+      name: "서연",
+      content: "React.memo 활용 글 덕분에 성능 최적화했습니다.",
+      isMe: false,
+    },
+    {
+      name: "태훈",
+      content: "Hydration 관련 글이 진짜 유용했네요!",
+      isMe: false,
+    },
+    {
+      name: "나",
+      content: "블로그 만들면서 배운 내용 공유합니다 😀",
+      isMe: true,
+    },
+    {
+      name: "현우",
+      content: "MSW 테스트 환경 세팅법이 깔끔하네요.",
+      isMe: false,
+    },
+    {
+      name: "지수",
+      content: "Infinite Scroll 구현 방법 잘 참고했습니다.",
+      isMe: false,
+    },
+    {
+      name: "민재",
+      content: "NextAuth 로그인 처리 예제도 기대할게요!",
+      isMe: false,
+    },
+    {
+      name: "소영",
+      content: "Tailwind 반응형 예시 보면서 따라했어요.",
+      isMe: false,
+    },
+    {
+      name: "준호",
+      content: "코드 컨벤션 정리 덕분에 팀 프로젝트 적용했어요.",
+      isMe: false,
+    },
+    {
+      name: "혜진",
+      content: "Skeleton UI 구현 글이 특히 좋았어요.",
+      isMe: false,
+    },
+    {
+      name: "나",
+      content: "이 블로그는 제가 Next.js + Prisma로 직접 만든 프로젝트예요!",
+      isMe: true,
+    },
+    {
+      name: "가영",
+      content: "MongoMemoryServer 테스트 환경 설명 최고네요.",
+      isMe: false,
+    },
+    {
+      name: "정우",
+      content: "Next.js App Router 글이 큰 도움이 됐습니다.",
+      isMe: false,
+    },
+    {
+      name: "서진",
+      content: "리액트 쿼리 staleTime vs gcTime 정리 좋네요.",
+      isMe: false,
+    },
+    {
+      name: "지아",
+      content: "프로젝트 구조 설계 참고하기 좋습니다.",
+      isMe: false,
+    },
+    {
+      name: "민혁",
+      content: "CI/CD 배포 팁 글 덕분에 에러 해결했어요.",
+      isMe: false,
+    },
+    {
+      name: "다은",
+      content: "개발자 경험 기반으로 글 쓰신 게 느껴져요.",
+      isMe: false,
+    },
+    {
+      name: "나",
+      content: "앞으로도 배운 내용들 꾸준히 기록할 예정입니다.",
+      isMe: true,
+    },
+    {
+      name: "현서",
+      content: "Flowbite-React 컴포넌트 예시도 유용했어요.",
+      isMe: false,
+    },
+    { name: "지완", content: "Prisma 에러 핸들링 정리 최고!", isMe: false },
+    { name: "수빈", content: "면접 준비 글도 있으면 좋겠어요.", isMe: false },
+    { name: "나", content: "읽어주셔서 감사합니다 🙏", isMe: true },
+  ];
+  for (const c of commentsSeed) {
+    const created = await prisma.comment.create({
+      data: {
+        ...c,
+        createdAt: getRandomDateWithinDays(7),
+      },
+    });
+    console.log("생성된 댓글:", created);
+  }
+  console.log("Demo seed 완료: Comments 생성");
 }
 
 main()

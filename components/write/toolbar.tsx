@@ -55,6 +55,7 @@ const ToolBar: NextPage<IToolBar> = (props) => {
               insert: `![](${randomImg})`,
             },
           });
+
           return;
         }
 
