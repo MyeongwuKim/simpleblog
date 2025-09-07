@@ -87,6 +87,7 @@ export function useProfileMutate({
       return { prev };
     },
     onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["profile"] });
       if (onSuccessCallback) onSuccessCallback(data);
     },
     onError: (err, _vars, ctx) => {
