@@ -63,4 +63,4 @@ UI 변경이나 리팩토링 이후에도 기능이 정상 동작하는지 빠�
 
 ### 1. Install JavaScript Packages
 ```bash
-npm install
+npm run demo //데모버전 체험하기
