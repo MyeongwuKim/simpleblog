@@ -1,7 +1,7 @@
 import { createUniqueSlug } from "@/app/hooks/useUtil";
 import { db } from "@/app/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { revalidateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 
 // 1) 공통 RAW 쿼리 (id 기준으로 단순·안전 페이징)
 async function getPostsPageRaw(args: {

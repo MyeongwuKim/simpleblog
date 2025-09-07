@@ -25,12 +25,6 @@ export default function Head() {
 
   const { data } = useProfileQuery();
 
-  // ✅ underline 상태 부모에서 관리
-  const [underline, setUnderline] = useState<{
-    left: number;
-    width: number;
-  } | null>(null);
-
   useEffect(() => {
     setTheme(myTheme!);
   }, [myTheme]);
