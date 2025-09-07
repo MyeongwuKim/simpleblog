@@ -51,8 +51,8 @@ export default function CustomTabs() {
   }, [activeIndex, pathname]);
 
   return (
-    <div className="flex flex-col gap-2 relative w-full">
-      <div className="flex text-center relative sm:justify-center">
+    <div className="flex flex-col gap-2 relative max-w-[768px] w-full">
+      <div className="w-full flex text-center relative sm:justify-center">
         {tabList.map((tab, i) => {
           const Icon = tab.icon;
           const isActive = i === activeIndex;
@@ -64,7 +64,7 @@ export default function CustomTabs() {
                 tabRefs.current[i] = el;
               }}
               onClick={() => router.push(tab.pathname)}
-              className={`flex items-center max-sm:w-1/3 w-1/6 justify-center rounded-t-lg p-4 text-sm focus:outline-none
+              className={`flex items-center w-1/3 justify-center rounded-t-lg p-4 text-sm focus:outline-none
                 ${
                   isActive
                     ? "text-text1 font-bold"
