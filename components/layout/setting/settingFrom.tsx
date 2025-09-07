@@ -15,13 +15,20 @@ export default function SettingForm() {
   if (profileLoading || !profileResult || !profileResult.ok || isError)
     return <SettingSkeleton />;
 
-  const { github, instagram, introduce, notion, profileImg, title } =
-    profileResult.data;
+  const data = profileResult.data;
 
   return (
     <div className="flex gap-6 flex-col">
-      <IntroCard introduce={introduce} pImg={profileImg} title={title} />
-      <SocialForm github={github} instagram={instagram} notion={notion} />
+      <IntroCard
+        introduce={data?.introduce}
+        pImg={data?.profileImg}
+        title={data?.title}
+      />
+      <SocialForm
+        github={data?.github}
+        instagram={data?.instagram}
+        notion={data?.notion}
+      />
       <TagForm />
     </div>
   );
