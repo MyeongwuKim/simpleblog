@@ -2,7 +2,7 @@
 > Next.js + Prisma + MongoDB 기반 개인 블로그 서비스  
 
 🔗 **Deployment URL**  
-👉 [https://simpleblog.vercel.app](https://simpleblog.vercel.app)  
+👉 [https://mw-simpleblog.vercel.app](https://mw-simpleblog.vercel.app)  
 
 ---
 
