@@ -18,18 +18,20 @@ export default function SettingForm() {
   const data = profileResult.data;
 
   return (
-    <div className="flex gap-6 flex-col">
-      <IntroCard
-        introduce={data?.introduce}
-        pImg={data?.profileImg}
-        title={data?.title}
-      />
-      <SocialForm
-        github={data?.github}
-        instagram={data?.instagram}
-        notion={data?.notion}
-      />
-      <TagForm />
+    <div className="layout">
+      <div className="flex gap-6 flex-col">
+        <IntroCard
+          introduce={data?.introduce}
+          pImg={data?.profileImg}
+          title={data?.title}
+        />
+        <SocialForm
+          github={data?.github}
+          instagram={data?.instagram}
+          notion={data?.notion}
+        />
+        <TagForm />
+      </div>
     </div>
   );
 }
