@@ -1,39 +1,44 @@
 "use client";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Head from "./commonHead";
 import Postfilter from "./postFilter";
-import { useEffect, useRef, useState } from "react";
 
 type CommonBodyType = {
   children: React.ReactNode;
 };
 
 export default function CommonBody({ children }: CommonBodyType) {
-  const pathname = usePathname(); // 현재 경로명 (예: /blog/post-1)
+  const pathname = usePathname();
   const smallHeaderPaths = ["/post", "/setting", "/temp"];
   const isSmallHeader = smallHeaderPaths.some((p) => pathname.startsWith(p));
-  const [show, setShow] = useState(true);
-  const [atTop, setAtTop] = useState(true);
+
+  const headerHeight = isSmallHeader ? 60 : 120;
+
+  const [translate, setTranslate] = useState(0); // 헤더 y 이동 값
   const lastScrollY = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
-      const currentY = Math.max(window.scrollY, 0); // 음수 방지
+      const currentY = Math.max(window.scrollY, 0);
       const diff = currentY - lastScrollY.current;
 
-      if (diff > 10) {
-        setShow(false); // 충분히 내렸을 때만 숨김
-      } else if (diff < -10) {
-        setShow(true); // 충분히 올렸을 때만 보임
-      }
+      let next = translate + diff;
 
-      setAtTop(currentY === 0);
+      // 범위 제한
+      if (next < 0) next = 0;
+      if (next > headerHeight) next = headerHeight;
+
+      // 최상단에서는 무조건 붙기
+      if (currentY === 0) next = 0;
+
+      setTranslate(next);
       lastScrollY.current = currentY;
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [translate, headerHeight]);
 
   return (
     <>
@@ -42,15 +47,23 @@ export default function CommonBody({ children }: CommonBodyType) {
       ) : (
         <>
           <div
-            className={`fixed w-full ${isSmallHeader ? "h-[60px]" : "h-[124px]"}
-    top-0 left-0 px-8 transition-all duration-300 z-50
-    ${show ? "translate-y-0" : "-translate-y-full"}
-    ${atTop ? "bg-transparent" : "bg-background1 shadow-md"}`}
+            className={`fixed w-full top-0 left-0 px-8 z-50
+              bg-background1 shadow-md transition-[height] duration-200
+              ${isSmallHeader ? "h-[60px]" : "h-[120px]"}
+            `}
+            style={{
+              transform: `translateY(-${translate}px)`,
+              transition: "transform 0.1s linear, height 0.2s ease",
+            }}
           >
             <Head />
           </div>
-          <div className="w-full relative mt-[124px] h-auto  p-8">
-            {pathname == "/" ? <Postfilter /> : ""}
+          <div
+            className={`w-full relative h-auto p-8 ${
+              isSmallHeader ? "mt-[60px]" : "mt-[120px]"
+            }`}
+          >
+            {pathname === "/" && <Postfilter />}
             {children}
           </div>
         </>

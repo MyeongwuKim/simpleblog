@@ -80,7 +80,7 @@ export default function CustomTabs() {
 
       {underline && (
         <div
-          className="absolute border-b-2 ease-in-out duration-200"
+          className="absolute border-b-2 ease-in-out duration-200 border-text1"
           style={{
             bottom: 0,
             left: underline.left,
