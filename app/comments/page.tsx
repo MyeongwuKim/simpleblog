@@ -1,7 +1,5 @@
 import InfiniteScrollProvider from "@/components/layout/InfiniteScroll/infiniteScrollProvider";
-import getQueryClient from "../hooks/useQueryClient";
 import CommentsLayout from "@/components/comments/commentsLayout";
-import { Comment } from "@prisma/client";
 
 export default async function Comments() {
   const queryKey = ["comments"];

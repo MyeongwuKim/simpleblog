@@ -1,14 +1,24 @@
-import { ProfileItem } from "@/components/ui/items/profileItem";
-import { db } from "../lib/db";
+import getQueryClient from "../hooks/useQueryClient";
+import { fetchProfile } from "../lib/fetchers/profile";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import SettingForm from "@/components/layout/setting/settingFrom";
 
-export const revalidate = 300; // ✅ 라우트 캐시 60초
+export const dynamic = "force-dynamic";
 
 export default async function Profile() {
-  const profile = await db.profile.findFirst({});
+  const queryClient = getQueryClient();
+
+  // 서버에서 데이터 미리 가져오기
+  await queryClient.prefetchQuery({
+    queryKey: ["profile"],
+    queryFn: fetchProfile,
+  });
 
   return (
-    <div className="max-w-[768px] w-full ml-auto mr-auto  h-full relative">
-      <ProfileItem profile={profile} />
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <div className="layout h-full relative">
+        <SettingForm />
+      </div>
+    </HydrationBoundary>
   );
 }
