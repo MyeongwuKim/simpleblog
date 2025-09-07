@@ -45,7 +45,7 @@ export const fetchTempPosts = async (cursor: string | undefined) => {
 
   const url = `${baseUrl}/api/temp?${search.toString()}`;
 
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await fetch(url);
 
   if (!res.ok) {
     return { ok: false, data: [], error: `API 오류입니다.` };

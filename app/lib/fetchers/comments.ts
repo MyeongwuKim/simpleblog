@@ -8,9 +8,7 @@ export async function fetchComments(cursor?: string) {
     search.toString() ? `?${search.toString()}` : ""
   }`;
 
-  const res = await fetch(url, {
-    cache: "no-store",
-  });
+  const res = await fetch(url);
 
   if (!res.ok) {
     return { ok: false, data: [], error: `HTTP ${res.status}` };
