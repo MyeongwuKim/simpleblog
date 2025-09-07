@@ -34,7 +34,6 @@ export default function IntroContentForm() {
     }
   }, [profileResult?.data.content]);
 
-  console.log(profileResult?.data.content);
   if (profileLoading) return;
   return (
     <div className="w-full h-full">

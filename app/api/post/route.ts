@@ -11,7 +11,7 @@ async function getPostsPageRaw(args: {
   type?: string;
 }) {
   const { cursor, tag, datetype } = args;
-  console.log(">>> DB 쿼리 실행", args); // ✅ 진짜 DB 접근 시에만 찍힘
+
   // 날짜 필터
   let dateCondition = {};
   if (datetype === "week")
@@ -73,8 +73,6 @@ export async function GET(req: NextRequest) {
         | "month"
         | "year"
         | "all") ?? "all";
-
-    console.log(">>> cache key", ["posts:v1", tag, datetype]);
 
     let page;
     if (cursor) {
@@ -148,8 +146,6 @@ export const POST = async (req: NextRequest) => {
       return { post, tags };
     });
 
-    revalidateTag("posts");
-    console.log(">>> revalidated posts cache");
     return NextResponse.json({
       ok: true,
       data: {

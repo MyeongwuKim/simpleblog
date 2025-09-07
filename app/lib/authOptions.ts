@@ -45,7 +45,7 @@ export const authOptions: NextAuthOptions = {
     },
     signIn: async (params) => {
       const { email } = params.user;
-      console.log("??");
+
       if (isDemo) {
         // 데모 모드에서는 누구나 허용
         return true;

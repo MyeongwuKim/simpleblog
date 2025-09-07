@@ -54,7 +54,6 @@ export default function TagForm() {
           }
         );
       }
-      console.log(result.data);
     },
     onError: (error) => {
       openToast(true, error.message, 1);
