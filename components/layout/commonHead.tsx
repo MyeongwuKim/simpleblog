@@ -62,7 +62,7 @@ export default function Head() {
           </div>
           {!session ? (
             <DefButton
-              className="h-[45px] w-[90px]"
+              className="h-[35px] w-[90px] text-base"
               btnColor={"gray"}
               outline={true}
               innerItem={"로그인"}

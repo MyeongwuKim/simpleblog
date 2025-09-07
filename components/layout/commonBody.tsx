@@ -2,7 +2,7 @@
 import { usePathname } from "next/navigation";
 import Head from "./commonHead";
 import Postfilter from "./postFilter";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type CommonBodyType = {
   children: React.ReactNode;
@@ -13,29 +13,27 @@ export default function CommonBody({ children }: CommonBodyType) {
   const smallHeaderPaths = ["/post", "/setting", "/temp"];
   const isSmallHeader = smallHeaderPaths.some((p) => pathname.startsWith(p));
   const [show, setShow] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const [atTop, setAtTop] = useState(true);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
-      const currentY = window.scrollY;
+      const currentY = Math.max(window.scrollY, 0); // 음수 방지
+      const diff = currentY - lastScrollY.current;
 
-      // 스크롤 방향 판단
-      if (currentY > lastScrollY) {
-        setShow(false); // 내리면 숨김
-      } else {
-        setShow(true); // 올리면 보임
+      if (diff > 10) {
+        setShow(false); // 충분히 내렸을 때만 숨김
+      } else if (diff < -10) {
+        setShow(true); // 충분히 올렸을 때만 보임
       }
 
-      // 상단 여부 판단
       setAtTop(currentY === 0);
-
-      setLastScrollY(currentY);
+      lastScrollY.current = currentY;
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
+  }, []);
 
   return (
     <>

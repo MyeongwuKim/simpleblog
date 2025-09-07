@@ -45,6 +45,11 @@ body {
   display: none; /* Chrome, Safari */
 }
 
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
 @layer components {
   .text-box {
     @apply overflow-ellipsis overflow-hidden whitespace-nowrap break-words;

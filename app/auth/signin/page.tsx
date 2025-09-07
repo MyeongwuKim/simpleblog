@@ -25,7 +25,7 @@ const Signin = () => {
         />
       ) : (
         <button
-          className="bg-[#fee500] rounded-lg p-4 font-semibold text-[#111] flex items-center gap-2 text-lg"
+          className="bg-[#fee500] cursor-pointer rounded-lg p-4 font-semibold text-[#111] flex items-center gap-2 text-lg"
           onClick={login}
         >
           <Image
