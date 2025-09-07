@@ -11,7 +11,7 @@
     "test:watch": "npm run test -- --watch",
     "lint": "next lint",
     "build:styles": "npx @tailwindcss/cli -i ./app/globals.css -o ./dist/css/flowbite.css",
-    "postinstall": "flowbite-react patch"
+    "postinstall": "flowbite-react patch && prisma generate"
   },
   "dependencies": {
     "@codemirror/commands": "^0.19.1",
