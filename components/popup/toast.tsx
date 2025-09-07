@@ -2,6 +2,7 @@
 import { NextPage } from "next";
 import { useEffect, useState } from "react";
 import { HiOutlineExclamationCircle } from "react-icons/hi2";
+import { motion } from "framer-motion";
 
 interface ToastProps {
   msg: string;
@@ -11,8 +12,8 @@ interface ToastProps {
   id: string;
 }
 
-type stoargeType = { [id: string]: NodeJS.Timeout };
-const timerStorage: stoargeType = {};
+type StorageType = { [id: string]: NodeJS.Timeout };
+const timerStorage: StorageType = {};
 
 const Toast: NextPage<ToastProps> = ({
   msg,
@@ -25,13 +26,19 @@ const Toast: NextPage<ToastProps> = ({
 
   useEffect(() => {
     timeoutLogic();
+    return () => {
+      if (timerStorage[id]) {
+        clearInterval(timerStorage[id]);
+        delete timerStorage[id];
+      }
+    };
   }, []);
 
   const timeoutLogic = () => {
     const toastEl = document.getElementById(`_toastView${id}`);
     const timeBarEl = document.getElementById(`_toastTime${id}`);
 
-    if (!toastEl || !timeBarEl) return; // ✅ 안전하게 null 체크
+    if (!toastEl || !timeBarEl) return;
 
     const fixedWidth = toastEl.clientWidth;
     const timeBar = timeBarEl as HTMLElement;
@@ -44,7 +51,7 @@ const Toast: NextPage<ToastProps> = ({
       if (currentTime <= 0) {
         clearInterval(timerStorage[id]);
         delete timerStorage[id];
-        toastArrHandler();
+        toastArrHandler(); // exit 애니메이션 트리거 → AnimatePresence가 잡음
       } else {
         currentTime -= 0.1;
         timeBar.style.width =
@@ -54,25 +61,27 @@ const Toast: NextPage<ToastProps> = ({
 
     timerStorage[id] = _timer;
   };
+
   return (
-    <div
+    <motion.div
       id={`_toastContainer${id}`}
-      className="w-full  md:w-[400px] sm:w-[300px] ti:w-[260px]  min-h-[46px] h-auto "
+      className="w-full sm:w-[400px] min-h-[46px] h-auto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      transition={{ duration: 0.3 }}
     >
       <div
         id={`_toastView${id}`}
-        onClick={() => {
-          //document.getElementById("cautionWindow").remove();
-        }}
-        className={`relative left-2 top-2 flex flex-col items-center
-        ${
-          isWarning == null
-            ? ""
-            : isWarning
-            ? "text-red-700  bg-background1 dark:text-red-400"
-            : "text-green-700 bg-background1 dark:text-green-400"
-        }
-       z-[99] w-full h-full  rounded-lg shadow-xl`}
+        className={`relative flex flex-col items-center
+          ${
+            isWarning == null
+              ? ""
+              : isWarning
+              ? "text-red-700 bg-background1 dark:text-red-400"
+              : "text-green-700 bg-background1 dark:text-green-400"
+          }
+          z-[99] w-full h-full rounded-lg shadow-xl`}
       >
         <div
           id={`_toastTime${id}`}
@@ -87,7 +96,7 @@ const Toast: NextPage<ToastProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

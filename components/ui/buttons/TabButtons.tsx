@@ -5,7 +5,7 @@ import { HiUserCircle } from "react-icons/hi";
 import { IconType } from "react-icons/lib";
 import { MdDashboard, MdInsertComment } from "react-icons/md";
 
-type TabItemType = {
+export type TabItemType = {
   title: string;
   icon: IconType;
   pathname: string;
@@ -20,8 +20,12 @@ const tabList: TabItemType[] = [
 export default function CustomTabs() {
   const router = useRouter();
   const pathname = usePathname();
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const [underline, setUnderline] = useState<{
+    left: number;
+    width: number;
+  } | null>(null);
 
-  // 태그 페이지(`/react`, `/nextjs`)도 게시글 탭으로 인식
   const isPostPage =
     pathname === "/" ||
     (!pathname.startsWith("/profile") &&
@@ -29,16 +33,7 @@ export default function CustomTabs() {
       !pathname.startsWith("/post"));
 
   let activeIndex = tabList.findIndex((t) => t.pathname === pathname);
-  if (isPostPage) {
-    activeIndex = 0;
-  }
-
-  const [underline, setUnderline] = useState<{
-    left: number;
-    width: number;
-  } | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  if (isPostPage) activeIndex = 0;
 
   useLayoutEffect(() => {
     function updateUnderline() {
@@ -50,16 +45,13 @@ export default function CustomTabs() {
         });
       }
     }
-
     updateUnderline();
-    setMounted(true);
     window.addEventListener("resize", updateUnderline);
     return () => window.removeEventListener("resize", updateUnderline);
   }, [activeIndex, pathname]);
 
   return (
-    <div className="flex flex-col gap-2 relative">
-      {/* Tab List */}
+    <div className="flex flex-col gap-2 relative w-full">
       <div className="flex text-center relative sm:justify-center">
         {tabList.map((tab, i) => {
           const Icon = tab.icon;
@@ -86,12 +78,9 @@ export default function CustomTabs() {
         })}
       </div>
 
-      {/* Underline */}
       {underline && (
         <div
-          className={`absolute border-b-2 ${
-            mounted ? "ease-in-out duration-200" : ""
-          }`}
+          className="absolute border-b-2 ease-in-out duration-200"
           style={{
             bottom: 0,
             left: underline.left,

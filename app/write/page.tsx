@@ -378,7 +378,7 @@ export default function Write() {
         });
         if (result == 0) return;
         popupResut = result;
-        if (popupResut) imageIds.push(popupResut);
+        if (popupResut) imageIds.push(popupResut as string);
       }
 
       const mutate = isValidPostId ? updateMuate : writeMutate;
@@ -387,7 +387,7 @@ export default function Write() {
         isTemp: process === 2,
         preview,
         imageIds,
-        thumbnail: popupResut || null,
+        thumbnail: (popupResut as string) || null,
         ...(isValidPostId ? {} : { slug: createSlug(state.title) }),
       });
     },

@@ -20,6 +20,7 @@ import {
 import { modalManager } from "@/app/lib/modalManager";
 import Toast from "../popup/toast";
 import WriteModal from "../popup/writeModal";
+import { AnimatePresence } from "framer-motion";
 
 let globalToast:
   | ((isWarning: boolean, msg: string, time: number) => void)
@@ -103,45 +104,49 @@ export const PopupContainer = () => {
 
   return (
     <>
-      {modalItems.map((v) => {
-        const onClose = handleClose(v.id);
-        let content = null;
-        switch (v.type) {
-          case "CONFIRM":
-            content = MODAL_MAP.CONFIRM(
-              v.props as { msg: string; btnMsg: string[] },
-              onClose
-            );
-            break;
-          case "WRITE":
-            content = MODAL_MAP.WRITE(
-              v.props as ModalPropsMap["WRITE"],
-              onClose
-            );
-            break;
-        }
-        return <div key={v.id}>{content}</div>;
-      })}
-      {toastItems.length > 0 && (
-        <div
-          id="popup-wrapper"
-          className="pointer-events-none flex-wrap justify-start gap-2
-          fixed w-full h-full flex flex-col right-8 top-0 items-end z-99"
-        >
-          {toastItems.map((v) => (
-            <Toast
-              key={v.id}
-              time={v.time}
-              isWarning={v.isWarning}
-              msg={v.msg}
-              id={v.id}
-              toastArrHandler={() => {
-                dispatch(removeToast(v.id));
-              }}
-            />
-          ))}
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        {modalItems.map((v) => {
+          const onClose = handleClose(v.id);
+          let content = null;
+          switch (v.type) {
+            case "CONFIRM":
+              content = MODAL_MAP.CONFIRM(
+                v.props as { msg: string; btnMsg: string[] },
+                onClose
+              );
+              break;
+            case "WRITE":
+              content = MODAL_MAP.WRITE(
+                v.props as ModalPropsMap["WRITE"],
+                onClose
+              );
+              break;
+          }
+          return <div key={v.id}>{content}</div>;
+        })}
+      </AnimatePresence>
+      <AnimatePresence>
+        {toastItems.length > 0 && (
+          <div
+            id="popup-wrapper"
+            className="pointer-events-none flex-wrap justify-start gap-2
+          fixed w-full h-full flex flex-col px-4 pt-4 top-0 items-end max-sm:items-center z-99"
+          >
+            {toastItems.map((v) => (
+              <Toast
+                key={v.id}
+                time={v.time}
+                isWarning={v.isWarning}
+                msg={v.msg}
+                id={v.id}
+                toastArrHandler={() => {
+                  dispatch(removeToast(v.id));
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

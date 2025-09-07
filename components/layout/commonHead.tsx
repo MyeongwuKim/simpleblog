@@ -1,7 +1,7 @@
 "use client";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useState } from "react";
-import TabButtons from "../ui/buttons/TabButtons";
+import CustomTabs from "../ui/buttons/TabButtons";
 import { TfiWrite } from "react-icons/tfi";
 import ToggleButton from "../ui/buttons/toggleButton";
 import { IoSunny, IoMoon } from "react-icons/io5";
@@ -25,12 +25,20 @@ export default function Head() {
 
   const { data } = useProfileQuery();
 
+  // ✅ underline 상태 부모에서 관리
+  const [underline, setUnderline] = useState<{
+    left: number;
+    width: number;
+  } | null>(null);
+
   useEffect(() => {
     setTheme(myTheme!);
   }, [myTheme]);
+
   const loginBtnClick = useCallback(() => {
     signIn();
   }, []);
+
   return (
     <div
       id="HeadView"
@@ -43,10 +51,10 @@ export default function Head() {
         >
           <div className="flex items-center gap-2">
             <FaBookBookmark className="w-6 h-6" />
-            <span className="sm:text-xl  font-semibold">북마크블로그</span>
+            <span className="sm:text-xl font-semibold">북마크블로그</span>
           </div>
         </button>
-        <div className="w-auto  flex items-center gap-3">
+        <div className="w-auto flex items-center gap-3">
           <div className="relative w-[35px] h-[35px]">
             <ToggleButton
               clickCallback={(isChecked) => {
@@ -60,7 +68,7 @@ export default function Head() {
           </div>
           {!session ? (
             <DefButton
-              className="h-[45px] w-[90px] "
+              className="h-[45px] w-[90px]"
               btnColor={"gray"}
               outline={true}
               innerItem={"로그인"}
@@ -97,13 +105,8 @@ export default function Head() {
           )}
         </div>
       </div>
-      <div
-        className={`w-full h-full relative ${
-          showList.includes(pathname) ? "visible" : "hidden"
-        }`}
-      >
-        <TabButtons />
-      </div>
+
+      {showList.includes(pathname) && <CustomTabs />}
     </div>
   );
 }

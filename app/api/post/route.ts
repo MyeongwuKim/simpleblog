@@ -29,7 +29,7 @@ async function getPostsPageRaw(args: {
       ...(datetype && datetype !== "all" ? { createdAt: dateCondition } : {}),
     },
     // ✅ 페이징은 정렬 필드와 커서 필드가 같아야 안정적 → id 기준으로 통일
-    orderBy: { id: "desc" },
+    orderBy: { createdAt: "desc" },
     take,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     select: {

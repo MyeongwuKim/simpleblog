@@ -6,8 +6,17 @@ const prisma = new PrismaClient();
 async function main() {
   for (let i = 1; i <= 50; i++) {
     const isTemp = false; // 데모니까 전부 false, 필요하면 i%5 === 0 ? true : false 이런 식으로 랜덤 지정 가능
+    const dateOptions = [
+      1, // 하루 전
+      7, // 일주일 전
+      30, // 한 달 전
+      365, // 일 년 전
+    ];
+    const randomDaysAgo =
+      dateOptions[Math.floor(Math.random() * dateOptions.length)];
+    const createdAt = new Date();
+    createdAt.setDate(createdAt.getDate() - randomDaysAgo);
 
-    // 트랜잭션으로 Post + Tag upsert
     await prisma.$transaction(async (tx) => {
       const post = await tx.post.create({
         data: {
@@ -59,6 +68,7 @@ function DemoPost() {
           slug: `demo-post-${i}`,
           imageIds: [],
           isTemp,
+          createdAt,
         },
       });
       console.log(post);
