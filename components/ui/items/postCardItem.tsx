@@ -1,7 +1,7 @@
 "use client";
 
 import { formatRelativeTime, getDeliveryDomain } from "@/app/hooks/useUtil";
-import { Post } from "@prisma/client";
+import { Image as ImageType, Post } from "@prisma/client";
 import { Card } from "flowbite-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,9 +14,10 @@ function PostCardItem({
   thumbnail,
   title,
   slug,
-  imageIds,
-}: Post) {
-  const imageSrc = thumbnail ?? (imageIds.length > 0 ? imageIds[0] : null);
+  images,
+}: Post & { images: ImageType[] }) {
+  const imageSrc =
+    thumbnail ?? (images && images.length > 0 ? images[0].imageId : null);
 
   return (
     <Link

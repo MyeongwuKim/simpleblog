@@ -4,20 +4,25 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  function getRandomDateWithinYear() {
+    const now = Date.now();
+    const oneYearAgo = now - 365 * 24 * 60 * 60 * 1000;
+    const randomTime = oneYearAgo + Math.random() * (now - oneYearAgo);
+    return new Date(randomTime);
+  }
+
   for (let i = 1; i <= 50; i++) {
-    const isTemp = false; // 데모니까 전부 false, 필요하면 i%5 === 0 ? true : false 이런 식으로 랜덤 지정 가능
-    const dateOptions = [
-      1, // 하루 전
-      7, // 일주일 전
-      30, // 한 달 전
-      365, // 일 년 전
-    ];
-    const randomDaysAgo =
-      dateOptions[Math.floor(Math.random() * dateOptions.length)];
-    const createdAt = new Date();
-    createdAt.setDate(createdAt.getDate() - randomDaysAgo);
+    const isTemp = false;
+    const createdAt = getRandomDateWithinYear();
 
     await prisma.$transaction(async (tx) => {
+      // 1. 본문에 넣을 이미지 URL들
+      const demoImages = [
+        `https://picsum.photos/seed/${i}a/600/400`,
+        `https://picsum.photos/seed/${i}b/600/400`,
+      ];
+
+      // 2. Post 생성 (본문 안에도 동일 URL 넣기)
       const post = await tx.post.create({
         data: {
           title: `데모 포스트 #${i}`,
@@ -55,47 +60,56 @@ function DemoPost() {
 ## 이미지
 아래는 랜덤 샘플 이미지입니다 (picsum.photos).
 
-![샘플 이미지 1](https://picsum.photos/seed/${i}a/600/400)
-![샘플 이미지 2](https://picsum.photos/seed/${i}b/600/400)
+![샘플 이미지 1](${demoImages[0]})
+![샘플 이미지 2](${demoImages[1]})
 
 ---
 
 ## 결론
 이 포스트는 데모용 데이터이지만, 실제 마크다운 렌더링 결과를 확인하는 데 유용합니다.
-  `.trim(),
+
+      `.trim(),
           preview: `이것은 데모 포스트 #${i}의 프리뷰 텍스트입니다.`,
-          thumbnail: `https://picsum.photos/seed/${i}/400/300`,
           slug: `demo-post-${i}`,
-          imageIds: [],
           isTemp,
           createdAt,
         },
       });
-      console.log(post);
-      // 연결할 태그 body
-      const body = ["nextjs", "react", "demo", "playground", "테스트"][i % 5];
 
-      // 태그 upsert + post 연결
+      // 3. Image 모델 생성 (본문에 쓴 URL 그대로)
+      for (let j = 0; j < demoImages.length; j++) {
+        await tx.image.create({
+          data: {
+            imageId: demoImages[j], // 👉 본문 URL 그대로 저장
+            post: { connect: { id: post.id } },
+            isThumb: j === 0, // 첫 번째 이미지를 대표 썸네일로
+          },
+        });
+      }
+
+      // 4. Post.thumbnail 업데이트 (첫 번째 이미지 URL)
+      await tx.post.update({
+        where: { id: post.id },
+        data: { thumbnail: demoImages[0] },
+      });
+
+      // 5. 태그 연결
+      const body = ["nextjs", "react", "demo", "playground", "테스트"][i % 5];
       await tx.tag.upsert({
         where: { body },
         create: {
           body,
-          isTemp: post.isTemp, // 새로 생성될 땐 post.isTemp 따라감
-          posts: {
-            connect: { id: post.id },
-          },
+          isTemp: post.isTemp,
+          posts: { connect: { id: post.id } },
         },
         update: {
-          // 이미 있으면 isTemp는 안 건드리고 posts만 연결
-          posts: {
-            connect: { id: post.id },
-          },
+          posts: { connect: { id: post.id } },
         },
       });
     });
   }
 
-  console.log("Demo seed 완료: Post 30개 + Tag 연결");
+  console.log("Demo seed 완료: Posts + Images + Tags 연결");
 
   // 데모 프로필 생성
   await prisma.profile.create({
@@ -112,7 +126,6 @@ function DemoPost() {
     },
   });
   console.log("Demo seed 완료: Profile 생성");
-
   // 최근 7일 랜덤 날짜 생성
   function getRandomDateWithinDays(days: number) {
     const now = new Date();
@@ -268,7 +281,6 @@ function DemoPost() {
         createdAt: getRandomDateWithinDays(7),
       },
     });
-    console.log("생성된 댓글:", created);
   }
   console.log("Demo seed 완료: Comments 생성");
 }

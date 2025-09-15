@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "api/cleanup/route.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cleanup",
+      "schedule": "0 18 * * *"
+    }
+  ]
+}

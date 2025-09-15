@@ -13,12 +13,14 @@ import Image from "next/image";
 import UploadButton from "../ui/buttons/uploadButton";
 import { showGlobalToast } from "../providers/uiProvider";
 import { motion } from "framer-motion";
+import { Image as ImageType } from "@prisma/client";
+import { useMutation } from "@tanstack/react-query";
 
 interface WriteModalProps {
   title: string;
   preview: string | null;
   thumbnail: string | null;
-  onClose: (value: number | string | null) => void;
+  onClose: (value: unknown) => void;
 }
 
 export default function WriteModal({
@@ -28,6 +30,7 @@ export default function WriteModal({
   title,
 }: WriteModalProps) {
   const [uploading, setUploading] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [writeThumbnail, setWriteThumbnail] = useState<string | null>(
     thumbnail
@@ -46,7 +49,7 @@ export default function WriteModal({
       const demoThumb = writeThumbnail?.match(
         /https:\/\/picsum\.photos\/[^\)\s]+/
       );
-      thumb = demoThumb ? demoThumb[1] : null;
+      thumb = demoThumb ? demoThumb[0] : null;
     } else {
       const realThumb = writeThumbnail?.match(
         /imagedelivery\.net\/[^\/]+\/([^\/]+)/
@@ -55,6 +58,23 @@ export default function WriteModal({
     }
     return thumb;
   };
+
+  const imageMutate = useMutation<
+    QueryResponse<ImageType>,
+    Error,
+    { imageId: string }
+  >({
+    mutationFn: async (id) => {
+      const result = await (
+        await fetch("/api/image", {
+          method: "POST",
+          body: JSON.stringify({ ...id }),
+        })
+      ).json();
+      if (!result.ok) throw new Error(result.error);
+      return result;
+    },
+  });
 
   const handleFileSelect = async (file: File | null) => {
     if (file) {
@@ -66,6 +86,7 @@ export default function WriteModal({
       if (process.env.NEXT_PUBLIC_DEMO) {
         const randomImg = `https://picsum.photos/seed/${Date.now()}/600/400`;
         setWriteThumbnail(randomImg);
+        await imageMutate.mutateAsync({ imageId: randomImg });
         setUploading(false);
         return;
       }
@@ -78,7 +99,7 @@ export default function WriteModal({
         form.append(
           "file",
           file,
-          `${process.env.NODE_ENV}_simpleblog_profile_${timeStamp()}`
+          `${process.env.NODE_ENV}_simpleblog_${timeStamp()}`
         );
 
         const {
@@ -87,6 +108,7 @@ export default function WriteModal({
           await fetch(uploadURL, { method: "POST", body: form })
         ).json();
 
+        await imageMutate.mutateAsync({ imageId: id });
         setWriteThumbnail(getDeliveryDomain(id, "public"));
         setUploading(false);
       } catch {

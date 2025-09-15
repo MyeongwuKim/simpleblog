@@ -42,7 +42,7 @@ type PopupContextType = {
   openModal: <T extends ModalType>(
     type: T,
     props: ModalPropsMap[T]
-  ) => Promise<number | string | null>;
+  ) => Promise<unknown>;
 };
 
 const PopupContext = createContext<PopupContextType | undefined>(undefined);
@@ -60,7 +60,7 @@ const MODAL_MAP = {
 } satisfies {
   [K in ModalType]: (
     props: ModalPropsMap[K],
-    onClose: (result: number | string | null) => void
+    onClose: (value: unknown) => void
   ) => ReactNode;
 };
 
@@ -79,7 +79,7 @@ export const UIProvider = ({ children }: { children: ReactNode }) => {
   function openModal<T extends ModalType>(
     type: T,
     props: ModalPropsMap[T]
-  ): Promise<number | string | null> {
+  ): Promise<unknown> {
     const id = uuidv4();
     dispatch(addModal({ type, id, props }));
     return modalManager.openModal(id);
@@ -97,7 +97,7 @@ export const PopupContainer = () => {
   const toastItems = useAppSelector((state) => state.toastReducer.toastItem);
   const modalItems = useAppSelector((state) => state.modalReducer.modalItem);
 
-  const handleClose = (id: string) => (result: number | string | null) => {
+  const handleClose = (id: string) => (result: unknown) => {
     dispatch(removeModal(id));
     modalManager.closeModal(id, result);
   };

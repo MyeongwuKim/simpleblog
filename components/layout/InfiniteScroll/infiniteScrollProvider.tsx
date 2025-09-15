@@ -14,7 +14,7 @@ import CommentItem from "@/components/ui/items/commentItem";
 import TempItem from "@/components/ui/items/tempItem";
 
 import { CardItemSkeleton, TempItemSkeleton } from "@/components/ui/skeleton";
-import { Comment, Post } from "@prisma/client";
+import { Comment, Image, Post } from "@prisma/client";
 import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useInView } from "react-intersection-observer";
@@ -42,10 +42,10 @@ interface RendererMap<T = unknown> {
 }
 
 type DataTypeMap = {
-  post: Post;
+  post: Post & { images: Image[] };
   temp: Post;
   comments: Comment;
-  relatedPosts: Post;
+  relatedPosts: Post & { images: Image[] };
 };
 
 const rendererMap: {
@@ -55,7 +55,9 @@ const rendererMap: {
     layout:
       "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4",
     fetcher: fetchPosts,
-    renderContent: (item: Post) => <PostCardItem key={item.id} {...item} />,
+    renderContent: (item: Post & { images: Image[] }) => (
+      <PostCardItem key={item.id} {...item} />
+    ),
     renderSkeleton: (i) => (
       <div className="h-[300px]" key={i}>
         <CardItemSkeleton />
@@ -90,7 +92,7 @@ const rendererMap: {
     layout:
       "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4",
     fetcher: fetchRelatedPosts,
-    renderContent: (item: Post) => (
+    renderContent: (item: Post & { images: Image[] }) => (
       <div key={item.id} className="h-[300px] floatBox">
         <PostCardItem {...item} />
       </div>

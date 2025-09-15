@@ -6,6 +6,9 @@ import { useForm } from "react-hook-form";
 import { SearchCursor } from "@codemirror/search";
 import { getDeliveryDomain, timeStamp } from "@/app/hooks/useUtil";
 import { useUI } from "../providers/uiProvider";
+import { useMutation } from "@tanstack/react-query";
+import { Image } from "@prisma/client";
+import { useWrite } from "@/app/write/page";
 
 interface IToolBar {
   theme: string | undefined;
@@ -14,9 +17,37 @@ interface IToolBar {
 
 const ToolBar: NextPage<IToolBar> = (props) => {
   const { editorView } = props;
+  const { dispatch, state } = useWrite();
   const { openToast } = useUI();
   const { watch, register, setValue } = useForm();
   const imageFile = watch("image");
+
+  const imageMutate = useMutation<
+    QueryResponse<Image>,
+    Error,
+    { imageId: string }
+  >({
+    mutationFn: async (id) => {
+      const result = await (
+        await fetch("/api/image", {
+          method: "POST",
+          body: JSON.stringify({ ...id }),
+        })
+      ).json();
+      if (!result.ok) throw new Error(result.error);
+      return result;
+    },
+    onSuccess: (res) => {
+      console.log(res);
+      dispatch({
+        type: "SET_FORM",
+        payload: {
+          images: [...state.images, res.data],
+        },
+      });
+    },
+    onError: (error) => openToast(true, error.message, 1),
+  });
 
   //이미지 송신, 완료하면 url 변경
   const onUploadImgEvt = useCallback(
@@ -55,7 +86,7 @@ const ToolBar: NextPage<IToolBar> = (props) => {
               insert: `![](${randomImg})`,
             },
           });
-
+          imageMutate.mutate({ imageId: randomImg });
           return;
         }
 
@@ -77,7 +108,7 @@ const ToolBar: NextPage<IToolBar> = (props) => {
             body: form,
           })
         ).json();
-
+        imageMutate.mutate({ imageId: id });
         const cursor = new SearchCursor(editorView.state.doc, link);
         cursor.next();
 

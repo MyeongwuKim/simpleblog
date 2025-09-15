@@ -1,7 +1,8 @@
 import { createUniqueSlug } from "@/app/hooks/useUtil";
 import { db } from "@/app/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { unstable_cache } from "next/cache";
+import { revalidateTag, unstable_cache } from "next/cache";
+import { Image } from "@prisma/client";
 
 // 1) 공통 RAW 쿼리 (id 기준으로 단순·안전 페이징)
 async function getPostsPageRaw(args: {
@@ -39,7 +40,7 @@ async function getPostsPageRaw(args: {
       slug: true,
       preview: true,
       title: true,
-      imageIds: true,
+      images: true,
     },
   });
 
@@ -100,8 +101,8 @@ export async function GET(req: NextRequest) {
 //글 작성시 revalidateTag를 통한 서버캐시 업데이트
 export const POST = async (req: NextRequest) => {
   const jsonData = await req.json();
-  const { content, tag, title, imageIds, preview, thumbnail, isTemp, slug } =
-    jsonData as PostType;
+  const { content, tag, title, images, preview, thumbnail, isTemp, slug } =
+    jsonData as PostType & { images: Image[] };
   let newSlug = slug;
   try {
     const result = await db.$transaction(async (tx) => {
@@ -116,13 +117,30 @@ export const POST = async (req: NextRequest) => {
         data: {
           content,
           title,
-          imageIds,
           preview,
           thumbnail,
           isTemp,
           slug: newSlug,
+          images: {
+            connect: images.map((img) => ({ id: img.id })),
+          },
         },
       });
+      if (thumbnail) {
+        await tx.image.update({
+          where: {
+            imageId: thumbnail,
+          },
+          data: {
+            isThumb: true,
+            post: {
+              connect: {
+                id: post.id,
+              },
+            },
+          },
+        });
+      }
       const tags = [];
       for (const body of tag) {
         const _tag = await tx.tag.upsert({
@@ -145,6 +163,8 @@ export const POST = async (req: NextRequest) => {
       }
       return { post, tags };
     });
+
+    revalidateTag(`posts`);
 
     return NextResponse.json({
       ok: true,

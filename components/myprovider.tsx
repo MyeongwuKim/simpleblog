@@ -42,8 +42,8 @@ export function MyProvider({ children }: { children: React.ReactNode }) {
     <ReduxProvider store={store()}>
       <SessionProvider>
         <ThemeProvider attribute="class">
-          <UIProvider>
-            <QueryClientProvider client={queryClient}>
+          <QueryClientProvider client={queryClient}>
+            <UIProvider>
               <ReactQueryStreamedHydration>
                 {children}
               </ReactQueryStreamedHydration>
@@ -55,9 +55,9 @@ export function MyProvider({ children }: { children: React.ReactNode }) {
               ) : (
                 ""
               )}
-            </QueryClientProvider>
-          </UIProvider>
-          <PopupContainer></PopupContainer>
+            </UIProvider>
+            <PopupContainer></PopupContainer>
+          </QueryClientProvider>
         </ThemeProvider>
       </SessionProvider>
     </ReduxProvider>

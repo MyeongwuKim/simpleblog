@@ -1,5 +1,5 @@
 import { db } from "@/app/lib/db";
-import { Tag } from "@prisma/client";
+import { Image, Tag } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 import { ObjectId } from "mongodb";
 import { revalidateTag } from "next/cache";
@@ -25,6 +25,7 @@ export const GET = async (
         thumbnail: true,
         createdAt: true,
         slug: true,
+        images: true,
         tag: {
           select: {
             body: true,
@@ -64,32 +65,75 @@ export const POST = async (
   const { postId } = await params;
   const jsonData = await req.json();
 
-  const {
-    content,
-    tag,
-    title,
-    imageIds,
-    preview,
-    thumbnail,
-    isTemp,
-    createdAt,
-  } = jsonData as PostType & { createdAt: Date };
+  const { content, tag, title, images, preview, thumbnail, isTemp, createdAt } =
+    jsonData as PostType & { createdAt: Date; images: Image[] };
 
   try {
     const result = await db.$transaction(async (tx) => {
+      const incomingIds = images.map((img) => img.imageId);
+
+      // 3. Post 업데이트 (연결 갱신)
       const post = await tx.post.update({
         where: { id: postId },
         data: {
           content,
           title,
-          imageIds,
           preview,
-          thumbnail,
           isTemp,
-
+          thumbnail,
           ...(createdAt ? { createdAt } : {}),
+          images: {
+            set: [],
+            connect: incomingIds.map((imageId) => ({ imageId })),
+          },
         },
+        include: { images: true },
       });
+
+      // 현재 DB에 설정된 썸네일 찾기
+      const currentThumb = await tx.image.findFirst({
+        where: { postId, isThumb: true },
+        select: { imageId: true },
+      });
+
+      if (thumbnail) {
+        // thumbnail 값이 변경된 경우만 업데이트
+        if (!currentThumb || currentThumb.imageId !== thumbnail) {
+          // 기존 썸네일 해제
+          await tx.image.update({
+            where: {
+              imageId: currentThumb?.imageId,
+            },
+            data: {
+              isThumb: false,
+              post: {
+                disconnect: true,
+              },
+            },
+          });
+
+          // 새 썸네일 지정
+          await tx.image.update({
+            where: { imageId: thumbnail },
+            data: {
+              isThumb: true,
+              post: {
+                connect: {
+                  id: postId,
+                },
+              },
+            },
+          });
+        }
+      } else {
+        if (currentThumb?.imageId) {
+          await tx.image.update({
+            where: { imageId: currentThumb.imageId },
+            data: { isThumb: false, post: { disconnect: true } },
+          });
+        }
+      }
+
       const tags: Tag[] = [];
       for (const body of tag) {
         const _tag = await tx.tag.upsert({
@@ -121,6 +165,7 @@ export const POST = async (
       },
     });
   } catch (e: unknown) {
+    console.error(e);
     if (e instanceof Error) {
       return NextResponse.json(
         { ok: false, error: e.message },
@@ -145,7 +190,7 @@ export const DELETE = async (
       // 1. 삭제할 post와 관련 태그들 가져오기
       const deletedPost = await tx.post.delete({
         where: { id: postId },
-        select: { id: true, tagIds: true, imageIds: true },
+        select: { id: true, tagIds: true, images: true },
       });
 
       const tags: Tag[] = [];
@@ -175,17 +220,18 @@ export const DELETE = async (
         tags,
       };
     });
-    result.deletedPost.imageIds.forEach((id) => {
-      fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/images/v1/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${process.env.CF_TOKEN}`,
-          },
-        }
-      ).catch((err) => console.error("삭제 실패:", err));
-    });
+    if (!process.env.NEXT_PUBLIC_DEMO)
+      result.deletedPost.images.forEach((image) => {
+        fetch(
+          `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/images/v1/${image.imageId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${process.env.CF_TOKEN}`,
+            },
+          }
+        ).catch((err) => console.error("삭제 실패:", err));
+      });
 
     revalidateTag(`posts`);
 

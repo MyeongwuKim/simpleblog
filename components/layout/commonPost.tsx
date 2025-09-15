@@ -12,7 +12,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { Post, Tag } from "@prisma/client";
+import { Image as ImageType, Post, Tag } from "@prisma/client";
 import { formateDate, getDeliveryDomain } from "@/app/hooks/useUtil";
 import Slugger from "github-slugger";
 import { Node, Parent } from "unist";
@@ -34,24 +34,6 @@ export default function CommonPost({ postId }: { postId: string }) {
   const queryClient = useQueryClient();
   const route = useRouter();
   const { openToast } = useUI();
-
-  const {
-    data: postData,
-    isLoading: isPostLoading,
-    isError: postError,
-  } = useQuery<QueryResponse<Post & { tag: Tag[] }>>({
-    queryKey: ["post", postId],
-    queryFn: () => fetchPostContentByPostId(postId),
-    staleTime: 600 * 1000,
-  });
-
-  const { data: sibData, isError: sibError } = useQuery<
-    QueryResponse<{ prev: Post; next: Post }>
-  >({
-    queryKey: ["post", postId, "siblings"],
-    queryFn: () => fetchSiblingPost(postId),
-    staleTime: 0,
-  });
   const { mutate, isPending } = useMutation<
     QueryResponse<{ post: Post; tag: Tag[] }>,
     Error
@@ -66,7 +48,7 @@ export default function CommonPost({ postId }: { postId: string }) {
       if (!result.ok) throw new Error(result.error);
       return result;
     },
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       queryClient.setQueryData<
         InfiniteData<{
           data: Post[];
@@ -111,13 +93,34 @@ export default function CommonPost({ postId }: { postId: string }) {
         return { ...old, data };
       });
       // 해당 post 상세 캐시 제거
-      queryClient.removeQueries({ queryKey: ["post", postId] });
+      openToast(false, "성공적으로 삭제하였습니다.", 1);
+      route.replace("/");
+      queryClient.setQueryData(["post", postId], undefined);
       queryClient.invalidateQueries({ queryKey: ["post"], exact: true });
       queryClient.invalidateQueries({ queryKey: ["tag"] });
-      openToast(false, "성공적으로 삭제하였습니다.", 1);
-      route.back();
     },
     onError: (error) => openToast(true, error.message, 1),
+  });
+
+  const {
+    data: postData,
+    isLoading: isPostLoading,
+    isError: postError,
+  } = useQuery<QueryResponse<Post & { tag: Tag[]; images: ImageType[] }>>({
+    queryKey: ["post", postId],
+    queryFn: () => {
+      console.log("fetch!");
+      return fetchPostContentByPostId(postId);
+    },
+    staleTime: 600 * 1000,
+  });
+
+  const { data: sibData, isError: sibError } = useQuery<
+    QueryResponse<{ prev: Post; next: Post }>
+  >({
+    queryKey: ["post", postId, "siblings"],
+    queryFn: () => fetchSiblingPost(postId),
+    staleTime: 0,
   });
 
   const headRef = useRef<HTMLDivElement>(null);
@@ -156,7 +159,12 @@ export default function CommonPost({ postId }: { postId: string }) {
       </div>
     );
   }
-
+  const thumb =
+    postData.data.images.length > 0
+      ? postData.data.images[0].imageId == postData.data.thumbnail
+        ? null
+        : postData.data.thumbnail
+      : postData.data.thumbnail;
   return (
     <>
       <div className="layout mt-20 h-full relative">
@@ -172,10 +180,7 @@ export default function CommonPost({ postId }: { postId: string }) {
           headRef={headRef}
           headings={extractHeadings(postData.data.content)}
         />
-        <PostBody
-          content={postData.data.content}
-          thumbnail={postData.data.thumbnail}
-        />
+        <PostBody content={postData.data.content} thumbnail={thumb} />
         <div className="w-full h-[1px] bg-text4 mt-20" />
 
         <PostFooter

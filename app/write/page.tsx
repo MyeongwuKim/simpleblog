@@ -17,28 +17,29 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { getFormatImagesId } from "../hooks/useUtil";
 import Preview from "@/components/write/preview";
 import { useRouter, useSearchParams } from "next/navigation";
 import Slugger from "github-slugger";
-import { Post, Tag } from "@prisma/client";
+import { Image, Post, Tag } from "@prisma/client";
 import { fetchPostContentByPostId } from "../lib/fetchers/post";
 import NotFound from "../not-found";
+import { getFormatImagesId } from "../hooks/useUtil";
 
-type Action = { type: "SET_FORM"; payload: Partial<PostType> };
+type PostPayload = PostType & { images: Image[] };
+type Action = { type: "SET_FORM"; payload: Partial<PostPayload> };
 
-const initialState: PostType = {
+const initialState: PostPayload = {
   title: "",
   tag: [],
   content: "",
-  imageIds: [],
+  images: [],
   isTemp: false,
   preview: null,
   slug: "",
   thumbnail: null,
 };
 
-const reducer = (state: PostType, action: Action) => {
+const reducer = (state: PostPayload, action: Action) => {
   switch (action.type) {
     case "SET_FORM":
       return { ...state, ...action.payload };
@@ -48,20 +49,22 @@ const reducer = (state: PostType, action: Action) => {
 };
 
 type ContextType = {
-  state: PostType;
+  state: PostPayload;
   dispatch: React.Dispatch<Action>;
 };
 
-const toPostType = (data: Post & { tag: Tag[] }): PostType => {
+const toPostType = (
+  data: Post & { tag: Tag[]; images: Image[] }
+): PostPayload => {
   return {
     title: data.title ?? "",
     tag: data.tag?.length > 0 ? data.tag.map((item) => item.body) : [],
     content: data.content ?? "",
-    imageIds: data.imageIds ?? [],
     isTemp: data.isTemp ?? false,
     preview: data.preview ?? null,
     slug: data.slug ?? "",
     thumbnail: data.thumbnail ?? null,
+    images: data.images,
   };
 };
 
@@ -77,7 +80,9 @@ export default function Write() {
   const previewRef = useRef<HTMLDivElement>(null);
   const { openToast, openModal } = useUI();
 
-  const { data: result } = useQuery<QueryResponse<Post & { tag: Tag[] }>>({
+  const { data: result } = useQuery<
+    QueryResponse<Post & { tag: Tag[]; images: Image[] }>
+  >({
     queryKey: ["post", postId],
     queryFn: () => fetchPostContentByPostId(postId!),
     enabled: isValidPostId,
@@ -284,7 +289,7 @@ export default function Write() {
   const updateMuate = useMutation<
     QueryResponse<{ post: Post; tag: Tag[] }>,
     Error,
-    PostType
+    PostPayload
   >({
     mutationFn: async (data) => {
       const result = await (
@@ -312,7 +317,7 @@ export default function Write() {
   const writeMutate = useMutation<
     QueryResponse<{ post: Post; tag: Tag[] }>,
     Error,
-    PostType
+    PostPayload
   >({
     mutationFn: async (data) => {
       const result = await (
@@ -365,29 +370,34 @@ export default function Write() {
   const createSlug = (title: string) => new Slugger().slug(title);
 
   const onMutatProcess = useCallback(
-    async (process: number) => {
+    async (postProcess: number) => {
       const preview = extractPreview();
       const imageIds = getFormatImagesId(state.content);
-      let popupResut = null;
-      if (process == 1) {
+      let popupResult = null;
+      if (postProcess == 1) {
         const result = await openModal("WRITE", {
           preview,
           thumbnail:
-            state.thumbnail ?? (imageIds.length > 0 ? imageIds[0] : null),
+            state.thumbnail ??
+            (state.images.length > 0 ? state.images[0].imageId : null),
           title: state.title,
         });
         if (result == 0) return;
-        popupResut = result;
-        if (popupResut) imageIds.push(popupResut as string);
+        popupResult = result as string;
       }
+      const thumbnail = popupResult;
+      const filteredImages = state.images.filter((img) =>
+        imageIds.includes(img.imageId)
+      );
 
       const mutate = isValidPostId ? updateMuate : writeMutate;
+
       mutate.mutate({
         ...state,
-        isTemp: process === 2,
+        isTemp: postProcess === 2,
         preview,
-        imageIds,
-        thumbnail: (popupResut as string) || null,
+        thumbnail,
+        images: process.env.NEXT_PUBLIC_DEMO ? state.images : filteredImages,
         ...(isValidPostId ? {} : { slug: createSlug(state.title) }),
       });
     },

@@ -1,4 +1,4 @@
-import { Post } from "@prisma/client";
+import { Image, Post } from "@prisma/client";
 
 export interface FetchParams {
   excludeId?: string;
@@ -10,7 +10,7 @@ export interface FetchParams {
 export async function fetchPosts(
   cursor: string | undefined,
   params: FetchParams
-): Promise<InfiniteResponse<Post>> {
+): Promise<InfiniteResponse<Post & { images: Image[] }>> {
   const baseUrl = process.env.NEXTAUTH_URL ?? "";
   const search = new URLSearchParams();
 

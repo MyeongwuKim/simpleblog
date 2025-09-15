@@ -18,9 +18,18 @@ model Post {
   tagIds    String[] @db.ObjectId
   tag       Tag[]    @relation(fields: [tagIds], references: [id])
   isTemp    Boolean  @default(false)
-  imageIds  String[]
+  images    Image[] // ✅ 1:N 관계
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Image {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  imageId   String   @unique
+  postId    String?  @db.ObjectId
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  isThumb   Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 model Tag {

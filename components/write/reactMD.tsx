@@ -127,7 +127,11 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
             );
           },
           ol({ children }) {
-            return <div className="mb-[1em] list-decimal">{children}</div>;
+            return (
+              <ol className="mb-[1em] list-decimal list-outside pl-6">
+                {children}
+              </ol>
+            );
           },
           hr({}) {
             return <hr className="border-border1"></hr>;
