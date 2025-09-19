@@ -104,7 +104,7 @@ export const PopupContainer = () => {
 
   return (
     <>
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {modalItems.map((v) => {
           const onClose = handleClose(v.id);
           let content = null;

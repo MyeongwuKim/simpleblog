@@ -112,6 +112,11 @@ export default function IntroCard({
           })
         ).json();
 
+        if (pImg)
+          fetch(`/api/upload?id=${pImg}`, {
+            method: "DELETE",
+          });
+
         mutate({ profileImg: id, form: "profileimg" });
       } catch {
         setUploading(false);

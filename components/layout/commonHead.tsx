@@ -39,15 +39,14 @@ export default function Head() {
       className="w-full h-full flex items-center py-2 gap-2 flex-col justify-center"
     >
       <div className="flex justify-between w-full">
-        <button
+        <div
           onClick={() => route.push("/")}
-          className="text-text1 cursor-pointer"
+          className="flex items-center gap-2 text-text1 cursor-pointer"
         >
-          <div className="flex items-center gap-2">
-            <FaBookBookmark className="w-6 h-6" />
-            <span className="sm:text-xl font-semibold">북마크블로그</span>
-          </div>
-        </button>
+          <FaBookBookmark className="w-6 h-6" />
+          <span className="sm:text-xl font-semibold">북마크블로그</span>
+        </div>
+
         <div className="w-auto flex items-center gap-3">
           <div className="relative w-[35px] h-[35px]">
             <ToggleButton

@@ -1,26 +1,22 @@
 "use client";
-import {
-  Card,
-  Modal,
-  ModalBody,
-  ModalFooter,
-  ModalHeader,
-} from "flowbite-react";
-import DefButton from "../ui/buttons/defButton";
+
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { getDeliveryDomain, timeStamp } from "@/app/hooks/useUtil";
-import Image from "next/image";
-import UploadButton from "../ui/buttons/uploadButton";
 import { showGlobalToast } from "../providers/uiProvider";
-import { motion } from "framer-motion";
 import { Image as ImageType } from "@prisma/client";
 import { useMutation } from "@tanstack/react-query";
+import DefButton from "../ui/buttons/defButton";
+import UploadButton from "../ui/buttons/uploadButton";
+import Image from "next/image";
+import { Card } from "flowbite-react";
 
 interface WriteModalProps {
   title: string;
   preview: string | null;
   thumbnail: string | null;
   onClose: (value: unknown) => void;
+  show?: boolean;
 }
 
 export default function WriteModal({
@@ -28,9 +24,9 @@ export default function WriteModal({
   preview,
   thumbnail,
   title,
+  show = true,
 }: WriteModalProps) {
   const [uploading, setUploading] = useState(false);
-
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [writeThumbnail, setWriteThumbnail] = useState<string | null>(
     thumbnail
@@ -42,9 +38,8 @@ export default function WriteModal({
     }
   }, [thumbnail]);
 
-  const extractTumbnail = () => {
+  const extractThumbnail = () => {
     let thumb: string | null = null;
-
     if (process.env.NEXT_PUBLIC_DEMO) {
       const demoThumb = writeThumbnail?.match(
         /https:\/\/picsum\.photos\/[^\)\s]+/
@@ -79,7 +74,6 @@ export default function WriteModal({
   const handleFileSelect = async (file: File | null) => {
     if (file) {
       setUploading(true);
-
       const previewUrl = URL.createObjectURL(file);
       setWriteThumbnail(previewUrl);
 
@@ -119,118 +113,118 @@ export default function WriteModal({
   };
 
   return (
-    <Modal
-      id="alert-modal"
-      theme={{
-        root: {
-          show: {
-            on: "dark:bg-[rgba(0,0,0,0.85)] bg-[rgba(249,249,249,0.85)]",
-          },
-        },
-        content: {
-          inner: "dark:bg-background1 bg-background1 rounded-md",
-        },
-        header: {
-          base: "border-border1 border-b-2 p-6 ",
-          close: { base: "hidden" },
-        },
-        footer: {
-          base: "border-border1  p-6 flex gap-2",
-        },
-      }}
-      show={true}
-      size="md"
-    >
-      {/* ✅ motion.div로 애니메이션 추가 */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        transition={{ duration: 0.25, ease: "easeInOut" }}
-      >
-        <ModalHeader>포스트 미리보기</ModalHeader>
-        <ModalBody>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null)}
-          />
-          <div className="relative w-full mb-4 flex justify-end gap-2 [&_span]:text-lg [&_span]:text-text3">
-            {writeThumbnail && (
-              <>
-                <span
-                  className="cursor-pointer"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  수정
-                </span>
-                <span
-                  className="cursor-pointer"
-                  onClick={() => setWriteThumbnail(null)}
-                >
-                  제거
-                </span>
-              </>
-            )}
-          </div>
-          <Card
-            theme={{
-              root: {
-                base: "border-0",
-                children:
-                  "flex h-full flex-col justify-center gap-2 p-2 bg-background1",
-              },
-            }}
-            className="w-full h-full"
-            renderImage={() => (
-              <div className="relative bg-background2 w-full h-[240px] flex justify-center items-center">
-                {writeThumbnail ? (
-                  <Image
-                    fill
-                    src={writeThumbnail}
-                    alt={title}
-                    priority
-                    sizes="(max-width: 768px) 100vw, 400px"
-                    className="object-cover"
-                  />
-                ) : (
-                  <UploadButton onSelect={handleFileSelect} />
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          key="backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[99] flex items-center justify-center 
+                     dark:bg-[rgba(0,0,0,0.85)] bg-[rgba(249,249,249,0.85)]"
+        >
+          <motion.div
+            key="content"
+            initial={{ opacity: 0, y: -40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -40 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="dark:bg-background1 bg-background1 rounded-md shadow-lg max-w-md w-full"
+          >
+            {/* Header */}
+            <div className="border-b-2 border-border1 p-6">
+              <h2 className="text-lg font-bold">포스트 미리보기</h2>
+            </div>
+
+            {/* Body */}
+            <div className="p-6">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null)}
+              />
+              <div className="relative w-full mb-4 flex justify-end gap-2 [&_span]:text-lg [&_span]:text-text3">
+                {writeThumbnail && (
+                  <>
+                    <span
+                      className="cursor-pointer"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      수정
+                    </span>
+                    <span
+                      className="cursor-pointer"
+                      onClick={() => setWriteThumbnail(null)}
+                    >
+                      제거
+                    </span>
+                  </>
                 )}
               </div>
-            )}
-          >
-            <div
-              id="CardItemWrapper"
-              className="flex flex-col flex-auto gap-1 mt-4"
-            >
-              <h4 className="text-[1rem] text-box font-bold tracking-tight text-gray-900 dark:text-white">
-                {title}
-              </h4>
-              <p className="line-clamp-1 text-text2 leading-[1.5em]">
-                {preview}
-              </p>
+
+              <Card
+                theme={{
+                  root: {
+                    base: "border-0",
+                    children:
+                      "flex h-full flex-col justify-center gap-2 p-2 bg-background1",
+                  },
+                }}
+                className="w-full h-full"
+                renderImage={() => (
+                  <div className="relative bg-background2 w-full h-[240px] flex justify-center items-center">
+                    {writeThumbnail ? (
+                      <Image
+                        fill
+                        src={writeThumbnail}
+                        alt={title}
+                        priority
+                        sizes="(max-width: 768px) 100vw, 400px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <UploadButton onSelect={handleFileSelect} />
+                    )}
+                  </div>
+                )}
+              >
+                <div
+                  id="CardItemWrapper"
+                  className="flex flex-col flex-auto gap-1 mt-4"
+                >
+                  <h4 className="text-[1rem] text-box font-bold tracking-tight text-gray-900 dark:text-white">
+                    {title}
+                  </h4>
+                  <p className="line-clamp-1 text-text2 leading-[1.5em]">
+                    {preview}
+                  </p>
+                </div>
+              </Card>
             </div>
-          </Card>
-        </ModalBody>
-        <ModalFooter>
-          <DefButton
-            className="h-11 hover:bg-bg-page3 text-cyan-500"
-            btnColor="black"
-            innerItem={"취소"}
-            disabled={uploading}
-            onClickEvt={() => onClose(0)}
-          />
-          <DefButton
-            className="text-button1 h-11"
-            btnColor="cyan"
-            innerItem={"작성"}
-            disabled={uploading}
-            onClickEvt={() => onClose(extractTumbnail())}
-          />
-        </ModalFooter>
-      </motion.div>
-    </Modal>
+
+            {/* Footer */}
+            <div className="border-t-2 border-border1 p-6 flex gap-2 justify-end">
+              <DefButton
+                className="h-11 hover:bg-bg-page3 text-cyan-500"
+                btnColor="black"
+                innerItem={"취소"}
+                disabled={uploading}
+                onClickEvt={() => onClose(0)}
+              />
+              <DefButton
+                className="text-button1 h-11"
+                btnColor="cyan"
+                innerItem={"작성"}
+                disabled={uploading}
+                onClickEvt={() => onClose(extractThumbnail())}
+              />
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
