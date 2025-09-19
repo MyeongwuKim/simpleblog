@@ -62,8 +62,8 @@ export const POST = async (req: NextRequest) => {
 
 // Vercel Cron Job 용 (GET만 지원)
 export const GET = async (req: NextRequest) => {
-  const token = req.headers.get("x-cron-token");
-  if (token !== process.env.CRON_SECRET) {
+  const auth = req.headers.get("authorization");
+  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json(
       { ok: false, error: "Unauthorized" },
       { status: 401 }
