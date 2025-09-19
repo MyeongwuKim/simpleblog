@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "lsof -ti:3000 | xargs kill -9; next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "demo": "NODE_ENV=demo NEXT_PUBLIC_DEMO=true node scripts/dev-memory.mjs",

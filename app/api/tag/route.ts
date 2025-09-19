@@ -1,28 +1,20 @@
+import { unstable_cache } from "next/cache";
+import { NextResponse, NextRequest } from "next/server";
 import { db } from "@/app/lib/db";
 
-import { NextResponse, NextRequest } from "next/server";
-
-export const GET = async () => {
-  try {
+const getTagsWithCount = unstable_cache(
+  async () => {
     const tagData = await db.tag.findMany({
-      where: {
-        isTemp: false,
-      },
+      where: { isTemp: false },
       select: {
         id: true,
         body: true,
-        _count: {
-          select: {
-            posts: true,
-          },
-        },
+        _count: { select: { posts: true } },
       },
     });
-    // 전체 글 수 합계
+
     const totalCount = await db.post.count({
-      where: {
-        isTemp: false,
-      },
+      where: { isTemp: false },
     });
 
     const allTag = {
@@ -30,11 +22,19 @@ export const GET = async () => {
       _count: { posts: totalCount },
     };
 
-    const result = [allTag, ...tagData];
-    return NextResponse.json({
-      ok: true,
-      data: result,
-    });
+    return [allTag, ...tagData];
+  },
+  ["tags-with-count"], // 캐시 키
+  {
+    revalidate: 60, // 1분마다 자동 갱신 (원하면 0으로 해서 강제 무효화 전용으로도 가능)
+    tags: ["tag", "posts"], // 두 가지 태그에 모두 반응
+  }
+);
+
+export const GET = async () => {
+  try {
+    const result = await getTagsWithCount();
+    return NextResponse.json({ ok: true, data: result });
   } catch (e: unknown) {
     if (e instanceof Error) {
       return NextResponse.json(

@@ -101,7 +101,7 @@ export default function Postfilter() {
         <div
           ref={scrollRef}
           onMouseDown={handleMouseDown}
-          className="  flex overflow-x-auto scrollbar-hide scroll-smooth gap-2"
+          className="flex overflow-x-auto scrollbar-hide scroll-smooth gap-2"
         >
           {isLoading
             ? Array.from({ length: 8 }, (_, i) => (
