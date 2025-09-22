@@ -6,10 +6,15 @@ import { useWrite } from "@/app/write/page";
 
 interface EditorProps {
   editorView: EditorView | null; // ✅ null 허용
-  refContainer: React.MutableRefObject<HTMLDivElement | null>;
+  refContainer: React.RefObject<HTMLDivElement | null>;
+  scrollRef: React.RefObject<HTMLDivElement | null>; // ✅ 추가
 }
 
-const Editor: React.FC<EditorProps> = ({ editorView, refContainer }) => {
+const Editor: React.FC<EditorProps> = ({
+  editorView,
+  refContainer,
+  scrollRef,
+}) => {
   const { dispatch, state } = useWrite();
   const titleArea = useRef<HTMLTextAreaElement>(null);
 
@@ -71,6 +76,7 @@ const Editor: React.FC<EditorProps> = ({ editorView, refContainer }) => {
         </div>
 
         <div
+          ref={scrollRef}
           onClick={() => {
             editorView?.focus();
           }}

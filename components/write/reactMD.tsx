@@ -47,6 +47,7 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
   return (
     <>
       <ReactMarkDown
+        className="leading-relaxed text-text1"
         components={{
           a({ children, ...props }) {
             return (
@@ -57,31 +58,19 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
           },
           h1({ children, ...props }) {
             return (
-              <h1 className="text-4xl font-bold leading-snug my-8" {...props}>
+              <h1 className="text-[2.5rem] font-bold  mt-10 mb-6" {...props}>
                 {children}
               </h1>
             );
           },
-          h2({ children, ...props }) {
-            return (
-              <h2
-                className="text-2xl font-semibold leading-snug my-4"
-                {...props}
-              >
-                {children}
-              </h2>
-            );
-          },
-          h3({ children, ...props }) {
-            return (
-              <h3
-                className="appendix font-sans mb-[1em] text-[20px] font-bold"
-                {...props}
-              >
-                {children}
-              </h3>
-            );
-          },
+          h2: ({ children }) => (
+            <h2 className="mt-8 mb-4 text-[2rem] font-bold">{children}</h2>
+          ),
+          h3: ({ children }) => (
+            <h3 className="mt-6 mb-2 text-[1.5rem] font-semibold">
+              {children}
+            </h3>
+          ),
           blockquote({ children, ...props }) {
             return (
               <blockquote
@@ -105,10 +94,7 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
           },
           p({ children, ...props }) {
             return (
-              <p
-                className="text-base leading-relaxed my-4 text-text1"
-                {...props}
-              >
+              <p className="text-base my-4 " {...props}>
                 {children}
               </p>
             );
@@ -135,6 +121,16 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
           },
           hr({}) {
             return <hr className="border-border1"></hr>;
+          },
+          ul({ children }) {
+            return (
+              <ul className="mb-[1em] list-disc list-outside pl-6">
+                {children}
+              </ul>
+            );
+          },
+          li({ children }) {
+            return <li>{children}</li>;
           },
           code: RemarkCode,
         }}

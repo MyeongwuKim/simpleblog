@@ -79,6 +79,7 @@ export default function Write() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const previewRef = useRef<HTMLDivElement>(null);
   const { openToast, openModal } = useUI();
+  const editorScrollRef = useRef<HTMLDivElement | null>(null);
 
   const { data: result } = useQuery<
     QueryResponse<Post & { tag: Tag[]; images: Image[] }>
@@ -414,14 +415,21 @@ export default function Write() {
   });
 
   useEffect(() => {
-    if (previewRef.current && editorViewRef.current) {
-      const editor = editorViewRef.current.dom;
-      const preview = previewRef.current;
-      const isEditorAtBottom =
-        editor.scrollHeight - editor.scrollTop === editor.clientHeight;
-      if (isEditorAtBottom) preview.scrollTop = preview.scrollHeight;
+    if (!previewRef.current || !editorScrollRef.current) return;
+
+    const editor = editorScrollRef.current;
+    const preview = previewRef.current;
+
+    const isEditorAtBottom =
+      editor.scrollTop + editor.clientHeight >= editor.scrollHeight - 2;
+
+    if (isEditorAtBottom) {
+      preview.scrollTo({
+        top: preview.scrollHeight,
+        behavior: "smooth",
+      });
     }
-  }, [state.content, editorViewRef]);
+  }, [state.content]);
 
   useEffect(() => {
     const view = editorViewRef.current;
@@ -451,6 +459,7 @@ export default function Write() {
             className="flex w-full flex-col h-full relative"
           >
             <Editor
+              scrollRef={editorScrollRef}
               editorView={editorViewRef.current}
               refContainer={refContainer}
             />

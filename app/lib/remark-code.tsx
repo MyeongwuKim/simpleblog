@@ -32,7 +32,7 @@ const RemarkCode: FC<CodeProps> = ({ className, children }) => {
   }, [children, langName]);
 
   return (
-    <pre className="bg-background2 p-4 rounded overflow-x-auto whitespace-pre-wrap break-words">
+    <pre className="bg-background2 p-4 rounded overflow-x-auto whitespace-pre-wrap break-words my-4">
       {tokens.length > 0
         ? tokens.map((t, i) => (
             <span key={i} className={t.style ?? "text-text3"}>
