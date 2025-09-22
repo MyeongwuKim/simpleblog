@@ -14,7 +14,6 @@ import {
 } from "@tanstack/react-query";
 import { Image as ImageType, Post, Tag } from "@prisma/client";
 import { formateDate, getDeliveryDomain } from "@/app/hooks/useUtil";
-import Slugger from "github-slugger";
 import { Node, Parent } from "unist";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
@@ -29,6 +28,7 @@ import { useSession } from "next-auth/react";
 import InfiniteScrollProvider from "./InfiniteScroll/infiniteScrollProvider";
 import { Root, Heading, Text } from "mdast";
 import Image from "next/image";
+import remarkSlug from "remark-slug";
 
 export default function CommonPost({ postId }: { postId: string }) {
   const queryClient = useQueryClient();
@@ -124,13 +124,17 @@ export default function CommonPost({ postId }: { postId: string }) {
   });
 
   const headRef = useRef<HTMLDivElement>(null);
-
   function extractHeadings(markdown: string) {
-    const tree = unified().use(remarkParse).parse(markdown) as Root;
+    // parse → transform 까지 실행해야 remark-slug 동작함
+    const tree = unified()
+      .use(remarkParse)
+      .use(remarkSlug)
+      .runSync(unified().use(remarkParse).parse(markdown)) as Root;
+
     const headings: { level: number; text: string; id: string }[] = [];
-    const slugger = new Slugger();
 
     const visit = (node: Node) => {
+      console.log(node);
       if (node.type === "heading") {
         const heading = node as Heading;
 
@@ -139,7 +143,9 @@ export default function CommonPost({ postId }: { postId: string }) {
           .map((child) => child.value)
           .join("");
 
-        const id = slugger.slug(text);
+        // ✅ remark-slug가 주입한 id 사용
+        const id = (heading.data?.id as string) ?? "";
+
         headings.push({ level: heading.depth, text, id });
       }
 
@@ -159,12 +165,10 @@ export default function CommonPost({ postId }: { postId: string }) {
       </div>
     );
   }
+
   const thumb =
-    postData.data.images.length > 0
-      ? postData.data.images[0].imageId == postData.data.thumbnail
-        ? null
-        : postData.data.thumbnail
-      : postData.data.thumbnail;
+    postData.data.thumbnail ?? postData.data.images[0]?.imageId ?? null;
+
   return (
     <>
       <div className="layout mt-20 h-full relative">
@@ -372,6 +376,7 @@ function PostSide({ headings, headRef }: PostSide) {
   }, [headings]);
   const scrollToHeading = (id: string) => {
     const target = document.getElementById(id);
+    console.log(target);
     if (!target) return;
     const offset = 20;
     const targetY =

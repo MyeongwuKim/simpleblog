@@ -58,16 +58,22 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
           },
           h1({ children, ...props }) {
             return (
-              <h1 className="text-[2.5rem] font-bold  mt-10 mb-6" {...props}>
+              <h1
+                id={props.id}
+                className="text-[2.5rem] font-bold  mt-10 mb-6"
+                {...props}
+              >
                 {children}
               </h1>
             );
           },
-          h2: ({ children }) => (
-            <h2 className="mt-8 mb-4 text-[2rem] font-bold">{children}</h2>
+          h2: ({ children, ...props }) => (
+            <h2 id={props.id} className="mt-8 mb-4 text-[2rem] font-bold">
+              {children}
+            </h2>
           ),
-          h3: ({ children }) => (
-            <h3 className="mt-6 mb-2 text-[1.5rem] font-semibold">
+          h3: ({ children, ...props }) => (
+            <h3 id={props.id} className="mt-6 mb-2 text-[1.5rem] font-semibold">
               {children}
             </h3>
           ),

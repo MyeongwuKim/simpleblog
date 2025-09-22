@@ -100,18 +100,19 @@ export const POST = async (
         // thumbnail 값이 변경된 경우만 업데이트
         if (!currentThumb || currentThumb.imageId !== thumbnail) {
           // 기존 썸네일 해제
-          await tx.image.update({
-            where: {
-              imageId: currentThumb?.imageId,
-            },
-            data: {
-              isThumb: false,
-              post: {
-                disconnect: true,
+          if (currentThumb?.imageId) {
+            await tx.image.update({
+              where: {
+                imageId: currentThumb?.imageId,
               },
-            },
-          });
-
+              data: {
+                isThumb: false,
+                post: {
+                  disconnect: true,
+                },
+              },
+            });
+          }
           // 새 썸네일 지정
           await tx.image.update({
             where: { imageId: thumbnail },
