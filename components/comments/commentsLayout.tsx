@@ -8,11 +8,12 @@ import {
 import DefButton from "../ui/buttons/defButton";
 import InputField from "../ui/input/inputField";
 import { TextAreaField } from "../ui/input/textAreaField";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useUI } from "../providers/uiProvider";
 import { Comment } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import Script from "next/script";
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function CommentsLayout() {
   const queryClient = useQueryClient();
@@ -114,6 +115,19 @@ export default function CommentsLayout() {
     }
     return true;
   };
+  useEffect(() => {
+    const renderCaptcha = () => {
+      if (window.grecaptcha && document.getElementById("recaptcha-container")) {
+        if (!document.querySelector("#recaptcha-container iframe")) {
+          window.grecaptcha.render("recaptcha-container", {
+            sitekey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!,
+          });
+        }
+      }
+    };
+
+    renderCaptcha();
+  }, []);
 
   return (
     <>
@@ -157,9 +171,10 @@ export default function CommentsLayout() {
           />
         </div>
         <div className="flex  gap-3 justify-between max-[500px]:flex-col  max-[500px]:place-items-end">
-          <div
-            className="g-recaptcha max-[500px]:scale-90 origin-top-right"
-            data-sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+          <ReCAPTCHA
+            className="max-[500px]:scale-90 origin-top-right"
+            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+            onChange={(token) => console.log("Captcha value:", token)}
           />
           <DefButton
             type="submit"
