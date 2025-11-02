@@ -21,26 +21,33 @@ interface IReactMD {
 
 const ReactMD: NextPage<IReactMD> = ({ doc }) => {
   const pathname = usePathname();
-  const customSanitizedSchema = {
-    ...defaultSchema,
-    tagNames:
-      pathname == "/comments"
-        ? ["br"]
-        : defaultSchema.tagNames.filter(
-            (tag) => !["script", "iframe", "object", "embed", ""].includes(tag)
-          ),
-    attributes: {
-      ...defaultSchema.attributes,
-      img: ["src", "alt", "title", "width", "height", "sizes", "srcset"],
-      h1: ["className"],
-      h2: ["className"],
-      h3: ["className"],
-    },
-    protocols: {
-      ...defaultSchema.protocols,
-      src: ["http", "https", "data", "blob"],
-    },
-  };
+const customSanitizedSchema = {
+  ...defaultSchema,
+  tagNames:
+    pathname == "/comments"
+      ? ["br"]
+      : [
+          // ✅ 기존 허용 태그 유지
+          ...defaultSchema.tagNames,
+          // ✅ 추가로 허용할 태그
+          "div",
+          "span",
+        ],
+  attributes: {
+    ...defaultSchema.attributes,
+    // ✅ div와 span에도 className 허용
+    div: ["className", "style"],
+    span: ["className", "style"],
+    img: ["src", "alt", "title", "width", "height", "sizes", "srcset"],
+    h1: ["className"],
+    h2: ["className"],
+    h3: ["className"],
+  },
+  protocols: {
+    ...defaultSchema.protocols,
+    src: ["http", "https", "data", "blob"],
+  },
+};
 
   const contentPlugins = [remarkGfm, remarkBreaks];
 
