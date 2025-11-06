@@ -10,6 +10,14 @@
   --font-jetbrains-mono: "JetBrains Mono", monospace;
 }
 
+@layer base {
+  @media (max-width: 768px) {
+    html {
+      font-size: clamp(12px, 1vw + 0.5rem, 16px);
+    }
+  }
+}
+
 @theme {
   --font-sans: var(--font-pretendard);
   --font-inter: var(--font-inter);
@@ -95,7 +103,7 @@ body {
   --breakpoint-xs: 360px;
   --breakpoint-sm: 768px;
   --breakpoint-md: 1056px;
-  --breakpoint-xl: 1366px;
+  --breakpoint-xl: 1376px;
   --breakpoint-lg: 1440px;
 }
 

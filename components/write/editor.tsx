@@ -57,8 +57,9 @@ const Editor: React.FC<EditorProps> = ({
               className=" bg-text2 w-[4rem] h-[6px] mb-4 rounded-xl relative mt-4"
             ></div>
           </div>
-          <div className="">
+          <div id="tag-area" className="relative w-full flex flex-col z-[51]">
             <TagInput
+              className="w-full h-full flex flex-wrap gap-2 flex-grow"
               tags={state.tag}
               callback={(tag) =>
                 dispatch({
@@ -86,7 +87,7 @@ const Editor: React.FC<EditorProps> = ({
             <div id="editor-wrapper" className="relative" ref={refContainer}>
               <div
                 id="editor-placeholder"
-                className="h-full flex items-center left-1 absolute z-[99] font-medium text-[20px] text-text3"
+                className="h-full flex items-center left-1 absolute z-[50] font-medium text-[20px] text-text3"
               >
                 <span
                   className={`${

@@ -9,6 +9,7 @@ import { useUI } from "../providers/uiProvider";
 import { useMutation } from "@tanstack/react-query";
 import { Image } from "@prisma/client";
 import { useWrite } from "@/app/write/page";
+import { useGlobalDragDrop } from "@/app/hooks/useDnD";
 
 interface IToolBar {
   theme: string | undefined;
@@ -134,6 +135,8 @@ const ToolBar: NextPage<IToolBar> = (props) => {
       //URL.revokeObjectURL(url);
     }
   }, [imageFile, onUploadImgEvt]);
+
+  const isDragging = useGlobalDragDrop(onUploadImgEvt);
 
   const onLinkEvt = () => {
     if (!editorView) return;
@@ -444,6 +447,11 @@ const ToolBar: NextPage<IToolBar> = (props) => {
           />
         </label>
       </div>
+      <div
+        className={`fixed w-full h-full dark:bg-[rgba(0,0,0,0.4)] invisible
+          ${isDragging && "visible"}
+           bg-[rgba(249,249,249,0.4)] top-0 left-0 z-[9999]`}
+      />
     </div>
   );
 };

@@ -47,7 +47,7 @@ export default function CommonBody({ children }: CommonBodyType) {
       ) : (
         <>
           <div
-            className={`fixed w-full top-0 left-0 px-8 z-50
+            className={`fixed w-full top-0 left-0 px-16 z-50
               bg-background1 shadow-md transition-[height] duration-200
               ${isSmallHeader ? "h-[60px]" : "h-[120px]"}
             `}
@@ -59,7 +59,7 @@ export default function CommonBody({ children }: CommonBodyType) {
             <Head />
           </div>
           <div
-            className={`w-full relative h-auto p-8 ${
+            className={`relative h-auto p-16 ${
               isSmallHeader ? "mt-[60px]" : "mt-[120px]"
             }`}
           >
