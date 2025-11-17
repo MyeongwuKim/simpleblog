@@ -1,4 +1,3 @@
-import { createUniqueSlug } from "@/app/hooks/useUtil";
 import { db } from "@/app/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag, unstable_cache } from "next/cache";
@@ -15,12 +14,9 @@ async function getPostsPageRaw(args: {
 
   // 날짜 필터
   let dateCondition = {};
-  if (datetype === "week")
-    dateCondition = { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
-  if (datetype === "month")
-    dateCondition = { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) };
-  if (datetype === "year")
-    dateCondition = { gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) };
+  if (datetype === "week") dateCondition = { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
+  if (datetype === "month") dateCondition = { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) };
+  if (datetype === "year") dateCondition = { gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) };
 
   const take = 12;
 
@@ -49,11 +45,22 @@ async function getPostsPageRaw(args: {
   return { ok: true as const, data, nextCursor };
 }
 
+async function createUniqueSlug(base: string) {
+  let slug = "";
+  let isUnique = false;
+
+  while (!isUnique) {
+    const random = Math.random().toString(36).substring(2, 9); // 7자리 랜덤
+    slug = `${base}-${random}`;
+    const existing = await db.post.findUnique({ where: { slug } });
+    if (!existing) isUnique = true;
+  }
+
+  return slug;
+}
+
 // 2) 캐시 팩토리 함수
-function getPostsPageCached(
-  tag: string,
-  datetype: "week" | "month" | "year" | "all"
-) {
+function getPostsPageCached(tag: string, datetype: "week" | "month" | "year" | "all") {
   return unstable_cache(
     async () => {
       return getPostsPageRaw({ tag, datetype, cursor: undefined });
@@ -68,12 +75,7 @@ export async function GET(req: NextRequest) {
     const cursor = req.nextUrl.searchParams.get("cursor") ?? undefined;
     const tag = req.nextUrl.searchParams.get("tag") ?? "all";
 
-    const datetype =
-      (req.nextUrl.searchParams.get("datetype") as
-        | "week"
-        | "month"
-        | "year"
-        | "all") ?? "all";
+    const datetype = (req.nextUrl.searchParams.get("datetype") as "week" | "month" | "year" | "all") ?? "all";
 
     let page;
     if (cursor) {
@@ -86,23 +88,16 @@ export async function GET(req: NextRequest) {
   } catch (e) {
     console.error("❌ GET /api/posts 에러:", e);
     if (e instanceof Error) {
-      return NextResponse.json(
-        { ok: false, error: e.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
     }
-    return NextResponse.json(
-      { ok: false, error: "Unknown error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: false, error: "Unknown error" }, { status: 500 });
   }
 }
 
 //글 작성시 revalidateTag를 통한 서버캐시 업데이트
 export const POST = async (req: NextRequest) => {
   const jsonData = await req.json();
-  const { content, tag, title, images, preview, thumbnail, isTemp, slug } =
-    jsonData as PostType & { images: Image[] };
+  const { content, tag, title, images, preview, thumbnail, isTemp, slug } = jsonData as PostType & { images: Image[] };
   let newSlug = slug;
   try {
     const result = await db.$transaction(async (tx) => {
@@ -175,14 +170,8 @@ export const POST = async (req: NextRequest) => {
     });
   } catch (e: unknown) {
     if (e instanceof Error) {
-      return NextResponse.json(
-        { ok: false, error: e.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
     }
-    return NextResponse.json(
-      { ok: false, error: "Unknown error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: false, error: "Unknown error" }, { status: 500 });
   }
 };

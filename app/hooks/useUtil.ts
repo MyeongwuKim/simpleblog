@@ -1,17 +1,11 @@
-import { db } from "../lib/db";
-
 export const setScrollValue = (pathname: string, value: string) => {
-  const key =
-    pathname.replace("/", "").length <= 0 ? "post" : pathname.replace("/", "");
+  const key = pathname.replace("/", "").length <= 0 ? "post" : pathname.replace("/", "");
   window.localStorage.setItem(key, value);
 };
 
 export const getScrollValue = (pathname: string): number => {
-  const key =
-    pathname.replace("/", "").length <= 0 ? "post" : pathname.replace("/", "");
-  return window.localStorage.getItem(key)
-    ? Number(window.localStorage.getItem(key))
-    : -1;
+  const key = pathname.replace("/", "").length <= 0 ? "post" : pathname.replace("/", "");
+  return window.localStorage.getItem(key) ? Number(window.localStorage.getItem(key)) : -1;
 };
 
 export const formatSringDate = (date: string, symbol: string) => {
@@ -66,13 +60,8 @@ export const timeStamp = () => {
 };
 
 /**클라우드플레어 이미지 주소(이미지 아이디, 형식 필요)*/
-export const getDeliveryDomain = (
-  fileId: string,
-  type: "public" | "avatar" | "thumbnail"
-) => {
-  return process.env.NEXT_PUBLIC_DEMO
-    ? fileId
-    : `https://imagedelivery.net/0VaIqAONZ2vq2gejAGX7Sw/${fileId}/${type}`;
+export const getDeliveryDomain = (fileId: string, type: "public" | "avatar" | "thumbnail") => {
+  return process.env.NEXT_PUBLIC_DEMO ? fileId : `https://imagedelivery.net/0VaIqAONZ2vq2gejAGX7Sw/${fileId}/${type}`;
 };
 
 export const getFormatImagesId = (content: string): string[] => {
@@ -81,8 +70,7 @@ export const getFormatImagesId = (content: string): string[] => {
   // 1. imagedelivery.net 뒤에 오는 계정 id (예: 0VaIqAONZ2vq2gejAGX7Sw)
   // 2. 그 뒤에 오는 UUID 형태의 이미지 id를 캡처
   // 3. 끝에 /public 으로 끝나는 패턴
-  const regex =
-    /!\[[^\]]*\]\(https:\/\/imagedelivery\.net\/[^\/]+\/([0-9a-fA-F-]{36,})\/public\)/g;
+  const regex = /!\[[^\]]*\]\(https:\/\/imagedelivery\.net\/[^\/]+\/([0-9a-fA-F-]{36,})\/public\)/g;
 
   let match;
   while ((match = regex.exec(content)) !== null) {
@@ -90,20 +78,6 @@ export const getFormatImagesId = (content: string): string[] => {
   }
   return imagesIdArr;
 };
-
-export async function createUniqueSlug(base: string) {
-  let slug = "";
-  let isUnique = false;
-
-  while (!isUnique) {
-    const random = Math.random().toString(36).substring(2, 9); // 7자리 랜덤
-    slug = `${base}-${random}`;
-    const existing = await db.post.findUnique({ where: { slug } });
-    if (!existing) isUnique = true;
-  }
-
-  return slug;
-}
 
 export function formatRelativeTime(date: Date) {
   const now = new Date();

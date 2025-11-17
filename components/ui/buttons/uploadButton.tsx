@@ -31,6 +31,7 @@ export default function UploadButton({ onSelect }: UploadButtonProps) {
           <p className=" text-text3">썸네일 업로드</p>
         </div>
         <FileInput
+          data-testid="file-input" // ★추가!
           id="dropzone-file"
           className="hidden"
           accept="image/*"

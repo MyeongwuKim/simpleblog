@@ -7,7 +7,7 @@ import ToggleButton from "../ui/buttons/toggleButton";
 import { IoSunny, IoMoon } from "react-icons/io5";
 import { usePathname, useRouter } from "next/navigation";
 import { HiCog, HiLogout } from "react-icons/hi";
-import { DropdownProfile } from "../ui/dropdown/dropdownProfile";
+import DropdownProfile from "../ui/dropdown/dropdownProfile";
 import { FaBookBookmark } from "react-icons/fa6";
 import { FaSave } from "react-icons/fa";
 import { useProfileQuery } from "../ui/profile/query";
@@ -34,15 +34,9 @@ export default function Head() {
   }, []);
 
   return (
-    <div
-      id="HeadView"
-      className="w-full h-full flex items-center py-2 gap-2 flex-col justify-center"
-    >
+    <div id="HeadView" className="w-full h-full flex items-center py-2 gap-2 flex-col justify-center">
       <div className="flex justify-between w-full">
-        <div
-          onClick={() => route.push("/")}
-          className="flex items-center gap-2 text-text1 cursor-pointer"
-        >
+        <div onClick={() => route.push("/")} className="flex items-center gap-2 text-text1 cursor-pointer">
           <FaBookBookmark className="w-6 h-6" />
           <span className="sm:text-xl font-semibold">북마크블로그</span>
         </div>

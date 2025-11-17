@@ -9,7 +9,7 @@ import { getDeliveryDomain } from "@/app/hooks/useUtil";
 interface ProfileProps extends DropdownType {
   profileImg?: string | null;
 }
-export function DropdownProfile({ items, clickEvt, profileImg }: ProfileProps) {
+export default function DropdownProfile({ items, clickEvt, profileImg }: ProfileProps) {
   return (
     <Dropdown
       applyTheme={{
@@ -31,7 +31,7 @@ export function DropdownProfile({ items, clickEvt, profileImg }: ProfileProps) {
       }}
       dismissOnClick={true}
       renderTrigger={() => (
-        <div className="h-full flex relative items-center gap-2">
+        <div data-testid="dropdown-trigger" className="h-full flex relative items-center gap-2">
           <div className="relative w-[45px] h-[45px] rounded-full bg-background3 overflow-hidden">
             {profileImg ? (
               <Image
