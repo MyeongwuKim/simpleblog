@@ -1,21 +1,14 @@
 import { rest } from "msw";
 
 export const handlers = [
-  rest.get("https://example.com/api/data", (req, res, ctx) => {
+  //태그 자동완성 api
+  rest.get("/api/tag/search", (req, res, ctx) => {
+    const q = req.url.searchParams.get("q");
+
     return res(
       ctx.status(200),
       ctx.json({
-        id: 1,
-        title: "MSW 테스트 데이터",
-        completed: true,
-      })
-    );
-  }),
-  rest.get("https://example.com/api/user", (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json({
-        name: "김철수",
+        data: [{ body: `${q}1` }, { body: `${q}2` }],
       })
     );
   }),

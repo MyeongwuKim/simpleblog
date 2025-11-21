@@ -1,29 +1,16 @@
 import { TextInput } from "flowbite-react";
 import { TextInputSizes } from "flowbite-react";
 import { DynamicStringEnumKeysOf } from "flowbite-react/types";
-import React, {
-  FC,
-  HTMLInputTypeAttribute,
-  InputHTMLAttributes,
-  memo,
-  SVGProps,
-} from "react";
+import React, { FC, HTMLInputTypeAttribute, InputHTMLAttributes, memo, SVGProps } from "react";
 
-interface InputFieldProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "size"> {
+interface InputFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "size"> {
   type: HTMLInputTypeAttribute;
   size: DynamicStringEnumKeysOf<TextInputSizes>;
   icon?: FC<SVGProps<SVGSVGElement>>;
   className?: string;
 }
 
-function InputField({
-  size,
-  type,
-  icon,
-  className = "",
-  ...rest
-}: InputFieldProps) {
+function InputField({ size, type, icon, className = "", ...rest }: InputFieldProps) {
   return (
     <TextInput
       applyTheme={{

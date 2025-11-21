@@ -8,6 +8,7 @@
     "start": "next start",
     "demo": "cross-env NODE_ENV=development NEXT_PUBLIC_DEMO=true NEXTAUTH_SECRET=demo-secret node scripts/dev-memory.mjs",
     "lint": "next lint",
+    "test": "jest",
     "build:styles": "npx @tailwindcss/cli -i ./app/globals.css -o ./dist/css/flowbite.css",
     "postinstall": "flowbite-react patch && prisma generate"
   },

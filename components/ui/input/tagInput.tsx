@@ -39,9 +39,7 @@ const TagInput = ({
   );
 
   // ✅ 자동완성: 조합 중에는 호출 안 함, 2자 이상부터
-  const { data: tagData, isLoading } = useQuery<
-    QueryResponse<{ body: string }[]>
-  >({
+  const { data: tagData, isLoading } = useQuery<QueryResponse<{ body: string }[]>>({
     queryKey: ["tag", deferredInput],
     queryFn: async () => {
       const q = deferredInput.trim();
@@ -56,20 +54,9 @@ const TagInput = ({
   const hasSuggestions = suggestions.length > 0;
 
   return (
-    <div
-      id="tagInputWrapper"
-      className={`relative flex flex-wrap gap-2 items-center ${
-        className ?? ""
-      }`}
-    >
+    <div id="tagInputWrapper" className={`relative flex flex-wrap gap-2 items-center ${className ?? ""}`}>
       {tags.map((v, i) => (
-        <TagItem
-          id=""
-          mode="normal"
-          clickEvt={() => removeTag(i)}
-          text={v}
-          key={`${v}-${i}`}
-        />
+        <TagItem id="" mode="normal" clickEvt={() => removeTag(i)} text={v} key={`${v}-${i}`} />
       ))}
 
       <div className="relative">
@@ -89,7 +76,7 @@ const TagInput = ({
           }}
           onKeyDown={(e) => {
             if (isComposit) return;
-            console.log(e.key);
+
             if (e.key === "Backspace") {
               if (input.length <= 0 && tags.length > 0) {
                 removeTag(tags.length - 1);

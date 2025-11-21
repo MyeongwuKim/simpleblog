@@ -16,6 +16,7 @@ export default function TagSuggestionPopup({
     <AnimatePresence>
       {visible && suggestions.length > 0 && (
         <motion.div
+          data-testid="suggestion-popup"
           key="suggestion-popup"
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -34,13 +35,7 @@ export default function TagSuggestionPopup({
             }}
           />
           {suggestions.map((item) => (
-            <TagItem
-              id=""
-              mode="normal"
-              text={item}
-              key={item}
-              clickEvt={() => onSelectItem(item)}
-            />
+            <TagItem id="" mode="normal" text={item} key={item} clickEvt={() => onSelectItem(item)} />
           ))}
         </motion.div>
       )}
