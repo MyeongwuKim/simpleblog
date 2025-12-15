@@ -4,7 +4,6 @@ import { NextPage } from "next";
 import remarkGfm from "remark-gfm";
 //  import  "github-markdown-css/github-markdown.css"; //<- github 스타일을 참조함
 import ReactMarkDown from "react-markdown";
-import rehypeRaw from "rehype-raw";
 import remarkBreaks from "remark-breaks";
 import Image from "next/image";
 import RemarkCode from "@/app/lib/remark-code";
