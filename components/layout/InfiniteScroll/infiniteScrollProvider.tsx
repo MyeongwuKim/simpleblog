@@ -14,13 +14,15 @@ import CommentItem from "@/components/ui/items/commentItem";
 import TempItem from "@/components/ui/items/tempItem";
 
 import { CardItemSkeleton, TempItemSkeleton } from "@/components/ui/skeleton";
-import { Comment, Image, Post } from "@prisma/client";
+import { Collection, Comment, Image, Post } from "@prisma/client";
 import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useInView } from "react-intersection-observer";
+import CollectionCardItem from "@/components/ui/items/collectionCardItem";
+import { fetchFeedCollections } from "@/app/lib/fetchers/collections";
 
 // 타입 정의
-type DataType = "post" | "temp" | "comments" | "relatedPosts";
+type DataType = "post" | "temp" | "comments" | "relatedPosts" | "collections";
 
 interface InfiniteScrollProviderProps {
   queryKey: readonly unknown[];
@@ -43,6 +45,7 @@ interface RendererMap<T = unknown> {
 
 type DataTypeMap = {
   post: Post & { images: Image[] };
+  collections: Collection & { _count: { posts: number } };
   temp: Post;
   comments: Comment;
   relatedPosts: Post & { images: Image[] };
@@ -57,6 +60,18 @@ const rendererMap: {
     fetcher: fetchPosts,
     renderContent: (item: Post & { images: Image[] }) => (
       <PostCardItem key={item.id} {...item} />
+    ),
+    renderSkeleton: (i) => (
+      <div className="h-[300px]" key={i}>
+        <CardItemSkeleton />
+      </div>
+    ),
+  },
+  collections: {
+    layout: "grid max-sm:grid-cols-1 grid-cols-2 gap-4",
+    fetcher: fetchFeedCollections,
+    renderContent: (item: Collection & { _count: { posts: number } }) => (
+      <CollectionCardItem key={item.id} {...item} />
     ),
     renderSkeleton: (i) => (
       <div className="h-[300px]" key={i}>

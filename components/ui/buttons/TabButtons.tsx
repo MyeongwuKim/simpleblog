@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { HiUserCircle } from "react-icons/hi";
 import { IconType } from "react-icons/lib";
 import { MdDashboard, MdInsertComment } from "react-icons/md";
+import { LuFolders } from "react-icons/lu";
 
 export type TabItemType = {
   title: string;
@@ -13,6 +14,7 @@ export type TabItemType = {
 
 const tabList: TabItemType[] = [
   { title: "게시글", icon: MdDashboard, pathname: "/" },
+  { title: "컬렉션", icon: LuFolders, pathname: "/collections" },
   { title: "프로필", icon: HiUserCircle, pathname: "/profile" },
   { title: "방명록", icon: MdInsertComment, pathname: "/comments" },
 ];
@@ -30,7 +32,8 @@ export default function CustomTabs() {
     pathname === "/" ||
     (!pathname.startsWith("/profile") &&
       !pathname.startsWith("/comments") &&
-      !pathname.startsWith("/post"));
+      !pathname.startsWith("/post") &&
+      !pathname.startsWith("/collections"));
 
   let activeIndex = tabList.findIndex((t) => t.pathname === pathname);
   if (isPostPage) activeIndex = 0;
@@ -56,7 +59,6 @@ export default function CustomTabs() {
         {tabList.map((tab, i) => {
           const Icon = tab.icon;
           const isActive = i === activeIndex;
-
           return (
             <button
               key={tab.pathname}
@@ -64,15 +66,16 @@ export default function CustomTabs() {
                 tabRefs.current[i] = el;
               }}
               onClick={() => router.push(tab.pathname)}
-              className={`flex items-center w-1/3 justify-center rounded-t-lg p-4 text-sm focus:outline-none
-                ${
-                  isActive
-                    ? "text-text1 font-bold"
-                    : "text-text3 hover:text-text2 cursor-pointer"
-                }`}
+              className={`flex flex-1 min-w-0 items-center justify-center
+    rounded-t-lg p-4 text-sm focus:outline-none
+    ${
+      isActive
+        ? "text-text1 font-bold"
+        : "text-text3 hover:text-text2 cursor-pointer"
+    }`}
             >
-              <Icon className="mr-2 h-5 w-5" />
-              <span className="max-xs:hidden">{tab.title}</span>
+              <Icon className="mr-2 h-5 w-5 shrink-0" />
+              <span className="truncate max-[390px]:hidden">{tab.title}</span>
             </button>
           );
         })}

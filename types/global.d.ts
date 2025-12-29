@@ -32,7 +32,20 @@ declare global {
   }
 
   interface PostType
-    extends Omit<Post, "createdAt" | "updatedAt" | "id" | "tagIds"> {
+    extends Omit<
+      Post,
+      "createdAt" | "updatedAt" | "id" | "tagIds" | "collectionId"
+    > {
     tag: string[];
+    collection: { id: string; slug: string } | null;
   }
+
+  type CollectionItemType = {
+    id: string;
+    title: string;
+    preview: string | null;
+    slug: string;
+    thumbnail: string | null;
+    createdAt: Date;
+  };
 }

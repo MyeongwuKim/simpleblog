@@ -109,14 +109,12 @@ function EditSocialForm({
         onChange={(e) => setNt(e.target.value)}
       />
       <div className="flex flex-row-reverse">
-        <div className="w-[100px] h-[40px]">
-          <DefButton
-            type="submit"
-            className="  text-button1"
-            btnColor="cyan"
-            innerItem="확인"
-          />
-        </div>
+        <DefButton
+          type="submit"
+          className="text-button1 w-[100px] h-[40px]"
+          btnColor="cyan"
+          innerItem="확인"
+        />
       </div>
     </form>
   );

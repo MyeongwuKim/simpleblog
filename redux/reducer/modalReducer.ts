@@ -3,7 +3,12 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 export type ModalType = "WRITE" | "CONFIRM";
 
 export type ModalPropsMap = {
-  WRITE: { thumbnail: string | null; preview: string | null; title: string };
+  WRITE: {
+    thumbnail: string | null;
+    preview: string | null;
+    title: string;
+    collection: string | null;
+  };
   CONFIRM: { msg: string; btnMsg: string[]; title?: string };
 };
 

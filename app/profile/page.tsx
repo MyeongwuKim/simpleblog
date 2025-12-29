@@ -7,7 +7,7 @@ export default async function Profile() {
   const profile = await db.profile.findFirst({});
 
   return (
-    <div className="max-w-[768px] w-full ml-auto mr-auto  h-full relative">
+    <div className="layout h-full relative">
       <ProfileItem profile={profile} />
     </div>
   );

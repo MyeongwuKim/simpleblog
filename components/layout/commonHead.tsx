@@ -14,7 +14,7 @@ import { useProfileQuery } from "../ui/profile/query";
 import { signIn, signOut, useSession } from "next-auth/react";
 import DefButton from "../ui/buttons/defButton";
 
-const showList = ["/", "/profile", "/comments"];
+const showList = ["/", "/profile", "/comments", "/collections"];
 
 export default function Head() {
   const { setTheme, theme } = useTheme();
@@ -34,9 +34,15 @@ export default function Head() {
   }, []);
 
   return (
-    <div id="HeadView" className="w-full h-full flex items-center py-2 gap-2 flex-col justify-center">
+    <div
+      id="HeadView"
+      className="w-full h-full flex items-center py-2 gap-2 flex-col justify-center"
+    >
       <div className="flex justify-between w-full">
-        <div onClick={() => route.push("/")} className="flex items-center gap-2 text-text1 cursor-pointer">
+        <div
+          onClick={() => route.push("/")}
+          className="flex items-center gap-2 text-text1 cursor-pointer"
+        >
           <FaBookBookmark className="w-6 h-6" />
           <span className="sm:text-xl font-semibold">북마크블로그</span>
         </div>

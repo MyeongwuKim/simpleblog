@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { CommonBtnProps } from "./buttonType";
 
-type colorType = "gray" | "cyan";
+type colorType = "gray" | "cyan" | "red";
 interface LblBtnProps extends CommonBtnProps {
   color?: colorType;
   className?: string;
@@ -10,6 +10,12 @@ interface LblBtnProps extends CommonBtnProps {
 const getTextColor = (color: colorType) => {
   let str = "";
   switch (color) {
+    case "red":
+      str = `text-red-500
+  hover:text-red-600
+  dark:text-red-400
+  dark:hover:text-red-300`;
+      break;
     case "cyan":
       str = ` text-cyan-600  hover:text-cyan-400 
      dark:text-cyan-400 dark:hover:text-cyan-200`;
@@ -29,7 +35,7 @@ function LabelButton({
   return (
     <button
       onClick={onClickEvt}
-      className={`${className} w-full h-full text-left cursor-pointer ${getTextColor(
+      className={`${className} text-left cursor-pointer   transition-colors ${getTextColor(
         color!
       )}`}
     >

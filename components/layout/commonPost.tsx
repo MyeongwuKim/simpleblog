@@ -3,7 +3,7 @@ import TagItem from "../ui/items/tagItem";
 import ReactMD from "../write/reactMD";
 import FooterItem from "../ui/items/postFooterItem";
 import LabelButton from "../ui/buttons/labelButton";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   InfiniteData,
@@ -29,6 +29,14 @@ import InfiniteScrollProvider from "./InfiniteScroll/infiniteScrollProvider";
 import { Root, Heading, Text } from "mdast";
 import Image from "next/image";
 import remarkSlug from "remark-slug";
+import { fetchCollectionDetail } from "@/app/lib/fetchers/collections";
+import {
+  IoChevronBack,
+  IoChevronDown,
+  IoChevronForward,
+  IoChevronUp,
+} from "react-icons/io5";
+import { usePostDetailContext } from "../providers/postDetailProvider";
 
 export default function CommonPost({ postId }: { postId: string }) {
   const queryClient = useQueryClient();
@@ -106,10 +114,17 @@ export default function CommonPost({ postId }: { postId: string }) {
     data: postData,
     isLoading: isPostLoading,
     isError: postError,
-  } = useQuery<QueryResponse<Post & { tag: Tag[]; images: ImageType[] }>>({
+  } = useQuery<
+    QueryResponse<
+      Post & {
+        tag: Tag[];
+        images: ImageType[];
+        collection: { id: string; slug: string } | null;
+      }
+    >
+  >({
     queryKey: ["post", postId],
     queryFn: () => {
-      console.log("fetch!");
       return fetchPostContentByPostId(postId);
     },
     staleTime: 600 * 1000,
@@ -134,7 +149,6 @@ export default function CommonPost({ postId }: { postId: string }) {
     const headings: { level: number; text: string; id: string }[] = [];
 
     const visit = (node: Node) => {
-      console.log(node);
       if (node.type === "heading") {
         const heading = node as Heading;
 
@@ -184,6 +198,14 @@ export default function CommonPost({ postId }: { postId: string }) {
           headRef={headRef}
           headings={extractHeadings(postData.data.content)}
         />
+        {postData.data.collectionId && postData.data.collection && (
+          <CollectionListBox
+            postId={postData.data.id}
+            collectionId={postData.data.collectionId}
+            slug={postData.data.collection.slug}
+          />
+        )}
+
         <PostBody content={postData.data.content} thumbnail={thumb} />
         <div className="w-full h-[1px] bg-text4 mt-20" />
 
@@ -196,13 +218,15 @@ export default function CommonPost({ postId }: { postId: string }) {
       <h2 className="text-text1 text-2xl my-20 text-center">
         이 게시물과 관련된 글
       </h2>
-      <InfiniteScrollProvider
-        type="relatedPosts"
-        queryKey={[
-          "relatedPosts",
-          { tags: postData.data.tag.map((v) => v.body), excludeId: postId },
-        ]}
-      />
+      <div className="relative h-auto py-16 mt-[120px] min-md:px-16 max-md:px-8 px-4">
+        <InfiniteScrollProvider
+          type="relatedPosts"
+          queryKey={[
+            "relatedPosts",
+            { tags: postData.data.tag.map((v) => v.body), excludeId: postId },
+          ]}
+        />
+      </div>
     </>
   );
 }
@@ -376,7 +400,7 @@ function PostSide({ headings, headRef }: PostSide) {
   }, [headings]);
   const scrollToHeading = (id: string) => {
     const target = document.getElementById(id);
-    console.log(target);
+
     if (!target) return;
     const offset = 20;
     const targetY =
@@ -423,4 +447,140 @@ function PostSide({ headings, headRef }: PostSide) {
     </div>
   );
 }
+
+function CollectionListBox({
+  collectionId,
+  slug,
+  postId,
+}: {
+  collectionId: string;
+  slug: string;
+  postId: string;
+}) {
+  const {
+    data: collectionData,
+    isLoading,
+    isError,
+  } = useQuery<QueryResponse<{ title: string; items: CollectionItemType[] }>>({
+    queryKey: ["collections", collectionId],
+    queryFn: () => fetchCollectionDetail(collectionId),
+    staleTime: 600 * 1000,
+  });
+  const { collectionOpen, setCollectionOpen } = usePostDetailContext();
+
+  const route = useRouter();
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const items = collectionData?.data.items ?? [];
+
+  const canPrev = activeIndex > 0;
+  const canNext = activeIndex < items.length - 1;
+
+  useEffect(() => {
+    if (!postId || items.length === 0) return;
+
+    const idx = items.findIndex((item) => item.id === postId);
+
+    if (idx !== -1) {
+      setActiveIndex(idx);
+    }
+  }, [postId, items]);
+
+  if (isLoading || isError || !collectionData) return null;
+
+  return (
+    <div className="rounded-xl bg-background2 p-6 mt-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-text2">
+          <Link href={`/collections/${slug}`}>{collectionData.data.title}</Link>
+        </h2>
+      </div>
+
+      {/* Content */}
+      {collectionOpen && (
+        <ul className="mt-6 space-y-3">
+          {items.map((post, idx) => {
+            const active = idx === activeIndex;
+
+            return (
+              <li
+                key={post.id}
+                className="flex gap-2 text-lg transition-colors text-text2"
+              >
+                {idx + 1}.
+                <Link
+                  className={`hover:underline ${
+                    active ? "text-text5" : "text-primary"
+                  }`}
+                  href={`/post/${post.slug}`}
+                >
+                  {post.title}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {/* Footer */}
+      <div className="mt-6 flex items-center justify-between text-text3">
+        {/* 숨기기 */}
+        <button
+          className="flex items-center gap-1 hover:text-text2 cursor-pointer"
+          onClick={() => setCollectionOpen(!collectionOpen)}
+        >
+          {collectionOpen ? (
+            <>
+              <IoChevronUp /> 숨기기
+            </>
+          ) : (
+            <>
+              <IoChevronDown /> 펼치기
+            </>
+          )}
+        </button>
+
+        {/* 🔥 글 이동 + 넘버링 */}
+        {items.length > 1 && (
+          <div className="flex items-center gap-3">
+            {/* 이전 글 */}
+            <button
+              disabled={!canPrev}
+              onClick={() => {
+                if (!canPrev) return;
+                route.push(`/post/${items[activeIndex - 1].slug}`);
+              }}
+              className={`p-1 ${
+                canPrev ? "hover:text-text2 cursor-pointer" : "opacity-30"
+              }`}
+            >
+              <IoChevronBack size={18} />
+            </button>
+
+            {/* ✅ 라우트 기준 넘버링 */}
+            <span className="text-sm">
+              {activeIndex + 1} / {items.length}
+            </span>
+
+            {/* 다음 글 */}
+            <button
+              disabled={!canNext}
+              onClick={() => {
+                if (!canNext) return;
+                route.push(`/post/${items[activeIndex + 1].slug}`);
+              }}
+              className={`p-1 ${
+                canNext ? "hover:text-text2 cursor-pointer" : "opacity-30"
+              }`}
+            >
+              <IoChevronForward size={18} />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 PostHead.displayName = "PostHead";

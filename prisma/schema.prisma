@@ -9,18 +9,21 @@ datasource db {
 }
 
 model Post {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  content   String
-  preview   String?
-  thumbnail String?
-  slug      String   @unique
-  tagIds    String[] @db.ObjectId
-  tag       Tag[]    @relation(fields: [tagIds], references: [id])
-  isTemp    Boolean  @default(false)
-  images    Image[] // ✅ 1:N 관계
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  content      String
+  preview      String?
+  thumbnail    String?
+  slug         String      @unique
+  tagIds       String[]    @db.ObjectId
+  tag          Tag[]       @relation(fields: [tagIds], references: [id])
+  isTemp       Boolean     @default(false)
+  images       Image[] // ✅ 1:N 관계
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  // ✅ 하나의 컬렉션만
+  collectionId String?     @db.ObjectId
+  collection   Collection? @relation(fields: [collectionId], references: [id])
 }
 
 model Image {
@@ -58,5 +61,22 @@ model Comment {
   name      String
   content   String
   isMe      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Collection {
+  id        String           @id @default(auto()) @map("_id") @db.ObjectId
+  slug      String           @unique
+  title     String
+  thumbnail String?
+  items     CollectionItem[] // embedded wrapper
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @default(now())
+  posts     Post[]
+}
+
+type CollectionItem {
+  postId    String   @db.ObjectId
+  order     Int
   createdAt DateTime @default(now())
 }

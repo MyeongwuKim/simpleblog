@@ -20,7 +20,7 @@ import {
 import Preview from "@/components/write/preview";
 import { useRouter, useSearchParams } from "next/navigation";
 import Slugger from "github-slugger";
-import { Image, Post, Tag } from "@prisma/client";
+import { Collection, Image, Post, Tag } from "@prisma/client";
 import { fetchPostContentByPostId } from "../lib/fetchers/post";
 import NotFound from "../not-found";
 import { getFormatImagesId } from "../hooks/useUtil";
@@ -37,6 +37,7 @@ const initialState: PostPayload = {
   preview: null,
   slug: "",
   thumbnail: null,
+  collection: null,
 };
 
 const reducer = (state: PostPayload, action: Action) => {
@@ -54,7 +55,11 @@ type ContextType = {
 };
 
 const toPostType = (
-  data: Post & { tag: Tag[]; images: Image[] }
+  data: Post & {
+    tag: Tag[];
+    images: Image[];
+    collection: { id: string; slug: string } | null;
+  }
 ): PostPayload => {
   return {
     title: data.title ?? "",
@@ -65,6 +70,7 @@ const toPostType = (
     slug: data.slug ?? "",
     thumbnail: data.thumbnail ?? null,
     images: data.images,
+    collection: data.collection ?? null,
   };
 };
 
@@ -82,13 +88,19 @@ export default function Write() {
   const editorScrollRef = useRef<HTMLDivElement | null>(null);
 
   const { data: result } = useQuery<
-    QueryResponse<Post & { tag: Tag[]; images: Image[] }>
+    QueryResponse<
+      Post & {
+        tag: Tag[];
+        images: Image[];
+        collection: { id: string; slug: string } | null;
+      }
+    >
   >({
     queryKey: ["post", postId],
     queryFn: () => fetchPostContentByPostId(postId!),
     enabled: isValidPostId,
   });
-
+  //!---QueryData 캐시 업데이트 -------------------------------------!
   const insertNewPostCache = (queryKey: string[], item: Post) => {
     queryClient.setQueryData<InfiniteData<InfiniteResponse<Post>>>(
       queryKey,
@@ -238,35 +250,151 @@ export default function Write() {
     );
   };
 
+  const removePostFromCollection = (collectionId: string, postId: string) => {
+    queryClient.setQueryData<QueryResponse<Collection>>(
+      ["collections", collectionId],
+      (old) => {
+        if (!old) return old;
+
+        const filtered = old.data.items.filter(
+          (item) => item.postId !== postId
+        );
+
+        const reordered = filtered.map((item, idx) => ({
+          ...item,
+          order: idx,
+        }));
+
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            items: reordered,
+            updatedAt: new Date(),
+          },
+        };
+      }
+    );
+    queryClient.invalidateQueries({
+      queryKey: ["collections", collectionId],
+      refetchType: "active",
+    });
+  };
+
+  const appendPostToCollection = (collectionId: string, post: Post) => {
+    queryClient.setQueryData<QueryResponse<Collection>>(
+      ["collections", collectionId],
+      (old) => {
+        if (!old) return old;
+
+        const nextOrder = old.data.items.length;
+
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            items: [
+              ...old.data.items,
+              {
+                postId: post.id,
+                title: post.title,
+                preview: post.preview ?? null,
+                slug: post.slug,
+                thumbnail: post.thumbnail ?? null,
+                order: nextOrder,
+                createdAt: post.createdAt,
+              },
+            ],
+            updatedAt: new Date(),
+          },
+        };
+      }
+    );
+    queryClient.invalidateQueries({
+      queryKey: ["collections", collectionId],
+      refetchType: "active",
+    });
+  };
+
+  function updatePostInCollection(
+    collectionId: string | null,
+    post: {
+      id: string;
+      title: string;
+      preview: string | null;
+      slug: string;
+      thumbnail: string | null;
+    }
+  ) {
+    if (!collectionId) return;
+
+    queryClient.setQueryData<QueryResponse<Collection>>(
+      ["collections", collectionId],
+      (old) => {
+        if (!old) return old;
+
+        const exists = old.data.items.some((item) => item.postId === post.id);
+        if (!exists) return old;
+
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            items: old.data.items.map((item) =>
+              item.postId === post.id
+                ? {
+                    ...item,
+                    title: post.title,
+                    preview: post.preview,
+                    slug: post.slug,
+                    thumbnail: post.thumbnail,
+                  }
+                : item
+            ),
+            updatedAt: new Date(),
+          },
+        };
+      }
+    );
+    queryClient.invalidateQueries({
+      queryKey: ["collections", collectionId],
+      refetchType: "active",
+    });
+  }
+
+  //!-------------------------------------------------------!
+
   const handleUpdatePost = (res: Post, prevIsTemp: boolean) => {
     if (prevIsTemp) {
       deleteTempPostCache(res);
     }
-
-    // queryClient.setQueryData<QueryResponse<Post & { tag: Tag[] }>>(
-    //   ["post", postId],
-    //   (oldData) => {
-    //     return oldData
-    //       ? {
-    //           ...oldData,
-    //           data: {
-    //             ...oldData.data,
-    //             current: {
-    //               ...oldData.data,
-    //               ...res, // ← res 안의 수정된 필드를 current에 병합
-    //             },
-    //           },
-    //         }
-    //       : oldData;
-    //   }
-    // );
-    //queryClient.invalidateQueries({ queryKey: ["post", postId] });
     //임시글 -> 추가했을때..
     if (prevIsTemp) insertNewPostCache(["post"], res);
     //게시글 -> 수정했을때..
     else updateExistingPostCache(["post"], res);
 
     queryClient.invalidateQueries({ queryKey: ["post"], exact: true });
+
+    const prevCollectionId = state.collection?.id ?? null;
+    const nextCollectionId = res.collectionId ?? null;
+
+    if (!prevCollectionId && !nextCollectionId) {
+      // 컬렉션 없음 → 없음
+    } else if (!prevCollectionId && nextCollectionId) {
+      appendPostToCollection(nextCollectionId, res);
+    } else if (prevCollectionId && !nextCollectionId) {
+      removePostFromCollection(prevCollectionId, res.id);
+    } else if (prevCollectionId === nextCollectionId) {
+      updatePostInCollection(prevCollectionId, res);
+    } else {
+      // prev !== next (A → B)
+      removePostFromCollection(prevCollectionId!, res.id);
+      appendPostToCollection(nextCollectionId!, res);
+    }
+    queryClient.invalidateQueries({
+      queryKey: ["collections"],
+      refetchType: "inactive",
+    });
     router.push(`/post/${res.slug}`);
     if (prevIsTemp) openToast(false, "글 작성을 완료하였습니다.", 1);
   };
@@ -282,13 +410,19 @@ export default function Write() {
       queryKey: ["relatedPosts"],
       exact: false,
     });
+    if (res.post.collectionId)
+      appendPostToCollection(res.post.collectionId, res.post);
 
     router.push(`/post/${res.post.slug}`);
     openToast(false, "글 작성을 완료하였습니다.", 1);
   };
 
   const updateMuate = useMutation<
-    QueryResponse<{ post: Post; tag: Tag[] }>,
+    QueryResponse<{
+      post: Post;
+      tag: Tag[];
+      collection: { id: string; slug: string } | null;
+    }>,
     Error,
     PostPayload
   >({
@@ -316,7 +450,11 @@ export default function Write() {
   });
 
   const writeMutate = useMutation<
-    QueryResponse<{ post: Post; tag: Tag[] }>,
+    QueryResponse<{
+      post: Post;
+      tag: Tag[];
+      collection: { id: string; slug: string } | null;
+    }>,
     Error,
     PostPayload
   >({
@@ -374,32 +512,50 @@ export default function Write() {
     async (postProcess: number) => {
       const preview = extractPreview();
       const imageIds = getFormatImagesId(state.content);
-      let popupResult = null;
+      let popupResult: { thumbnail: string; collection: string | null } = {
+        thumbnail: "",
+        collection: null,
+      };
       if (postProcess == 1) {
+        //컬렉션 id와 slug를 합쳐서 보냄, 오브젝트 만들기 귀차늠
         const result = await openModal("WRITE", {
           preview,
           thumbnail:
             state.thumbnail ??
             (state.images.length > 0 ? state.images[0].imageId : null),
           title: state.title,
+          collection: state.collection
+            ? state.collection.id + "," + state.collection.slug
+            : null,
         });
         if (result == 0) return;
-        popupResult = result as string;
+
+        popupResult = result as {
+          thumbnail: string;
+          collection: string | null;
+        };
       }
-      const thumbnail = popupResult;
+      const { thumbnail, collection } = popupResult;
+
       const filteredImages = state.images.filter((img) =>
         imageIds.includes(img.imageId)
       );
 
       const mutate = isValidPostId ? updateMuate : writeMutate;
+      const collecionData = collection ? collection.split(",") : null;
 
       mutate.mutate({
         ...state,
         isTemp: postProcess === 2,
         preview,
         thumbnail,
+        collection: collecionData
+          ? { id: collecionData[0], slug: collecionData[1] }
+          : null,
         images: process.env.NEXT_PUBLIC_DEMO ? state.images : filteredImages,
-        ...(isValidPostId ? {} : { slug: createSlug(state.title) }),
+        ...(isValidPostId
+          ? { slug: state.slug }
+          : { slug: createSlug(state.title) }),
       });
     },
     [state]

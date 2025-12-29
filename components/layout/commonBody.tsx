@@ -10,10 +10,12 @@ type CommonBodyType = {
 
 export default function CommonBody({ children }: CommonBodyType) {
   const pathname = usePathname();
-  const smallHeaderPaths = ["/post", "/setting", "/temp"];
-  const isSmallHeader = smallHeaderPaths.some((p) => pathname.startsWith(p));
+  const bigHeaderPrefixes = ["/profile", "/collections", "/comments"];
+  const isBigHeader =
+    pathname === "/" || bigHeaderPrefixes.some((p) => pathname.endsWith(p));
+  const isWide = pathname === "/" || pathname == "/collections";
 
-  const headerHeight = isSmallHeader ? 60 : 120;
+  const headerHeight = isBigHeader ? 120 : 60;
 
   const [translate, setTranslate] = useState(0); // 헤더 y 이동 값
   const lastScrollY = useRef(0);
@@ -49,7 +51,7 @@ export default function CommonBody({ children }: CommonBodyType) {
           <div
             className={`fixed w-full top-0 left-0 px-16 z-50
               bg-background1 shadow-md transition-[height] duration-200
-              ${isSmallHeader ? "h-[60px]" : "h-[120px]"}
+              ${isBigHeader ? "h-[120px]" : "h-[60px]"}
             `}
             style={{
               transform: `translateY(-${translate}px)`,
@@ -59,9 +61,9 @@ export default function CommonBody({ children }: CommonBodyType) {
             <Head />
           </div>
           <div
-            className={`relative h-auto p-16 ${
-              isSmallHeader ? "mt-[60px]" : "mt-[120px]"
-            }`}
+            className={`relative h-auto py-16 ${
+              isBigHeader ? "mt-[120px]" : "mt-[60px]"
+            } ${isWide && "min-md:px-16 max-md:px-8 px-4"}`}
           >
             {pathname === "/" && <Postfilter />}
             {children}

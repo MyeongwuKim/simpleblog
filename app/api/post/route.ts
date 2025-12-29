@@ -1,7 +1,7 @@
 import { db } from "@/app/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag, unstable_cache } from "next/cache";
-import { Image } from "@prisma/client";
+import { CollectionItem, Image, Prisma } from "@prisma/client";
 
 // 1) 공통 RAW 쿼리 (id 기준으로 단순·안전 페이징)
 async function getPostsPageRaw(args: {
@@ -14,9 +14,12 @@ async function getPostsPageRaw(args: {
 
   // 날짜 필터
   let dateCondition = {};
-  if (datetype === "week") dateCondition = { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
-  if (datetype === "month") dateCondition = { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) };
-  if (datetype === "year") dateCondition = { gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) };
+  if (datetype === "week")
+    dateCondition = { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
+  if (datetype === "month")
+    dateCondition = { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) };
+  if (datetype === "year")
+    dateCondition = { gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) };
 
   const take = 12;
 
@@ -60,7 +63,10 @@ async function createUniqueSlug(base: string) {
 }
 
 // 2) 캐시 팩토리 함수
-function getPostsPageCached(tag: string, datetype: "week" | "month" | "year" | "all") {
+function getPostsPageCached(
+  tag: string,
+  datetype: "week" | "month" | "year" | "all"
+) {
   return unstable_cache(
     async () => {
       return getPostsPageRaw({ tag, datetype, cursor: undefined });
@@ -75,7 +81,12 @@ export async function GET(req: NextRequest) {
     const cursor = req.nextUrl.searchParams.get("cursor") ?? undefined;
     const tag = req.nextUrl.searchParams.get("tag") ?? "all";
 
-    const datetype = (req.nextUrl.searchParams.get("datetype") as "week" | "month" | "year" | "all") ?? "all";
+    const datetype =
+      (req.nextUrl.searchParams.get("datetype") as
+        | "week"
+        | "month"
+        | "year"
+        | "all") ?? "all";
 
     let page;
     if (cursor) {
@@ -88,16 +99,127 @@ export async function GET(req: NextRequest) {
   } catch (e) {
     console.error("❌ GET /api/posts 에러:", e);
     if (e instanceof Error) {
-      return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
     }
-    return NextResponse.json({ ok: false, error: "Unknown error" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
+}
+
+const syncCollectionThumbnail = async (
+  collectionId: string,
+  tx: Prisma.TransactionClient
+) => {
+  const col = await tx.collection.findUnique({
+    where: { id: collectionId },
+    select: {
+      items: true,
+    },
+  });
+  if (!col || col.items.length === 0) {
+    await tx.collection.update({
+      where: { id: collectionId },
+      data: { thumbnail: null },
+    });
+    return;
+  }
+
+  const firstItem = col.items
+    .slice()
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))[0];
+
+  const post = await tx.post.findUnique({
+    where: { id: firstItem.postId },
+    select: { thumbnail: true },
+  });
+
+  await tx.collection.update({
+    where: { id: collectionId },
+    data: {
+      thumbnail: post?.thumbnail ?? null,
+    },
+  });
+};
+
+function reindexItems(items: CollectionItem[]) {
+  return [...items]
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .map((it, idx) => ({ ...it, order: idx }));
+}
+
+async function syncPostCollection({
+  tx,
+  postId,
+  nextCollectionId,
+}: {
+  tx: Prisma.TransactionClient;
+  postId: string;
+  nextCollectionId: string | null;
+}) {
+  /** helper: attach */
+  const attach = async (collectionId: string) => {
+    const col = await tx.collection.findUnique({
+      where: { id: collectionId },
+      select: { items: true },
+    });
+    if (!col) throw new Error("Collection not found");
+
+    const items = col.items.filter((it) => it.postId !== postId);
+    const nextOrder =
+      items.length === 0
+        ? 0
+        : Math.max(...items.map((it) => it.order ?? 0)) + 1;
+
+    await tx.collection.update({
+      where: { id: collectionId },
+      data: {
+        items: {
+          set: [
+            ...items,
+            {
+              postId,
+              order: nextOrder,
+            },
+          ],
+        },
+      },
+    });
+  };
+
+  // 1️⃣ 해제
+  if (nextCollectionId === null) {
+    return;
+  }
+
+  await attach(nextCollectionId);
+
+  await tx.post.update({
+    where: { id: postId },
+    data: { collectionId: nextCollectionId },
+  });
+
+  await syncCollectionThumbnail(nextCollectionId, tx);
 }
 
 //글 작성시 revalidateTag를 통한 서버캐시 업데이트
 export const POST = async (req: NextRequest) => {
   const jsonData = await req.json();
-  const { content, tag, title, images, preview, thumbnail, isTemp, slug } = jsonData as PostType & { images: Image[] };
+  const {
+    content,
+    tag,
+    title,
+    images,
+    preview,
+    thumbnail,
+    isTemp,
+    slug,
+    collection,
+  } = jsonData as PostType & { images: Image[] };
   let newSlug = slug;
   try {
     const result = await db.$transaction(async (tx) => {
@@ -156,10 +278,21 @@ export const POST = async (req: NextRequest) => {
         });
         if (!_tag.isTemp) tags.push(_tag);
       }
+
+      // 컬렉션 값이 있고 임시가 아닐때 컬렉션 연결
+      if (collection && !post.isTemp) {
+        await syncPostCollection({
+          tx,
+          postId: post.id,
+          nextCollectionId: collection?.id ?? null,
+        });
+      }
+
       return { post, tags };
     });
 
     revalidateTag(`posts`);
+    if (collection) revalidateTag(`collections:${collection.id}`);
 
     return NextResponse.json({
       ok: true,
@@ -170,8 +303,14 @@ export const POST = async (req: NextRequest) => {
     });
   } catch (e: unknown) {
     if (e instanceof Error) {
-      return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
+      return NextResponse.json(
+        { ok: false, error: e.message },
+        { status: 500 }
+      );
     }
-    return NextResponse.json({ ok: false, error: "Unknown error" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: "Unknown error" },
+      { status: 500 }
+    );
   }
 };

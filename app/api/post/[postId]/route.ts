@@ -1,5 +1,5 @@
 import { db } from "@/app/lib/db";
-import { Image, Tag } from "@prisma/client";
+import { CollectionItem, Image, Prisma, Tag } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 import { ObjectId } from "mongodb";
 import { revalidateTag } from "next/cache";
@@ -26,6 +26,13 @@ export const GET = async (
         createdAt: true,
         slug: true,
         images: true,
+        collectionId: true,
+        collection: {
+          select: {
+            id: true,
+            slug: true,
+          },
+        },
         tag: {
           select: {
             body: true,
@@ -57,6 +64,150 @@ export const GET = async (
     );
   }
 };
+
+function reindexItems(items: CollectionItem[]) {
+  return [...items]
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .map((it, idx) => ({ ...it, order: idx }));
+}
+
+const syncCollectionThumbnail = async (
+  collectionId: string,
+  tx: Prisma.TransactionClient
+) => {
+  const col = await tx.collection.findUnique({
+    where: { id: collectionId },
+    select: {
+      items: true,
+    },
+  });
+  if (!col || col.items.length === 0) {
+    await tx.collection.update({
+      where: { id: collectionId },
+      data: { thumbnail: null },
+    });
+    return;
+  }
+
+  const firstItem = col.items
+    .slice()
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))[0];
+
+  const post = await tx.post.findUnique({
+    where: { id: firstItem.postId },
+    select: { thumbnail: true },
+  });
+
+  await tx.collection.update({
+    where: { id: collectionId },
+    data: {
+      thumbnail: post?.thumbnail ?? null,
+    },
+  });
+};
+
+async function syncPostCollection({
+  tx,
+  postId,
+  nextCollectionId,
+}: {
+  tx: Prisma.TransactionClient;
+  postId: string;
+  nextCollectionId: string | null;
+}): Promise<{
+  currentCollectionId: string | null;
+  nextCollectionId: string | null;
+} | null> {
+  // 현재 post 상태
+  const post = await tx.post.findUnique({
+    where: { id: postId },
+    select: {
+      collectionId: true,
+
+      createdAt: true,
+    },
+  });
+
+  if (!post) throw new Error("Post not found");
+
+  const currentCollectionId = post.collectionId;
+
+  /** helper: detach */
+  const detach = async (collectionId: string) => {
+    const col = await tx.collection.findUnique({
+      where: { id: collectionId },
+      select: { items: true },
+    });
+    if (!col) return;
+
+    const filtered = col.items.filter((it) => it.postId !== postId);
+    const reindexed = reindexItems(filtered);
+
+    await tx.collection.update({
+      where: { id: collectionId },
+      data: { items: { set: reindexed }, updatedAt: new Date() },
+    });
+    await syncCollectionThumbnail(collectionId, tx);
+  };
+
+  /** helper: attach */
+  const attach = async (collectionId: string) => {
+    const col = await tx.collection.findUnique({
+      where: { id: collectionId },
+      select: { items: true },
+    });
+    if (!col) throw new Error("Collection not found");
+
+    const items = col.items.filter((it) => it.postId !== postId);
+    const nextOrder =
+      items.length === 0
+        ? 0
+        : Math.max(...items.map((it) => it.order ?? 0)) + 1;
+
+    await tx.collection.update({
+      where: { id: collectionId },
+      data: {
+        updatedAt: new Date(),
+        items: {
+          set: [
+            ...items,
+            {
+              postId,
+              order: nextOrder,
+            },
+          ],
+        },
+      },
+    });
+    await syncCollectionThumbnail(collectionId, tx);
+  };
+
+  // 1️⃣ 해제
+  if (nextCollectionId === null) {
+    if (currentCollectionId) {
+      await detach(currentCollectionId);
+      await tx.post.update({
+        where: { id: postId },
+        data: { collectionId: null },
+      });
+    }
+    return null;
+  }
+
+  // 2️⃣ 동일 컬렉션 → noop
+  if (currentCollectionId === nextCollectionId) return null;
+
+  // 3️⃣ 이동
+  if (currentCollectionId) await detach(currentCollectionId);
+  await attach(nextCollectionId);
+
+  await tx.post.update({
+    where: { id: postId },
+    data: { collectionId: nextCollectionId },
+  });
+  return { currentCollectionId, nextCollectionId };
+}
+
 //글 업데이트시 revalidateTag통한 글목록과 해당글 캐시업데이트
 export const POST = async (
   req: NextRequest,
@@ -65,8 +216,21 @@ export const POST = async (
   const { postId } = await params;
   const jsonData = await req.json();
 
-  const { content, tag, title, images, preview, thumbnail, isTemp, createdAt } =
-    jsonData as PostType & { createdAt: Date; images: Image[] };
+  const {
+    content,
+    tag,
+    title,
+    images,
+    preview,
+    thumbnail,
+    isTemp,
+    createdAt,
+    collection,
+    slug,
+  } = jsonData as PostType & {
+    createdAt: Date;
+    images: Image[];
+  };
 
   try {
     const result = await db.$transaction(async (tx) => {
@@ -152,11 +316,24 @@ export const POST = async (
         });
         if (!_tag.isTemp) tags.push(_tag);
       }
-      return { post, tags };
+      // 2️⃣ 컬렉션 동기화
+      const collectionResult = await syncPostCollection({
+        tx,
+        postId,
+        nextCollectionId: collection?.id ?? null,
+      });
+
+      return { post, tags, colletion: collectionResult };
     });
 
     revalidateTag(`post:${postId}`);
     revalidateTag(`posts`);
+    if (result.colletion) {
+      const { currentCollectionId, nextCollectionId } = result.colletion;
+      if (nextCollectionId) revalidateTag(`collections:${nextCollectionId}`);
+      if (currentCollectionId)
+        revalidateTag(`collections:${currentCollectionId}`);
+    }
 
     return NextResponse.json({
       ok: true,
