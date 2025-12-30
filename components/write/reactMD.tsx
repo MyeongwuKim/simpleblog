@@ -153,23 +153,11 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
           blockquote({ children, ...props }) {
             return (
               <blockquote
-                className="text-lg mb-[1em] border-l-4 bg-background1 text-text1 border-emerald-500 py-4 pr-4 pl-8 leading-[1.7]"
+                className="mb-[1em] border-l-4 border-emerald-500 bg-background1
+                 py-4 pr-4 pl-8 text-text1 leading-[1.7]"
                 {...props}
               >
-                <strong>
-                  {children.map((child, i) => {
-                    const reactElement = child as JSX.Element;
-                    if (reactElement.props) {
-                      const div = React.createElement(
-                        "p",
-                        { key: i },
-                        reactElement.props?.children
-                      );
-
-                      return div;
-                    } else return child;
-                  })}
-                </strong>
+                {children}
               </blockquote>
             );
           },
