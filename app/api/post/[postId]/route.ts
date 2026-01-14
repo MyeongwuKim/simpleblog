@@ -4,11 +4,137 @@ import { NextResponse, NextRequest } from "next/server";
 import { ObjectId } from "mongodb";
 import { revalidateTag } from "next/cache";
 
+/* ---------------- util ---------------- */
+
+function reindexItems(items: CollectionItem[]) {
+  return [...items]
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .map((it, idx) => ({ ...it, order: idx }));
+}
+
+async function updateCollectionThumbnailByItems(
+  tx: Prisma.TransactionClient,
+  collectionId: string,
+  items: CollectionItem[]
+) {
+  if (items.length === 0) {
+    await tx.collection.update({
+      where: { id: collectionId },
+      data: { thumbnail: null },
+    });
+    return;
+  }
+
+  const first = [...items].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))[0];
+
+  const post = await tx.post.findUnique({
+    where: { id: first.postId },
+    select: { thumbnail: true },
+  });
+
+  await tx.collection.update({
+    where: { id: collectionId },
+    data: { thumbnail: post?.thumbnail ?? null },
+  });
+}
+
+/* ---------------- collection sync ---------------- */
+
+async function syncPostCollection({
+  tx,
+  postId,
+  nextCollectionId,
+}: {
+  tx: Prisma.TransactionClient;
+  postId: string;
+  nextCollectionId: string | null;
+}): Promise<{
+  currentCollectionId: string | null;
+  nextCollectionId: string | null;
+} | null> {
+  const post = await tx.post.findUnique({
+    where: { id: postId },
+    select: { collectionId: true },
+  });
+  if (!post) throw new Error("Post not found");
+
+  const currentCollectionId = post.collectionId;
+
+  const detach = async (collectionId: string) => {
+    const col = await tx.collection.findUnique({
+      where: { id: collectionId },
+      select: { items: true },
+    });
+    if (!col) return;
+
+    const items = reindexItems(col.items.filter((it) => it.postId !== postId));
+
+    await tx.collection.update({
+      where: { id: collectionId },
+      data: { items: { set: items } },
+    });
+
+    await updateCollectionThumbnailByItems(tx, collectionId, items);
+  };
+
+  const attach = async (collectionId: string) => {
+    const col = await tx.collection.findUnique({
+      where: { id: collectionId },
+      select: { items: true },
+    });
+    if (!col) throw new Error("Collection not found");
+
+    const base = col.items.filter((it) => it.postId !== postId);
+    const nextOrder =
+      base.length === 0 ? 0 : Math.max(...base.map((it) => it.order ?? 0)) + 1;
+
+    const items: CollectionItem[] = [
+      ...base,
+      { postId, order: nextOrder, createdAt: new Date() },
+    ];
+
+    await tx.collection.update({
+      where: { id: collectionId },
+      data: { items: { set: items } },
+    });
+
+    await updateCollectionThumbnailByItems(tx, collectionId, items);
+  };
+
+  // 1️⃣ 해제
+  if (nextCollectionId === null) {
+    if (currentCollectionId) {
+      await detach(currentCollectionId);
+      await tx.post.update({
+        where: { id: postId },
+        data: { collectionId: null },
+      });
+    }
+    return null;
+  }
+
+  // 2️⃣ 동일 컬렉션
+  if (currentCollectionId === nextCollectionId) return null;
+
+  // 3️⃣ 이동
+  if (currentCollectionId) await detach(currentCollectionId);
+  await attach(nextCollectionId);
+
+  await tx.post.update({
+    where: { id: postId },
+    data: { collectionId: nextCollectionId },
+  });
+
+  return { currentCollectionId, nextCollectionId };
+}
+
+/* ---------------- GET ---------------- */
+
 export const GET = async (
   req: NextRequest,
   { params }: { params: { postId: string } }
 ) => {
-  const { postId } = await params;
+  const { postId } = params;
 
   if (!ObjectId.isValid(postId)) {
     return NextResponse.json({ ok: false, data: null });
@@ -28,18 +154,14 @@ export const GET = async (
         images: true,
         collectionId: true,
         collection: {
-          select: {
-            id: true,
-            slug: true,
-          },
+          select: { id: true, slug: true },
         },
         tag: {
-          select: {
-            body: true,
-          },
+          select: { body: true },
         },
       },
     });
+
     if (!postData) {
       return NextResponse.json(
         { ok: false, data: null, error: "존재하지 않는 글입니다" },
@@ -47,173 +169,22 @@ export const GET = async (
       );
     }
 
-    return NextResponse.json({
-      ok: true,
-      data: postData,
-    });
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      return NextResponse.json(
-        { ok: false, error: e.message },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json({ ok: true, data: postData });
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: "Unknown error" },
+      { ok: false, error: "Server error" },
       { status: 500 }
     );
   }
 };
 
-function reindexItems(items: CollectionItem[]) {
-  return [...items]
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-    .map((it, idx) => ({ ...it, order: idx }));
-}
+/* ---------------- POST ---------------- */
 
-const syncCollectionThumbnail = async (
-  collectionId: string,
-  tx: Prisma.TransactionClient
-) => {
-  const col = await tx.collection.findUnique({
-    where: { id: collectionId },
-    select: {
-      items: true,
-    },
-  });
-  if (!col || col.items.length === 0) {
-    await tx.collection.update({
-      where: { id: collectionId },
-      data: { thumbnail: null },
-    });
-    return;
-  }
-
-  const firstItem = col.items
-    .slice()
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))[0];
-
-  const post = await tx.post.findUnique({
-    where: { id: firstItem.postId },
-    select: { thumbnail: true },
-  });
-
-  await tx.collection.update({
-    where: { id: collectionId },
-    data: {
-      thumbnail: post?.thumbnail ?? null,
-    },
-  });
-};
-
-async function syncPostCollection({
-  tx,
-  postId,
-  nextCollectionId,
-}: {
-  tx: Prisma.TransactionClient;
-  postId: string;
-  nextCollectionId: string | null;
-}): Promise<{
-  currentCollectionId: string | null;
-  nextCollectionId: string | null;
-} | null> {
-  // 현재 post 상태
-  const post = await tx.post.findUnique({
-    where: { id: postId },
-    select: {
-      collectionId: true,
-
-      createdAt: true,
-    },
-  });
-
-  if (!post) throw new Error("Post not found");
-
-  const currentCollectionId = post.collectionId;
-
-  /** helper: detach */
-  const detach = async (collectionId: string) => {
-    const col = await tx.collection.findUnique({
-      where: { id: collectionId },
-      select: { items: true },
-    });
-    if (!col) return;
-
-    const filtered = col.items.filter((it) => it.postId !== postId);
-    const reindexed = reindexItems(filtered);
-
-    await tx.collection.update({
-      where: { id: collectionId },
-      data: { items: { set: reindexed }, updatedAt: new Date() },
-    });
-    await syncCollectionThumbnail(collectionId, tx);
-  };
-
-  /** helper: attach */
-  const attach = async (collectionId: string) => {
-    const col = await tx.collection.findUnique({
-      where: { id: collectionId },
-      select: { items: true },
-    });
-    if (!col) throw new Error("Collection not found");
-
-    const items = col.items.filter((it) => it.postId !== postId);
-    const nextOrder =
-      items.length === 0
-        ? 0
-        : Math.max(...items.map((it) => it.order ?? 0)) + 1;
-
-    await tx.collection.update({
-      where: { id: collectionId },
-      data: {
-        updatedAt: new Date(),
-        items: {
-          set: [
-            ...items,
-            {
-              postId,
-              order: nextOrder,
-            },
-          ],
-        },
-      },
-    });
-    await syncCollectionThumbnail(collectionId, tx);
-  };
-
-  // 1️⃣ 해제
-  if (nextCollectionId === null) {
-    if (currentCollectionId) {
-      await detach(currentCollectionId);
-      await tx.post.update({
-        where: { id: postId },
-        data: { collectionId: null },
-      });
-    }
-    return null;
-  }
-
-  // 2️⃣ 동일 컬렉션 → noop
-  if (currentCollectionId === nextCollectionId) return null;
-
-  // 3️⃣ 이동
-  if (currentCollectionId) await detach(currentCollectionId);
-  await attach(nextCollectionId);
-
-  await tx.post.update({
-    where: { id: postId },
-    data: { collectionId: nextCollectionId },
-  });
-  return { currentCollectionId, nextCollectionId };
-}
-
-//글 업데이트시 revalidateTag통한 글목록과 해당글 캐시업데이트
 export const POST = async (
   req: NextRequest,
   { params }: { params: { postId: string } }
 ) => {
-  const { postId } = await params;
+  const { postId } = params;
   const jsonData = await req.json();
 
   const {
@@ -226,122 +197,102 @@ export const POST = async (
     isTemp,
     createdAt,
     collection,
-    slug,
   } = jsonData as PostType & {
     createdAt: Date;
     images: Image[];
   };
 
   try {
-    const result = await db.$transaction(async (tx) => {
-      const incomingIds = images.map((img) => img.imageId);
+    const result = await db.$transaction(
+      async (tx) => {
+        const incomingIds = images.map((img) => img.imageId);
 
-      // 3. Post 업데이트 (연결 갱신)
-      const post = await tx.post.update({
-        where: { id: postId },
-        data: {
-          content,
-          title,
-          preview,
-          isTemp,
-          thumbnail,
-          ...(createdAt ? { createdAt } : {}),
-          images: {
-            set: [],
-            connect: incomingIds.map((imageId) => ({ imageId })),
+        const post = await tx.post.update({
+          where: { id: postId },
+          data: {
+            content,
+            title,
+            preview,
+            isTemp,
+            thumbnail,
+            ...(createdAt ? { createdAt } : {}),
+            images: {
+              set: [],
+              connect: incomingIds.map((imageId) => ({ imageId })),
+            },
           },
-        },
-        include: { images: true },
-      });
+          include: { images: true },
+        });
 
-      // 현재 DB에 설정된 썸네일 찾기
-      const currentThumb = await tx.image.findFirst({
-        where: { postId, isThumb: true },
-        select: { imageId: true },
-      });
+        // thumbnail (image)
+        const currentThumb = await tx.image.findFirst({
+          where: { postId, isThumb: true },
+          select: { imageId: true },
+        });
 
-      if (thumbnail) {
-        // thumbnail 값이 변경된 경우만 업데이트
-        if (!currentThumb || currentThumb.imageId !== thumbnail) {
-          // 기존 썸네일 해제
+        if (thumbnail && currentThumb?.imageId !== thumbnail) {
           if (currentThumb?.imageId) {
             await tx.image.update({
-              where: {
-                imageId: currentThumb?.imageId,
-              },
-              data: {
-                isThumb: false,
-                post: {
-                  disconnect: true,
-                },
-              },
+              where: { imageId: currentThumb.imageId },
+              data: { isThumb: false, post: { disconnect: true } },
             });
           }
-          // 새 썸네일 지정
           await tx.image.update({
             where: { imageId: thumbnail },
-            data: {
-              isThumb: true,
-              post: {
-                connect: {
-                  id: postId,
-                },
-              },
-            },
+            data: { isThumb: true, post: { connect: { id: postId } } },
           });
         }
-      } else {
-        if (currentThumb?.imageId) {
+
+        if (!thumbnail && currentThumb?.imageId) {
           await tx.image.update({
             where: { imageId: currentThumb.imageId },
             data: { isThumb: false, post: { disconnect: true } },
           });
         }
-      }
 
-      const tags: Tag[] = [];
-      for (const body of tag) {
-        const _tag = await tx.tag.upsert({
-          where: { body },
-          create: {
-            body,
-            isTemp: post.isTemp, // 새 태그는 글 상태 따라감
-            posts: { connect: { id: post.id } },
-          },
-          update: {
-            // 정식 글이 달리면 태그는 즉시 영구 태그가 됨
-            ...(post.isTemp === false ? { isTemp: false } : {}),
-            posts: { connect: { id: post.id } },
-          },
+        // tags (병렬)
+        const tags: Tag[] = (
+          await Promise.all(
+            tag.map((body) =>
+              tx.tag.upsert({
+                where: { body },
+                create: {
+                  body,
+                  isTemp: post.isTemp,
+                  posts: { connect: { id: post.id } },
+                },
+                update: {
+                  ...(post.isTemp === false ? { isTemp: false } : {}),
+                  posts: { connect: { id: post.id } },
+                },
+              })
+            )
+          )
+        ).filter((t) => !t.isTemp);
+
+        const collectionId = collection
+          ? (
+              await tx.collection.findUnique({
+                where: { slug: collection.slug },
+                select: { id: true },
+              })
+            )?.id ?? null
+          : null;
+
+        const collectionResult = await syncPostCollection({
+          tx,
+          postId,
+          nextCollectionId: collectionId,
         });
-        if (!_tag.isTemp) tags.push(_tag);
-      }
 
-      let collectionId = null;
-
-      if (collection) {
-        const collectionData = await db.collection.findUnique({
-          where: {
-            slug: collection.slug,
-          },
-          select: {
-            id: true,
-          },
-        });
-        if (collectionData) collectionId = collectionData.id;
-      }
-      // 2️⃣ 컬렉션 동기화
-      const collectionResult = await syncPostCollection({
-        tx,
-        postId,
-        nextCollectionId: collectionId,
-      });
-
-      return { post, tags, colletion: collectionResult };
-    });
+        return { post, tags, colletion: collectionResult };
+      },
+      { timeout: 15000 }
+    );
 
     revalidateTag(`post:${postId}`);
     revalidateTag(`posts`);
+
     if (result.colletion) {
       const { currentCollectionId, nextCollectionId } = result.colletion;
       if (nextCollectionId) revalidateTag(`collections:${nextCollectionId}`);
@@ -356,16 +307,10 @@ export const POST = async (
         tag: result.tags,
       },
     });
-  } catch (e: unknown) {
+  } catch (e) {
     console.error(e);
-    if (e instanceof Error) {
-      return NextResponse.json(
-        { ok: false, error: e.message },
-        { status: 500 }
-      );
-    }
     return NextResponse.json(
-      { ok: false, error: "Unknown error" },
+      { ok: false, error: "Post update failed" },
       { status: 500 }
     );
   }
