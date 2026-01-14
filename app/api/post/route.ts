@@ -279,12 +279,24 @@ export const POST = async (req: NextRequest) => {
         if (!_tag.isTemp) tags.push(_tag);
       }
 
+      let collectionId = null;
+
       // 컬렉션 값이 있고 임시가 아닐때 컬렉션 연결
       if (collection && !post.isTemp) {
+        const collectionData = await db.collection.findUnique({
+          where: {
+            slug: collection.slug,
+          },
+          select: {
+            id: true,
+          },
+        });
+        if (collectionData) collectionId = collectionData.id;
+
         await syncPostCollection({
           tx,
           postId: post.id,
-          nextCollectionId: collection?.id ?? null,
+          nextCollectionId: collectionId,
         });
       }
 

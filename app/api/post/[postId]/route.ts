@@ -316,11 +316,25 @@ export const POST = async (
         });
         if (!_tag.isTemp) tags.push(_tag);
       }
+
+      let collectionId = null;
+
+      if (collection) {
+        const collectionData = await db.collection.findUnique({
+          where: {
+            slug: collection.slug,
+          },
+          select: {
+            id: true,
+          },
+        });
+        if (collectionData) collectionId = collectionData.id;
+      }
       // 2️⃣ 컬렉션 동기화
       const collectionResult = await syncPostCollection({
         tx,
         postId,
-        nextCollectionId: collection?.id ?? null,
+        nextCollectionId: collectionId,
       });
 
       return { post, tags, colletion: collectionResult };
