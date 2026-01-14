@@ -71,7 +71,7 @@ async function syncPostCollection({
 
     await tx.collection.update({
       where: { id: collectionId },
-      data: { items: { set: items } },
+      data: { items: { set: items }, updatedAt: new Date() },
     });
 
     await updateCollectionThumbnailByItems(tx, collectionId, items);
@@ -95,7 +95,7 @@ async function syncPostCollection({
 
     await tx.collection.update({
       where: { id: collectionId },
-      data: { items: { set: items } },
+      data: { items: { set: items }, updatedAt: new Date() },
     });
 
     await updateCollectionThumbnailByItems(tx, collectionId, items);

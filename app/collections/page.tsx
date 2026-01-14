@@ -9,6 +9,7 @@ export default async function Collections() {
         staleTime={30 * 1000}
         queryKey={queryKey}
         type="collections"
+        refetchOnMount={true}
       />
     </div>
   );

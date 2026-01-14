@@ -184,6 +184,7 @@ async function syncPostCollection({
     where: { id: nextCollectionId },
     data: {
       items: { set: items },
+      updatedAt: new Date(),
     },
   });
 
