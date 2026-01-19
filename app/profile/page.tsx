@@ -1,4 +1,4 @@
-import { ProfileItem } from "@/components/ui/items/profileItem";
+import { ProfileItem } from "@/app/profile/_components/profileItem";
 import { db } from "../lib/db";
 
 export const revalidate = 300; // ✅ 라우트 캐시 60초

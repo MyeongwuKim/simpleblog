@@ -1,8 +1,5 @@
 "use client";
-import TagItem from "../ui/items/tagItem";
-import ReactMD from "../write/reactMD";
-import FooterItem from "../ui/items/postFooterItem";
-import LabelButton from "../ui/buttons/labelButton";
+
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -18,14 +15,14 @@ import { Node, Parent } from "unist";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import PostSkeleton from "../ui/skeleton";
+
 import {
   fetchPostContentByPostId,
   fetchSiblingPost,
 } from "@/app/lib/fetchers/post";
-import { useUI } from "../providers/uiProvider";
+
 import { useSession } from "next-auth/react";
-import InfiniteScrollProvider from "./InfiniteScroll/infiniteScrollProvider";
+
 import { Root, Heading, Text } from "mdast";
 import Image from "next/image";
 import remarkSlug from "remark-slug";
@@ -36,12 +33,21 @@ import {
   IoChevronForward,
   IoChevronUp,
 } from "react-icons/io5";
-import { usePostDetailContext } from "../providers/postDetailProvider";
+import { useUI } from "@/components/providers/uiProvider";
+import PostSkeleton from "@/components/ui/skeleton";
+import ReactMD from "@/components/write/reactMD";
+import InfiniteScrollProvider from "@/components/layout/InfiniteScroll/infiniteScrollProvider";
+import TagItem from "@/components/ui/items/tagItem";
+import FooterItem from "@/components/ui/items/postFooterItem";
+import { usePostDetailContext } from "@/components/providers/postDetailProvider";
+import LabelButton from "@/components/ui/buttons/labelButton";
 
 export default function CommonPost({ postId }: { postId: string }) {
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const route = useRouter();
   const { openToast } = useUI();
+  //POST DELETE
   const { mutate, isPending } = useMutation<
     QueryResponse<{ post: Post; tag: Tag[] }>,
     Error
@@ -110,6 +116,32 @@ export default function CommonPost({ postId }: { postId: string }) {
     onError: (error) => openToast(true, error.message, 1),
   });
 
+  const { mutate: postStatsMutate } = useMutation<QueryResponse<null>, Error>({
+    mutationFn: async () => {
+      const result = await (
+        await fetch(`/api/post/${postId}/view`, {
+          method: "POST",
+        })
+      ).json();
+
+      return result;
+    },
+    onSuccess: async (res) => {
+      if (res.ok) {
+        queryClient.invalidateQueries({
+          queryKey: ["poststats", postId],
+          type: "inactive",
+        });
+        if (window.umami) {
+          window.umami.track("post_view", {
+            postId,
+            slug: postData?.data.slug,
+          });
+        }
+      }
+    },
+  });
+
   const {
     data: postData,
     isLoading: isPostLoading,
@@ -172,6 +204,11 @@ export default function CommonPost({ postId }: { postId: string }) {
     return headings;
   }
 
+  useEffect(() => {
+    if (!postData?.ok || session) return;
+    postStatsMutate();
+  }, [postData?.ok]);
+
   if (isPostLoading || !postData || isPending || postError) {
     return (
       <div className="layout mt-20 h-full relative">
@@ -192,6 +229,7 @@ export default function CommonPost({ postId }: { postId: string }) {
           tag={postData.data.tag}
           createdAt={postData.data.createdAt}
           postId={postData.data.id}
+          slug={postData?.data.slug}
           mutate={mutate}
         />
         <PostSide
@@ -262,10 +300,11 @@ interface HeadProps {
   tag: Tag[];
   createdAt: Date;
   postId: string;
+  slug: string;
   mutate: UseMutateFunction;
 }
 const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
-  ({ tag, title, createdAt, postId, mutate }, ref) => {
+  ({ tag, title, createdAt, postId, mutate, slug }, ref) => {
     const { data: session } = useSession();
     const route = useRouter();
     const { openModal } = useUI();
@@ -292,6 +331,9 @@ const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
           <span>{formateDate(createdAt, "NOR")}</span>
           {session && (
             <div className={`gap-2 flex`}>
+              <Link href={`/post-stats/${postId}`}>
+                <span>통계</span>
+              </Link>
               <Link href={`/write?id=${postId}`}>
                 <span>수정</span>
               </Link>

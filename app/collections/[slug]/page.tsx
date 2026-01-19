@@ -1,7 +1,7 @@
 import { db } from "@/app/lib/db";
 import { fetchCollectionDetail } from "@/app/lib/fetchers/collections";
 import NotFound from "@/app/not-found";
-import CollectionsBody from "@/components/layout/collections/collectionsBody";
+import CollectionsBody from "@/app/collections/_components/collectionsBody";
 import {
   dehydrate,
   HydrationBoundary,

@@ -2,7 +2,7 @@ import PostDetailProvider from "@/components/providers/postDetailProvider";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "글 조회",
+  title: "글 통계",
 };
 
 export default function RootLayout({
@@ -10,5 +10,5 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <PostDetailProvider>{children}</PostDetailProvider>;
+  return <>{children}</>;
 }

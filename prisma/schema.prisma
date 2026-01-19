@@ -80,3 +80,12 @@ type CollectionItem {
   order     Int
   createdAt DateTime @default(now())
 }
+
+model PostViewLog {
+  id     String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId String
+  ip     String
+  date   DateTime
+
+  @@unique([postId, ip, date])
+}

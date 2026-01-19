@@ -17,7 +17,12 @@ export async function middleware(request: NextRequest) {
     !token &&
     (request.method === "POST" || request.method === "DELETE") &&
     !pathname.startsWith("/api/auth") &&
-    !(request.method === "POST" && pathname.startsWith("/api/comments")) // 댓글 POST만 예외
+    !(request.method === "POST" && pathname.startsWith("/api/comments")) &&
+    !(
+      request.method === "POST" &&
+      pathname.startsWith("/api/post/") &&
+      pathname.endsWith("/view")
+    )
   ) {
     return NextResponse.json(
       { error: "API 접근 권한이 없습니다." },

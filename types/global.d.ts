@@ -3,6 +3,9 @@ import { Post } from "@prisma/client";
 
 declare global {
   interface Window {
+    umami?: {
+      track: (eventName: string, eventData?: Record<string, any>) => void;
+    };
     grecaptcha: {
       getResponse: (opt_widgetId?: number) => string;
       reset: (opt_widgetId?: number) => void;
@@ -47,5 +50,11 @@ declare global {
     slug: string;
     thumbnail: string | null;
     createdAt: Date;
+  };
+
+  type PostStatsType = {
+    total: number;
+    yesterday: number;
+    today: number;
   };
 }

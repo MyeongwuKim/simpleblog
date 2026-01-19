@@ -7,13 +7,13 @@ import { getDeliveryDomain } from "@/app/hooks/useUtil";
 import Image from "next/image";
 
 import ReactMD from "@/components/write/reactMD";
-import DefButton from "../buttons/defButton";
+import DefButton from "../../../components/ui/buttons/defButton";
 import { useCallback, useState } from "react";
-import { TextAreaField } from "../input/textAreaField";
+import { TextAreaField } from "../../../components/ui/input/textAreaField";
 
 import { useUI } from "@/components/providers/uiProvider";
 import { useSession } from "next-auth/react";
-import { useProfileMutate } from "../profile/query";
+import { useProfileMutate } from "../../../components/ui/profile/query";
 import { Profile } from "@prisma/client";
 
 const mainTheme = createTheme({

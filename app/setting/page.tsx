@@ -1,6 +1,6 @@
 import getQueryClient from "@/app/hooks/useQueryClient";
 import { fetchProfile } from "@/app/lib/fetchers/profile";
-import SettingForm from "@/components/layout/setting/settingFrom";
+import SettingForm from "@/app/setting/_components/settingFrom";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
 export const dynamic = "force-dynamic";

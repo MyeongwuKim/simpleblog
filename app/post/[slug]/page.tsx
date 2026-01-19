@@ -1,7 +1,6 @@
 import { db } from "@/app/lib/db";
 import { fetchPostContentByPostId } from "@/app/lib/fetchers/post";
 import NotFound from "@/app/not-found";
-import CommonPost from "@/components/layout/commonPost";
 
 import {
   dehydrate,
@@ -9,6 +8,7 @@ import {
   QueryClient,
 } from "@tanstack/react-query";
 import { Metadata } from "next";
+import CommonPost from "./_components/commonPost";
 
 // app/posts/[postId]/page.tsx
 interface PageProps {
