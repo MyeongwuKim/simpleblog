@@ -134,7 +134,7 @@ export const GET = async (
   req: NextRequest,
   { params }: { params: { postId: string } }
 ) => {
-  const { postId } = params;
+  const { postId } = await params;
 
   if (!ObjectId.isValid(postId)) {
     return NextResponse.json({ ok: false, data: null });
