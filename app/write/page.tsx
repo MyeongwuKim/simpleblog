@@ -496,9 +496,17 @@ export default function Write() {
   const extractPreview = useCallback(
     (length = 150) => {
       const preview = state.content
+        // 이미지 제거
         .replace(/!\[.*?\]\(.*?\)/g, "")
-        .replace(/[#_*`>+\-\[\]\(\)~|]/g, "")
+        // callout 마커 제거
+        .replace(/^\s*>\s*\[!(TIP|NOTE|WARNING|IMPORTANT|CAUTION)\]\s*/gim, "")
+        // 일반 blockquote 표시 제거
+        .replace(/^\s*>\s?/gim, "")
+        // markdown 문법 기호 제거
+        .replace(/[#_*`+\-\[\]\(\)~|]/g, "")
+        // 개행 정리
         .replace(/\n/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
 
       return preview.slice(0, length);
