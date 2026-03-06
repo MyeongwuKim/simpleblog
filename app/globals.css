@@ -45,6 +45,22 @@ body {
   }
 }
 
+@keyframes copy-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.copy-pop {
+  animation: copy-pop 0.25s ease;
+}
+
 .scrollbar-hide {
   -ms-overflow-style: none; /* IE, Edge */
   scrollbar-width: none; /* Firefox */
