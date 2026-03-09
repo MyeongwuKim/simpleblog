@@ -1,10 +1,6 @@
 import PostDetailProvider from "@/components/providers/postDetailProvider";
 import { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "글 조회",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{

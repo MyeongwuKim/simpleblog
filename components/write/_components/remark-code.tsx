@@ -78,9 +78,9 @@ const RemarkCode: FC<CodeProps> = ({ inline, className, children }) => {
   }
 
   return (
-    <div className="my-6 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-zinc-700 dark:bg-zinc-800/80">
-        <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+    <div className="my-6 overflow-hidden rounded-2xl border border-border1 bg-background1">
+      <div className="flex items-center justify-between border-b  px-4 py-2 bg-background2 border-border1">
+        <span className="text-xs font-semibold uppercase tracking-wide text-text1">
           {displayLang}
         </span>
 
@@ -88,18 +88,18 @@ const RemarkCode: FC<CodeProps> = ({ inline, className, children }) => {
           type="button"
           onClick={handleCopy}
           className={`
-          rounded-md px-2.5 py-1 text-xs font-medium
-          transition-all duration-200
-          hover:scale-[1.03] active:scale-[0.97]
-          ${copyState === "copied" ? "copy-pop" : ""}
-          ${
-            copyState === "copied"
-              ? "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400"
-              : copyState === "error"
-              ? "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400"
-              : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
-          }
-`}
+    rounded-md px-2.5 py-1 text-xs font-medium
+    transition-all duration-200 border border-border1
+    hover:scale-[1.03] active:scale-[0.97] 
+    ${copyState === "copied" ? "copy-pop" : ""}
+    ${
+      copyState === "copied"
+        ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/18 dark:text-emerald-300 dark:hover:bg-emerald-500/24"
+        : copyState === "error"
+        ? "bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-500/18 dark:text-rose-300 dark:hover:bg-rose-500/24"
+        : "bg-white/80 text-zinc-700 hover:bg-white dark:bg-white/8 dark:text-zinc-200 dark:hover:bg-white/12 "
+    }
+  `}
         >
           {copyState === "copied"
             ? "Copied!"

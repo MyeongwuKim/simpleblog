@@ -5,11 +5,37 @@ import { pretendard, jetbrainsMono } from "./fonts";
 
 import CommonBody from "@/components/layout/commonBody";
 import MyProvider from "@/components/myprovider";
-import Script from "next/script";
 import UmamiScript from "@/components/analytics/UmamiScript";
 
 export const metadata: Metadata = {
   title: "북마크 블로그 | 게시글",
+  metadataBase: new URL("https://mw-simpleblog.vercel.app"),
+  description:
+    "각종 개발, 사이드프로젝트, 트러블슈팅 내용을 기록하는 블로그입니다.",
+  openGraph: {
+    title: "김명우 개발 블로그",
+    description:
+      "각종 개발, 사이드프로젝트, 트러블슈팅 내용을 기록하는 블로그입니다.",
+    url: "https://mw-simpleblog.vercel.app",
+    siteName: "김명우 개발 블로그",
+    locale: "ko_KR",
+    type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "김명우 개발 블로그",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "김명우 개발 블로그",
+    description:
+      "각종 개발, 사이드프로젝트, 트러블슈팅 내용을 기록하는 블로그입니다.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
