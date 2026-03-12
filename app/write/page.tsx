@@ -518,6 +518,9 @@ export default function Write() {
 
   const onMutatProcess = useCallback(
     async (postProcess: number) => {
+      const { isOk, msg } = validate();
+      if (!isOk) return openToast(true, msg, 1);
+
       const preview = extractPreview();
       const imageIds = getFormatImagesId(state.content);
       let popupResult: { thumbnail: string; collection: string | null } = {
@@ -663,11 +666,7 @@ export default function Write() {
                         ? "수정하기"
                         : "작성하기"
                     }
-                    onClickEvt={async () => {
-                      const { isOk, msg } = validate();
-                      if (!isOk) return openToast(true, msg, 1);
-                      onMutatProcess(1);
-                    }}
+                    onClickEvt={async () => onMutatProcess(1)}
                   />
                 </div>
               </div>

@@ -25,6 +25,7 @@ async function getPostsPageRaw(args: {
 
   const data = await db.post.findMany({
     where: {
+      isTemp: { equals: false },
       ...(tag !== "all" ? { tag: { some: { body: tag } } } : {}),
       ...(datetype && datetype !== "all" ? { createdAt: dateCondition } : {}),
     },

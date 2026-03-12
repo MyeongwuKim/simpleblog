@@ -6,9 +6,11 @@ export const POST = async (req: NextRequest) => {
     const thumb = req.nextUrl.searchParams.get("thumb") ?? undefined;
 
     const body = await req.json();
-    const { imageId, postId } = body as {
+    const { imageId, postId, height, width } = body as {
       imageId: string;
       postId?: string;
+      width: number | null;
+      height: number | null;
     };
 
     if (!imageId) {
@@ -17,12 +19,15 @@ export const POST = async (req: NextRequest) => {
         { status: 400 }
       );
     }
-
+    console.log(width);
+    console.log(height);
     const createdImage = await db.image.create({
       data: {
         imageId,
         isThumb: thumb === "true", // 안전 변환
         postId: postId ?? null, // 글과 바로 연결할 수도 있고 나중에 연결할 수도 있음
+        height,
+        width,
       },
     });
 

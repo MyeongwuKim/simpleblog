@@ -26,20 +26,19 @@ const ToolBar: NextPage<IToolBar> = (props) => {
   const imageMutate = useMutation<
     QueryResponse<Image>,
     Error,
-    { imageId: string }
+    { imageId: string; width?: number; height?: number }
   >({
-    mutationFn: async (id) => {
+    mutationFn: async (formData) => {
       const result = await (
         await fetch("/api/image", {
           method: "POST",
-          body: JSON.stringify({ ...id }),
+          body: JSON.stringify({ ...formData }),
         })
       ).json();
       if (!result.ok) throw new Error(result.error);
       return result;
     },
     onSuccess: (res) => {
-      console.log(res);
       dispatch({
         type: "SET_FORM",
         payload: {
@@ -53,6 +52,29 @@ const ToolBar: NextPage<IToolBar> = (props) => {
   //이미지 송신, 완료하면 url 변경
   const onUploadImgEvt = useCallback(
     async (file: File) => {
+      const getImageSize = (
+        file: File
+      ): Promise<{ width: number; height: number }> =>
+        new Promise((resolve, reject) => {
+          const objectUrl = URL.createObjectURL(file);
+          const img = new window.Image();
+
+          img.onload = () => {
+            resolve({
+              width: img.naturalWidth,
+              height: img.naturalHeight,
+            });
+            URL.revokeObjectURL(objectUrl);
+          };
+
+          img.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error("이미지 크기를 읽을 수 없습니다."));
+          };
+
+          img.src = objectUrl;
+        });
+
       if (!editorView) return;
       editorView?.focus();
       const imgURL = URL.createObjectURL(file);
@@ -90,12 +112,15 @@ const ToolBar: NextPage<IToolBar> = (props) => {
           imageMutate.mutate({ imageId: randomImg });
           return;
         }
+        //원본 이미지의 넓이 높이 추출
+        const { width, height } = await getImageSize(file);
 
         const { uploadURL } = await (
           await fetch(`/api/upload`, { method: "POST" })
         ).json();
 
         const form = new FormData();
+
         form.append(
           "file",
           file as File,
@@ -109,7 +134,8 @@ const ToolBar: NextPage<IToolBar> = (props) => {
             body: form,
           })
         ).json();
-        imageMutate.mutate({ imageId: id });
+
+        imageMutate.mutate({ imageId: id, width, height });
         const cursor = new SearchCursor(editorView.state.doc, link);
         cursor.next();
 

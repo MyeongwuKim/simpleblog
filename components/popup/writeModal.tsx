@@ -69,13 +69,13 @@ export default function WriteModal({
   const imageMutate = useMutation<
     QueryResponse<ImageType>,
     Error,
-    { imageId: string }
+    { imageId: string; width?: number; height?: number }
   >({
-    mutationFn: async (id) => {
+    mutationFn: async (formData) => {
       const result = await (
         await fetch("/api/image", {
           method: "POST",
-          body: JSON.stringify({ ...id }),
+          body: JSON.stringify({ ...formData }),
         })
       ).json();
       if (!result.ok) throw new Error(result.error);
@@ -84,6 +84,29 @@ export default function WriteModal({
   });
 
   const handleFileSelect = async (file: File | null) => {
+    const getImageSize = (
+      file: File
+    ): Promise<{ width: number; height: number }> =>
+      new Promise((resolve, reject) => {
+        const objectUrl = URL.createObjectURL(file);
+        const img = new window.Image();
+
+        img.onload = () => {
+          resolve({
+            width: img.naturalWidth,
+            height: img.naturalHeight,
+          });
+          URL.revokeObjectURL(objectUrl);
+        };
+
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error("이미지 크기를 읽을 수 없습니다."));
+        };
+
+        img.src = objectUrl;
+      });
+
     if (file) {
       setUploading(true);
       const previewUrl = URL.createObjectURL(file);
@@ -97,6 +120,9 @@ export default function WriteModal({
         return;
       }
       try {
+        //원본 이미지의 넓이 높이 추출
+        const { width, height } = await getImageSize(file);
+
         const { uploadURL } = await (
           await fetch(`/api/upload`, { method: "POST" })
         ).json();
@@ -114,7 +140,7 @@ export default function WriteModal({
           await fetch(uploadURL, { method: "POST", body: form })
         ).json();
 
-        await imageMutate.mutateAsync({ imageId: id });
+        await imageMutate.mutateAsync({ imageId: id, width, height });
         setWriteThumbnail(getDeliveryDomain(id, "public"));
         setUploading(false);
       } catch {

@@ -17,7 +17,7 @@ export default function TempItem({ preview, title, updatedAt, id }: Post) {
   const { mutate } = useMutation<QueryResponse<Post>, Error>({
     mutationFn: async () => {
       const result = await (
-        await fetch(`/api/post/postId/${id}`, {
+        await fetch(`/api/post/${id}`, {
           method: "DELETE",
         })
       ).json();

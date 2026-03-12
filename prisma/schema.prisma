@@ -32,6 +32,8 @@ model Image {
   postId    String?  @db.ObjectId
   post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
   isThumb   Boolean  @default(false)
+  width     Int?
+  height    Int?
   createdAt DateTime @default(now())
 }
 

@@ -19,7 +19,7 @@ const siteUrl = "https://mw-simpleblog.vercel.app";
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { slug } = params;
+  const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
 
   const post = await db.post.findUnique({
@@ -73,7 +73,7 @@ export async function generateMetadata({
 
 export default async function Post({ params }: PageProps) {
   const queryClient = new QueryClient();
-  const { slug } = params;
+  const { slug } = await params;
 
   const postData = await db.post.findUnique({
     where: { slug: decodeURIComponent(slug) },

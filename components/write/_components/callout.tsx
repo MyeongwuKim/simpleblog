@@ -66,20 +66,20 @@ export default function Callout({ type, children }: CalloutProps) {
     <div
       className={`
         relative my-8 overflow-hidden rounded-sm
-        bg-background1
+        bg-background5
         px-8 py-6
         ${config.barClassName} text-text1 
         before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:content-['']
       `}
     >
-      <div className="mb-4 flex items-center gap-2 border-b border-zinc-200 pb-3 dark:border-zinc-800">
+      <div className="mb-4 flex items-center gap-2 border-b  pb-3 border-border1">
         <Icon size={18} className={`shrink-0 ${config.iconClassName}`} />
         <span className="text-xs font-bold tracking-[0.14em] ">
           {config.label}
         </span>
       </div>
 
-      <div className="leading-[1.7] [&>p]:my-0">{children}</div>
+      <div className=" leading-[1.7] [&>p]:my-0">{children}</div>
     </div>
   );
 }

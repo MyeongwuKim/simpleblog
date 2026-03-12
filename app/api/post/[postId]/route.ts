@@ -168,8 +168,19 @@ export const GET = async (
         { status: 200 }
       );
     }
-
-    return NextResponse.json({ ok: true, data: postData });
+    let thumbData = null;
+    if (postData.thumbnail) {
+      thumbData = await db.image.findUnique({
+        where: {
+          imageId: postData.thumbnail,
+        },
+        select: {
+          width: true,
+          height: true,
+        },
+      });
+    }
+    return NextResponse.json({ ok: true, data: { ...postData, thumbData } });
   } catch (e) {
     return NextResponse.json(
       { ok: false, error: "Server error" },

@@ -1,5 +1,5 @@
 import { EditorView } from "@codemirror/view";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import ToolBar from "./toolbar";
 import TagInput from "../ui/input/tagInput";
 import { useWrite } from "@/app/write/page";
@@ -31,6 +31,12 @@ const Editor: React.FC<EditorProps> = ({
     current!.style.height = "auto";
     current!.style.height = current!.scrollHeight + "px";
   };
+
+  useEffect(() => {
+    const { current } = titleArea;
+    current!.style.height = "auto";
+    current!.style.height = current!.scrollHeight + "px";
+  }, [state.title]);
 
   return (
     <div className="h-[calc(100%-60px)]  relative w-full bg-bg-page2 dark:shadow-black shadow-md">

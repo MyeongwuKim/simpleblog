@@ -1,6 +1,6 @@
 "use client";
 import { NextPage } from "next";
-
+import { Image as ImageType } from "@prisma/client";
 import remarkGfm from "remark-gfm";
 import ReactMarkDown from "react-markdown";
 import remarkBreaks from "remark-breaks";
@@ -17,11 +17,17 @@ import { parseCallout } from "./_utils/parser";
 
 interface IReactMD {
   doc: string;
+  images: ImageType[];
 }
 
-const ReactMD: NextPage<IReactMD> = ({ doc }) => {
-  const pathname = usePathname();
+const extractImageIdFromDeliveryUrl = (url: string) => {
+  const match = url.match(/imagedelivery\.net\/[^/]+\/([^/]+)\/public/);
+  return match?.[1] ?? null;
+};
 
+const ReactMD: NextPage<IReactMD> = ({ doc, images }) => {
+  const pathname = usePathname();
+  const imageMap = new Map(images?.map((img) => [img.imageId, img]));
   const customSanitizedSchema = {
     ...defaultSchema,
     tagNames:
@@ -161,7 +167,8 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
 
           return (
             <blockquote
-              className="mb-[1em] border-l-4 border-emerald-500 bg-background1 py-4 pr-4 pl-8 text-text1 leading-[1.7]"
+              className="mb-[1em] border-l-4 border-emerald-500 bg-background5 
+              py-4 pr-4 pl-8 text-text1 leading-[1.7]"
               {...props}
             >
               {children}
@@ -178,15 +185,32 @@ const ReactMD: NextPage<IReactMD> = ({ doc }) => {
         },
 
         img({ ...props }) {
+          const src = props.src ?? "";
+          const imageId = extractImageIdFromDeliveryUrl(src);
+          const meta = imageId ? imageMap.get(imageId) : null;
+
+          if (!meta?.width || !meta?.height) {
+            return (
+              <img
+                src={src}
+                alt={props.alt ?? ""}
+                className="block mx-auto max-w-full h-auto"
+              />
+            );
+          }
+
           return (
             <Image
-              width={0}
-              height={0}
-              sizes="100vw"
-              src={props.src ?? ""}
-              alt="public"
-              style={{ width: "100%", height: "auto" }}
-              priority
+              src={src}
+              alt={props.alt ?? ""}
+              width={meta.width}
+              height={meta.height}
+              className="block mx-auto max-w-full h-auto"
+              style={{
+                width: "100%",
+                maxWidth: `${meta.width}px`,
+                height: "auto",
+              }}
             />
           );
         },

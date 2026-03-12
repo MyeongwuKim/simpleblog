@@ -152,6 +152,7 @@ export default function CommonPost({ postId }: { postId: string }) {
         tag: Tag[];
         images: ImageType[];
         collection: { id: string; slug: string } | null;
+        thumbData: { width: number; height: number } | null;
       }
     >
   >({
@@ -217,9 +218,6 @@ export default function CommonPost({ postId }: { postId: string }) {
     );
   }
 
-  const thumb =
-    postData.data.thumbnail ?? postData.data.images[0]?.imageId ?? null;
-
   return (
     <>
       <div className="layout mt-20 h-full relative">
@@ -236,6 +234,7 @@ export default function CommonPost({ postId }: { postId: string }) {
           headRef={headRef}
           headings={extractHeadings(postData.data.content)}
         />
+
         {postData.data.collectionId && postData.data.collection && (
           <CollectionListBox
             postId={postData.data.id}
@@ -244,7 +243,12 @@ export default function CommonPost({ postId }: { postId: string }) {
           />
         )}
 
-        <PostBody content={postData.data.content} thumbnail={thumb} />
+        <PostBody
+          content={postData.data.content}
+          thumbnail={postData.data.thumbnail}
+          images={postData.data.images}
+          thumbData={postData.data.thumbData}
+        />
         <div className="w-full h-[1px] bg-text4 mt-20" />
 
         <PostFooter
@@ -253,17 +257,19 @@ export default function CommonPost({ postId }: { postId: string }) {
           isError={sibError}
         />
       </div>
-      <h2 className="text-text1 text-2xl my-20 text-center">
-        이 게시물과 관련된 글
-      </h2>
-      <div className="relative h-auto py-16 mt-[120px] min-md:px-16 max-md:px-8 px-4">
-        <InfiniteScrollProvider
-          type="relatedPosts"
-          queryKey={[
-            "relatedPosts",
-            { tags: postData.data.tag.map((v) => v.body), excludeId: postId },
-          ]}
-        />
+      <div className="z-30 bg-bg-page2 relative">
+        <h2 className="text-text1 text-2xl my-20 text-center">
+          이 게시물과 관련된 글
+        </h2>
+        <div className="relative h-auto py-16 mt-[120px] min-md:px-16 max-md:px-8 px-4">
+          <InfiniteScrollProvider
+            type="relatedPosts"
+            queryKey={[
+              "relatedPosts",
+              { tags: postData.data.tag.map((v) => v.body), excludeId: postId },
+            ]}
+          />
+        </div>
       </div>
     </>
   );
@@ -272,25 +278,49 @@ export default function CommonPost({ postId }: { postId: string }) {
 export function PostBody({
   content,
   thumbnail,
+  images,
+  thumbData,
 }: {
   content: string;
   thumbnail: string | null;
+  images: ImageType[];
+  thumbData: { width: number; height: number } | null;
 }) {
+  const getFirstImageUrlFromMarkdown = (markdown: string) => {
+    const match = markdown.match(/!\[[^\]]*\]\((https?:\/\/[^\s)]+)\)/);
+    return match?.[1] ?? null;
+  };
+
+  const extractImageIdFromDeliveryUrl = (url: string) => {
+    const match = url.match(/imagedelivery\.net\/[^/]+\/([^/]+)\/public/);
+    return match?.[1] ?? null;
+  };
+
+  const firstImageUrl = getFirstImageUrlFromMarkdown(content);
+  const firstImageId = firstImageUrl
+    ? extractImageIdFromDeliveryUrl(firstImageUrl)
+    : null;
+
+  const shouldHideThumbnail =
+    !!thumbnail && !!firstImageId && thumbnail === firstImageId;
+
   return (
     <div id="post-body" className="my-40 min-h-[100px]">
-      {thumbnail && (
-        <div className="max-w-[768px]">
+      {!shouldHideThumbnail && thumbnail && thumbData && (
+        <div className="w-full max-w-[768px] mx-auto flex justify-center">
           <Image
-            width={200}
-            height={200}
-            className="h-auto w-full "
             src={getDeliveryDomain(thumbnail, "public")}
             alt="post-thumbnail"
+            width={thumbData.width ?? 768}
+            height={thumbData.height ?? 432}
+            className="h-auto w-full object-contain"
+            style={{ maxWidth: `${thumbData.width}px` }}
+            sizes="(max-width: 768px) 100vw, 768px"
             priority
           />
         </div>
       )}
-      <ReactMD doc={content} />
+      <ReactMD doc={content} images={images} />
     </div>
   );
 }
@@ -457,11 +487,11 @@ function PostSide({ headings, headRef }: PostSide) {
         headings.length <= 0 ? "hidden" : "relative mt-2  xl:block hidden"
       }`}
     >
-      <div className="absolute left-full z-50">
+      <div className="absolute left-full ">
         <div
           className={`${
             isFixed ? "fixed top-[112px]" : ""
-          } w-[240px] ml-[3rem] h-auto bg-background5 p-4`}
+          } w-[240px] ml-[3rem] h-auto bg-background5 p-4 z-0`}
         >
           <ul>
             {headings.map(({ level, text, id }, i) => {
