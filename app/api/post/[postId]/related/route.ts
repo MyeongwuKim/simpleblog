@@ -30,11 +30,13 @@ export async function GET(
             isTemp: false,
           };
 
+    const pageSize = 12;
+
     const relatedPosts = await db.post.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}), // ✅ 수정
-      take: 12,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      take: pageSize + 1,
       select: {
         id: true,
         slug: true,
@@ -46,13 +48,14 @@ export async function GET(
       },
     });
 
+    const hasMore = relatedPosts.length > pageSize;
+    const data = hasMore ? relatedPosts.slice(0, pageSize) : relatedPosts;
+    const nextCursor = hasMore ? data[data.length - 1].id : null;
+
     return NextResponse.json({
       ok: true,
-      data: relatedPosts,
-      nextCursor:
-        relatedPosts.length > 0
-          ? relatedPosts[relatedPosts.length - 1].id
-          : null,
+      data,
+      nextCursor,
     });
   } catch (e: unknown) {
     if (e instanceof Error) {

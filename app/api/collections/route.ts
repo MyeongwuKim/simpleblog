@@ -4,9 +4,10 @@ import { db } from "@/app/lib/db";
 import { Collection } from "@prisma/client";
 
 export const GET = async (req: NextRequest) => {
-  const mode = req.nextUrl.searchParams.get("mode"); // "feed" | "all" | null
+  const mode = req.nextUrl.searchParams.get("mode");
+
   try {
-    if (mode == "all") {
+    if (mode === "all") {
       const collectionData = await db.collection.findMany({
         select: {
           updatedAt: true,
@@ -24,9 +25,11 @@ export const GET = async (req: NextRequest) => {
       });
     } else {
       const cursor = req.nextUrl.searchParams.get("cursor");
+      const pageSize = 12;
+
       const collectionData = await db.collection.findMany({
-        take: 12,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}), // ✅ 수정
+        take: pageSize + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
         select: {
           updatedAt: true,
           id: true,
@@ -44,13 +47,14 @@ export const GET = async (req: NextRequest) => {
         },
       });
 
+      const hasMore = collectionData.length > pageSize;
+      const data = hasMore ? collectionData.slice(0, pageSize) : collectionData;
+      const nextCursor = hasMore ? data[data.length - 1].id : null;
+
       return NextResponse.json({
         ok: true,
-        data: collectionData,
-        nextCursor:
-          collectionData.length > 0
-            ? collectionData[collectionData.length - 1].id
-            : null,
+        data,
+        nextCursor,
       });
     }
   } catch (e: unknown) {
@@ -60,6 +64,7 @@ export const GET = async (req: NextRequest) => {
         { status: 500 }
       );
     }
+
     return NextResponse.json(
       { ok: false, error: "Unknown error" },
       { status: 500 }
