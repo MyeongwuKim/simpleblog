@@ -61,12 +61,14 @@ export default function CommonBody({ children }: CommonBodyType) {
             <Head />
           </div>
           <div
-            className={`relative h-auto py-16 ${
-              isBigHeader ? "mt-[120px]" : "mt-[60px]"
-            } ${isWide && "min-md:px-16 max-md:px-8 px-4"}`}
+            className={`absolute h-[calc(100%-${
+              isBigHeader ? "120px" : "60px"
+            })] w-full py-16 ${isBigHeader ? "top-[120px]" : "top-[60px]"} ${
+              isWide && "min-md:px-16 max-md:px-8 px-4"
+            }`}
           >
             {pathname === "/" && <Postfilter />}
-            {children}
+            <div className="relative"> {children}</div>
           </div>
         </>
       )}
