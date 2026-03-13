@@ -1,35 +1,28 @@
 import { MetadataRoute } from "next";
 import { db } from "./lib/db";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
+// 디버깅 끝나고 안정화되면 revalidate=3600으로 되돌려도 됨
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = "https://mw-simpleblog.vercel.app";
+  const baseUrl = "https://mw-simpleblog.vercel.app";
 
-    let posts: { slug: string; updatedAt: Date | null; createdAt?: Date }[] =
-        [];
+  const posts = await db.post.findMany({
+    where: { isTemp: false },
+    select: {
+      slug: true,
+      updatedAt: true,
+      createdAt: true,
+    },
+    orderBy: { updatedAt: "desc" },
+  });
 
-    try {
-        posts = await db.post.findMany({
-            where: { isTemp: false },
-            select: {
-                slug: true,
-                updatedAt: true,
-                createdAt: true,
-            },
-        });
-    } catch (e) {
-        console.error("Failed to generate sitemap", e);
-    }
-
-    const postUrls = posts.map((post) => ({
-        url: `${baseUrl}/post/${post.slug}`,
-        lastModified: post.updatedAt ?? post.createdAt ?? new Date(),
-    }));
-
-    return [
-        { url: `${baseUrl}/`, lastModified: new Date() },
-        { url: `${baseUrl}/profile`, lastModified: new Date() },
-        ...postUrls,
-    ];
+  return [
+    { url: `${baseUrl}/` },
+    { url: `${baseUrl}/profile` },
+    ...posts.map((post) => ({
+      url: `${baseUrl}/post/${encodeURIComponent(post.slug)}`,
+      lastModified: post.updatedAt ?? post.createdAt ?? undefined,
+    })),
+  ];
 }
