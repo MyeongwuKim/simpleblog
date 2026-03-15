@@ -79,7 +79,12 @@ export default async function Post({ params }: PageProps) {
     where: { slug: decodeURIComponent(slug) },
     select: {
       id: true,
-      tag: true,
+      slug: true,
+      title: true,
+      preview: true,
+      thumbnail: true,
+      createdAt: true,
+      updatedAt: true,
     },
   });
 
@@ -92,9 +97,40 @@ export default async function Post({ params }: PageProps) {
     queryFn: () => fetchPostContentByPostId(postData.id),
   });
 
+  const postUrl = `${siteUrl}/post/${encodeURIComponent(postData.slug)}`;
+  const thumbnailUrl = postData.thumbnail
+    ? `https://imagedelivery.net/0VaIqAONZ2vq2gejAGX7Sw/${postData.thumbnail}/public`
+    : `${siteUrl}/og-image.png`;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: postData.title,
+    description: postData.preview ?? "",
+    image: [thumbnailUrl],
+    datePublished: postData.createdAt.toISOString(),
+    dateModified: postData.updatedAt.toISOString(),
+    author: {
+      "@type": "Person",
+      name: "김명우",
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": postUrl,
+    },
+  };
+
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <CommonPost postId={postData.id} />
-    </HydrationBoundary>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <CommonPost postId={postData.id} />
+      </HydrationBoundary>
+    </>
   );
 }

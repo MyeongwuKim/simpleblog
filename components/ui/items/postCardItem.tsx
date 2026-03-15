@@ -51,10 +51,7 @@ function PostCardItem({
         )}
       >
         <div id="CardItemWrapper" className="flex flex-col flex-auto gap-1">
-          <h4
-            className="text-[1rem] text-box
-    font-bold tracking-tight text-gray-900 dark:text-white"
-          >
+          <h4 className="text-[1rem] text-box font-bold tracking-tight text-text1">
             {title}
           </h4>
           <p className="line-clamp-2 text-text2 leading-[1.5em]">{preview}</p>
