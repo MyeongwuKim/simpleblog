@@ -2,7 +2,7 @@ import { EditorView } from "@codemirror/view";
 import { useEffect, useRef } from "react";
 import ToolBar from "./toolbar";
 import TagInput from "../ui/input/tagInput";
-import { useWrite } from "@/app/write/page";
+import { useWrite } from "@/app/write/writeClient";
 
 interface EditorProps {
   editorView: EditorView | null; // ✅ null 허용

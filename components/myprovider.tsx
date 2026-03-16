@@ -56,7 +56,7 @@ export function MyProvider({ children }: { children: React.ReactNode }) {
                 ""
               )}
             </UIProvider>
-            <PopupContainer></PopupContainer>
+            <PopupContainer />
           </QueryClientProvider>
         </ThemeProvider>
       </SessionProvider>

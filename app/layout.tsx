@@ -3,9 +3,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { pretendard, jetbrainsMono } from "./fonts";
 
-import CommonBody from "@/components/layout/commonBody";
+import MainLayout from "@/components/layout/mainLayout";
 import MyProvider from "@/components/myprovider";
 import UmamiScript from "@/components/analytics/UmamiScript";
+import { HeaderVisibilityProvider } from "@/components/providers/HeaderVisibilityProvider";
 
 export const metadata: Metadata = {
   title: "북마크 블로그 | 게시글",
@@ -57,7 +58,9 @@ export default function RootLayout({
       <body className={`ease-linear w-full h-full bg-bg-page2 }`}>
         <MyProvider>
           <UmamiScript />
-          <CommonBody>{children}</CommonBody>
+          <HeaderVisibilityProvider>
+            <MainLayout>{children}</MainLayout>
+          </HeaderVisibilityProvider>
         </MyProvider>
       </body>
     </html>

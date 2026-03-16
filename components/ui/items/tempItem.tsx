@@ -61,7 +61,7 @@ export default function TempItem({ preview, title, updatedAt, id }: Post) {
       <Link href={`/write?id=${id}`}>
         <h3 className="text-text1 font-bold text-2xl">{title}</h3>
       </Link>
-      <Link href={`/write?slug=${id}`}>
+      <Link href={`/write?id=${id}`}>
         <p className="line-clamp-3 text-text2 leading-[1.5em]">{preview}</p>
       </Link>
       <div className="text-text3 flex justify-between">

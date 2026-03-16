@@ -1,6 +1,6 @@
 import React, { forwardRef } from "react";
 import ReactMD from "./reactMD";
-import { useWrite } from "@/app/write/page";
+import { useWrite } from "@/app/write/writeClient";
 
 const Preview = forwardRef<HTMLDivElement>((props, ref) => {
   const { state } = useWrite();

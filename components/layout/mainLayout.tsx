@@ -3,12 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Head from "./commonHead";
 import Postfilter from "./postFilter";
+import { useHeaderVisibility } from "../providers/HeaderVisibilityProvider";
 
-type CommonBodyType = {
+type MainLayoutType = {
   children: React.ReactNode;
 };
 
-export default function CommonBody({ children }: CommonBodyType) {
+export default function MainLayout({ children }: MainLayoutType) {
   const pathname = usePathname();
   const bigHeaderPrefixes = ["/profile", "/collections", "/comments"];
   const isBigHeader =
@@ -41,7 +42,15 @@ export default function CommonBody({ children }: CommonBodyType) {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, [translate, headerHeight]);
+  const { showHead } = useHeaderVisibility();
 
+  if (!showHead) {
+    return (
+      <div className="absolute flex justify-center w-full h-full min-md:px-16 max-md:px-8 px-4">
+        {children}
+      </div>
+    );
+  }
   return (
     <>
       {pathname.startsWith("/write") || pathname.startsWith("/auth") ? (

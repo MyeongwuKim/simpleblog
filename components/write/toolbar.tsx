@@ -8,7 +8,7 @@ import { getDeliveryDomain, timeStamp } from "@/app/hooks/useUtil";
 import { useUI } from "../providers/uiProvider";
 import { useMutation } from "@tanstack/react-query";
 import { Image } from "@prisma/client";
-import { useWrite } from "@/app/write/page";
+import { useWrite } from "@/app/write/writeClient";
 import { useGlobalDragDrop } from "@/app/hooks/useDnD";
 
 interface IToolBar {

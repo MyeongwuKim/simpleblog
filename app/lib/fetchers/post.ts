@@ -69,10 +69,6 @@ export const fetchPostContentByPostId = async (postId: string) => {
 
   const jsonData = await res.json();
 
-  if (!jsonData.ok) {
-    throw new Error(`API 오류 (${jsonData.error})`);
-  }
-
   return jsonData;
 };
 

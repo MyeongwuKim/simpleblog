@@ -1,6 +1,5 @@
 import { db } from "@/app/lib/db";
 import { fetchPostContentByPostId } from "@/app/lib/fetchers/post";
-import NotFound from "@/app/not-found";
 
 import {
   dehydrate,
@@ -9,6 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { Metadata } from "next";
 import CommonPost from "./_components/commonPost";
+import { notFound } from "next/navigation";
 
 interface PageProps {
   params: { slug: string };
@@ -89,7 +89,7 @@ export default async function Post({ params }: PageProps) {
   });
 
   if (!postData) {
-    return <NotFound />;
+    notFound();
   }
 
   await queryClient.prefetchQuery({

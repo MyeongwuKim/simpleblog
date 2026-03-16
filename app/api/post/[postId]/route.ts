@@ -3,6 +3,7 @@ import { CollectionItem, Image, Prisma, Tag } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 import { ObjectId } from "mongodb";
 import { revalidateTag } from "next/cache";
+import { error } from "console";
 
 /* ---------------- util ---------------- */
 
@@ -137,7 +138,11 @@ export const GET = async (
   const { postId } = await params;
 
   if (!ObjectId.isValid(postId)) {
-    return NextResponse.json({ ok: false, data: null });
+    return NextResponse.json({
+      ok: false,
+      data: null,
+      error: "올바른 형태의 id가 아닙니다.",
+    });
   }
 
   try {
@@ -161,7 +166,6 @@ export const GET = async (
         },
       },
     });
-
     if (!postData) {
       return NextResponse.json(
         { ok: false, data: null, error: "존재하지 않는 글입니다" },
