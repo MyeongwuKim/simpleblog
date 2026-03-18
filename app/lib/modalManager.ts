@@ -3,17 +3,25 @@
 class ModalManager {
   private resolvers: Record<string, (result: unknown) => void> = {};
 
-  openModal(id: string): Promise<unknown> {
+  create<T>(id: string): Promise<T> {
     return new Promise((resolve) => {
-      this.resolvers[id] = resolve;
+      this.resolvers[id] = resolve as (result: unknown) => void;
     });
   }
 
-  closeModal(id: string, result: unknown) {
+  resolve(id: string, result: unknown) {
     if (this.resolvers[id]) {
       this.resolvers[id](result);
       delete this.resolvers[id];
     }
+  }
+
+  cleanup(id: string, fallbackResult: unknown) {
+    this.resolve(id, fallbackResult);
+  }
+
+  cleanupMany(ids: string[], fallbackResult: unknown) {
+    ids.forEach((id) => this.cleanup(id, fallbackResult));
   }
 }
 

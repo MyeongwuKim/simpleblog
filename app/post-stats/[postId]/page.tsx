@@ -1,7 +1,7 @@
 import PostStatsBody from "../_components/poststatsBody";
 
 interface PageProps {
-  params: { postId: string };
+  params: Promise<{ postId: string }>;
 }
 
 export default async function PostStatsPage({ params }: PageProps) {

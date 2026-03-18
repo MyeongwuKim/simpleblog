@@ -11,7 +11,7 @@ import CommonPost from "./_components/commonPost";
 import { notFound } from "next/navigation";
 
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 const siteUrl = "https://mw-simpleblog.vercel.app";

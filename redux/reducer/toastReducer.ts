@@ -1,31 +1,29 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid"; // uuid 라이브러리 임포트
 
-interface ToastProps {
+export interface ToastItem {
   msg: string;
   isWarning: boolean | null;
   time: number;
   id: string;
 }
 
-interface ModalProps {
-  msg: string;
-  btnInfo: string[];
-  title?: string;
-  isOpen: boolean;
+export type ToastPayload = Omit<ToastItem, "id">;
+
+export interface ToastState {
+  toastItem: ToastItem[];
 }
 
-const initialState: { toastItem: ToastProps[]; modalObj: ModalProps } = {
+const initialState: ToastState = {
   toastItem: [],
-  modalObj: { btnInfo: [], msg: "", title: "", isOpen: false },
 };
 
 export const toastSlice = createSlice({
   name: "toast",
   initialState,
   reducers: {
-    addToast: (state, action: PayloadAction<Omit<ToastProps, "id">>) => {
-      const newToast: ToastProps = {
+    addToast: (state, action: PayloadAction<ToastPayload>) => {
+      const newToast: ToastItem = {
         id: uuidv4(),
         ...action.payload,
       };

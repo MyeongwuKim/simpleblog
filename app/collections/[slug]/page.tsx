@@ -11,7 +11,7 @@ import { Metadata } from "next";
 
 // app/posts/[postId]/page.tsx
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({

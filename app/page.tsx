@@ -2,15 +2,15 @@ import InfiniteScrollProvider from "@/components/layout/InfiniteScroll/infiniteS
 import { redirect } from "next/navigation";
 import { db } from "./lib/db";
 
-interface SearchParams {
-  searchParams: {
+interface HomePageProps {
+  searchParams: Promise<{
     tag?: string;
     datetype?: string;
-  };
+  }>;
 }
 const VALID_DATE_TYPES = ["year", "month", "week"];
 
-export default async function Home({ searchParams }: SearchParams) {
+export default async function Home({ searchParams }: HomePageProps) {
   // const queryClient = getQueryClient();
 
   const { tag, datetype } = await searchParams;

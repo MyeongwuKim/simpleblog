@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/lib/db";
 
+type RelatedPostRouteContext = {
+  params: Promise<{ postId: string }>;
+};
+
 export async function GET(
   req: NextRequest,
-  context: { params: { postId: string } }
+  context: RelatedPostRouteContext
 ) {
-  const { postId } = (await context.params) as { postId: string };
+  const { postId } = await context.params;
 
   const cursor = req.nextUrl.searchParams.get("cursor");
   const tags = req.nextUrl.searchParams.getAll("tags");

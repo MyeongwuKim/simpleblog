@@ -4,9 +4,13 @@ import { ObjectId } from "mongodb";
 import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
+type CollectionRouteContext = {
+  params: Promise<{ collectionId: string }>;
+};
+
 export const GET = async (
   req: NextRequest,
-  { params }: { params: { collectionId: string } }
+  { params }: CollectionRouteContext
 ) => {
   const { collectionId } = await params;
 
@@ -78,7 +82,7 @@ export const GET = async (
 
 export const POST = async (
   req: NextRequest,
-  { params }: { params: { collectionId: string } }
+  { params }: CollectionRouteContext
 ) => {
   const { collectionId } = await params;
 
@@ -172,7 +176,7 @@ export const POST = async (
 
 export const DELETE = async (
   req: NextRequest,
-  { params }: { params: { collectionId: string } }
+  { params }: CollectionRouteContext
 ) => {
   const { collectionId } = await params;
   try {

@@ -20,9 +20,13 @@ import { db } from "@/app/lib/db";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
+type PostViewRouteContext = {
+  params: Promise<{ postId: string }>;
+};
+
 export async function GET(
   req: Request,
-  { params }: { params: { postId: string } }
+  { params }: PostViewRouteContext
 ) {
   const { postId } = await params;
 
@@ -64,7 +68,7 @@ export async function GET(
 
 export async function POST(
   req: Request,
-  { params }: { params: { postId: string } }
+  { params }: PostViewRouteContext
 ) {
   const { postId } = await params;
   const ip = getClientIp(req);

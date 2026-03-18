@@ -3,7 +3,10 @@ import { CollectionItem, Image, Prisma, Tag } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 import { ObjectId } from "mongodb";
 import { revalidateTag } from "next/cache";
-import { error } from "console";
+
+type PostRouteContext = {
+  params: Promise<{ postId: string }>;
+};
 
 /* ---------------- util ---------------- */
 
@@ -133,7 +136,7 @@ async function syncPostCollection({
 
 export const GET = async (
   req: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: PostRouteContext
 ) => {
   const { postId } = await params;
 
@@ -197,9 +200,9 @@ export const GET = async (
 
 export const POST = async (
   req: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: PostRouteContext
 ) => {
-  const { postId } = params;
+  const { postId } = await params;
   const jsonData = await req.json();
 
   const {
@@ -333,7 +336,7 @@ export const POST = async (
 
 export const DELETE = async (
   req: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: PostRouteContext
 ) => {
   const { postId } = await params;
 

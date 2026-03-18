@@ -1,13 +1,11 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { getDeliveryDomain, timeStamp } from "@/app/hooks/useUtil";
-import { showGlobalToast } from "../providers/uiProvider";
+import { showGlobalToast } from "@/app/lib/toastManager";
 import { Collection, Image as ImageType } from "@prisma/client";
 import {
-  InfiniteData,
-  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -21,16 +19,9 @@ import InputField from "../ui/input/inputField";
 import { fetchAllCollections } from "@/app/lib/fetchers/collections";
 import LabelButton from "../ui/buttons/labelButton";
 import { IoMdSettings } from "react-icons/io";
-import { useInView } from "react-intersection-observer";
+import type { ModalComponentProps } from "./modalRegistry";
 
-interface WriteModalProps {
-  title: string;
-  preview: string | null;
-  thumbnail: string | null;
-  collection: string | null;
-  onClose: (value: unknown) => void;
-  show?: boolean;
-}
+type WriteModalProps = ModalComponentProps<"WRITE">;
 
 export default function WriteModal({
   onClose,

@@ -24,6 +24,7 @@ import { Collection, Image, Post, Tag } from "@prisma/client";
 import { fetchPostContentByPostId } from "../lib/fetchers/post";
 
 import { getFormatImagesId } from "../hooks/useUtil";
+import type { WriteModalResult } from "@/redux/reducer/modalReducer";
 
 type PostPayload = PostType & { images: Image[] };
 type Action = { type: "SET_FORM"; payload: Partial<PostPayload> };
@@ -522,8 +523,8 @@ export default function WriteClient({ postId }: { postId: string }) {
 
       const preview = extractPreview();
       const imageIds = getFormatImagesId(state.content);
-      let popupResult: { thumbnail: string; collection: string | null } = {
-        thumbnail: "",
+      let popupResult: WriteModalResult = {
+        thumbnail: null,
         collection: null,
       };
       if (postProcess == 1) {
@@ -540,10 +541,7 @@ export default function WriteClient({ postId }: { postId: string }) {
         });
         if (result == 0) return;
 
-        popupResult = result as {
-          thumbnail: string;
-          collection: string | null;
-        };
+        popupResult = result;
       }
       const { thumbnail, collection } = popupResult;
 

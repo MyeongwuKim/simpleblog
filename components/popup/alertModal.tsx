@@ -1,13 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import DefButton from "../ui/buttons/defButton";
+import type { ModalComponentProps } from "./modalRegistry";
 
-interface AlertModalProps {
-  msg: string;
-  title?: string;
-  btnMsg: string[];
-  onClose: (value: number) => void;
-  show?: boolean; // 외부에서 제어 (modalItems 배열 쓰면 없어도 됨)
-}
+type AlertModalProps = ModalComponentProps<"CONFIRM">;
 
 export default function AlertModal({
   msg,

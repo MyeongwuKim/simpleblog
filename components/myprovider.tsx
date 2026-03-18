@@ -7,12 +7,10 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"; // 1. devtools import
 import getQueryClient from "@/app/hooks/useQueryClient";
 import { ReactQueryStreamedHydration } from "@tanstack/react-query-next-experimental";
-import {
-  PopupContainer,
-  showGlobalToast,
-  UIProvider,
-} from "./providers/uiProvider";
+import { UIProvider } from "./providers/uiProvider";
 import { SessionProvider } from "next-auth/react";
+import { showGlobalToast } from "@/app/lib/toastManager";
+import { PopupContainer } from "./providers/popupContainer";
 
 export function MyProvider({ children }: { children: React.ReactNode }) {
   const [isMount, setMount] = useState(false);

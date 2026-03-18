@@ -2,9 +2,13 @@ import { db } from "@/app/lib/db";
 import { NextResponse, NextRequest } from "next/server";
 import { ObjectId } from "mongodb";
 
+type PostSiblingRouteContext = {
+  params: Promise<{ postId: string }>;
+};
+
 export const GET = async (
   req: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: PostSiblingRouteContext
 ) => {
   const { postId } = await params;
 

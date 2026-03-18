@@ -1,24 +1,59 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-export type ModalType = "WRITE" | "CONFIRM";
-
-export type ModalPropsMap = {
-  WRITE: {
-    thumbnail: string | null;
-    preview: string | null;
-    title: string;
-    collection: string | null;
-  };
-  CONFIRM: { msg: string; btnMsg: string[]; title?: string };
+export type ConfirmModalProps = {
+  msg: string;
+  btnMsg: string[];
+  title?: string;
 };
 
-type ModalItem<T extends ModalType = ModalType> = {
+export type WriteModalProps = {
+  thumbnail: string | null;
+  preview: string | null;
+  title: string;
+  collection: string | null;
+};
+
+export type WriteModalResult = {
+  thumbnail: string | null;
+  collection: string | null;
+};
+
+export type ModalDefinitionMap = {
+  WRITE: {
+    props: WriteModalProps;
+    result: WriteModalResult | 0;
+  };
+  CONFIRM: {
+    props: ConfirmModalProps;
+    result: 0 | 1;
+  };
+};
+
+export type ModalType = keyof ModalDefinitionMap;
+
+export type ModalPropsMap = {
+  [K in ModalType]: ModalDefinitionMap[K]["props"];
+};
+
+export type ModalResultMap = {
+  [K in ModalType]: ModalDefinitionMap[K]["result"];
+};
+
+type ModalItemByType<T extends ModalType> = {
   id: string;
   type: T;
   props: ModalPropsMap[T];
 };
 
-const initialState: { modalItem: ModalItem[] } = {
+export type ModalItem<T extends ModalType = ModalType> = T extends ModalType
+  ? ModalItemByType<T>
+  : never;
+
+export interface ModalState {
+  modalItem: ModalItem[];
+}
+
+const initialState: ModalState = {
   modalItem: [],
 };
 
@@ -27,10 +62,10 @@ export const modalSlice = createSlice({
   initialState,
   reducers: {
     addModal: (state, action: PayloadAction<ModalItem>) => {
-      const newToast: ModalItem = {
+      const newModal: ModalItem = {
         ...action.payload,
       };
-      state.modalItem.push(newToast);
+      state.modalItem.push(newModal);
     },
     removeModal: (state, action: PayloadAction<string>) => {
       state.modalItem = state.modalItem.filter(
