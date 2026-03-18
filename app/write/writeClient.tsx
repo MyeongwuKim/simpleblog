@@ -1,5 +1,4 @@
 "use client";
-import Editor from "@/components/write/editor";
 import {
   createContext,
   useCallback,
@@ -8,7 +7,6 @@ import {
   useReducer,
   useRef,
 } from "react";
-import useCodeMirror from "../lib/use-codemirror";
 import DefButton from "@/components/ui/buttons/defButton";
 import { useUI } from "@/components/providers/uiProvider";
 import {
@@ -17,7 +15,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import Preview from "@/components/write/preview";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Slugger from "github-slugger";
 import { Collection, Image, Post, Tag } from "@prisma/client";
@@ -76,6 +74,14 @@ const toPostType = (
 };
 
 const WriteContext = createContext<ContextType | undefined>(undefined);
+const Editor = dynamic(() => import("@/components/write/editor"), {
+  ssr: false,
+  loading: () => <div className="h-[calc(100%-60px)] w-full bg-bg-page2" />,
+});
+const Preview = dynamic(() => import("@/components/write/preview"), {
+  ssr: false,
+  loading: () => <div className="h-full w-full bg-transparent" />,
+});
 
 export default function WriteClient({ postId }: { postId: string }) {
   const isValidPostId = typeof postId === "string" && postId.length > 0;
@@ -573,11 +579,6 @@ export default function WriteClient({ postId }: { postId: string }) {
     dispatch({ type: "SET_FORM", payload: { content } });
   }, []);
 
-  const [refContainer, editorViewRef] = useCodeMirror<HTMLDivElement>({
-    initialDoc: state.content,
-    onChange: handleChange,
-  });
-
   useEffect(() => {
     if (!previewRef.current || !editorScrollRef.current) return;
 
@@ -595,22 +596,6 @@ export default function WriteClient({ postId }: { postId: string }) {
     }
   }, [state.content]);
 
-  useEffect(() => {
-    const view = editorViewRef.current;
-    if (!view) return;
-
-    const currentDoc = view.state.doc.toString();
-    if (state.content !== currentDoc) {
-      view.dispatch({
-        changes: {
-          from: 0,
-          to: currentDoc.length,
-          insert: state.content,
-        },
-      });
-    }
-  }, [state.content]);
-
   return (
     <WriteContext.Provider value={{ state, dispatch }}>
       <div id="write" className="w-full h-full bg-gray-100 dark:bg-[#0c0c0c]">
@@ -620,9 +605,9 @@ export default function WriteClient({ postId }: { postId: string }) {
             className="flex w-full flex-col h-full relative"
           >
             <Editor
+              content={state.content}
+              onChange={handleChange}
               scrollRef={editorScrollRef}
-              editorView={editorViewRef.current}
-              refContainer={refContainer}
             />
             <div
               id="editor_footer"
@@ -674,7 +659,7 @@ export default function WriteClient({ postId }: { postId: string }) {
               id="previewContainer"
               className={`w-full h-full bg-transparent`}
             >
-              <Preview ref={previewRef} />
+              <Preview containerRef={previewRef} />
             </div>
           </div>
         </div>

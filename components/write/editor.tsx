@@ -1,22 +1,23 @@
-import { EditorView } from "@codemirror/view";
 import { useEffect, useRef } from "react";
 import ToolBar from "./toolbar";
 import TagInput from "../ui/input/tagInput";
 import { useWrite } from "@/app/write/writeClient";
+import useCodeMirror from "@/app/lib/use-codemirror";
 
 interface EditorProps {
-  editorView: EditorView | null; // ✅ null 허용
-  refContainer: React.RefObject<HTMLDivElement | null>;
-  scrollRef: React.RefObject<HTMLDivElement | null>; // ✅ 추가
+  content: string;
+  onChange: (content: string) => void;
+  scrollRef: React.RefObject<HTMLDivElement | null>;
 }
 
-const Editor: React.FC<EditorProps> = ({
-  editorView,
-  refContainer,
-  scrollRef,
-}) => {
+const Editor: React.FC<EditorProps> = ({ content, onChange, scrollRef }) => {
   const { dispatch, state } = useWrite();
   const titleArea = useRef<HTMLTextAreaElement>(null);
+  const [refContainer, editorViewRef] = useCodeMirror<HTMLDivElement>({
+    initialDoc: content,
+    onChange,
+  });
+  const editorView = editorViewRef.current;
 
   const onTitleChange = () => {
     const { current } = titleArea;
@@ -78,7 +79,7 @@ const Editor: React.FC<EditorProps> = ({
             />
           </div>
           <div className="w-full min-h-[60px]">
-            <ToolBar editorView={editorView!} theme={"light"} />
+            {editorView && <ToolBar editorView={editorView} theme={"light"} />}
           </div>
         </div>
 

@@ -27,7 +27,7 @@ export default function IntroCard({
     onSuccessCallback: (result) => {
       setUploading(false);
       if (result?.data?.profileImg) {
-        setProfileImg(getDeliveryDomain(result.data.profileImg, "public"));
+        setProfileImg(getDeliveryDomain(result.data.profileImg, "thumbnail"));
       }
     },
     onErrorCallback: (error) => {
@@ -38,7 +38,7 @@ export default function IntroCard({
 
   useEffect(() => {
     if (pImg) {
-      setProfileImg(getDeliveryDomain(pImg, "public"));
+      setProfileImg(getDeliveryDomain(pImg, "thumbnail"));
     }
   }, [pImg]);
 
@@ -136,7 +136,6 @@ export default function IntroCard({
               src={profileImg}
               alt="profile"
               fill
-              priority
             />
           ) : uploading ? (
             <span className="text-gray-500 text-sm">업로드 중...</span>

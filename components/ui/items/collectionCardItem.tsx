@@ -24,9 +24,8 @@ function CollectionCardItem({
           {thumbnail ? (
             <Image
               fill
-              src={getDeliveryDomain(thumbnail, "public")}
+              src={getDeliveryDomain(thumbnail, "thumbnail")}
               alt={title}
-              priority
               sizes="(max-width: 768px) 100vw, 400px"
               className="object-cover"
             />

@@ -38,9 +38,8 @@ function PostCardItem({
             {imageSrc ? (
               <Image
                 fill
-                src={getDeliveryDomain(imageSrc, "public")}
+                src={getDeliveryDomain(imageSrc, "thumbnail")}
                 alt={title}
-                priority
                 sizes="(max-width: 768px) 100vw, 400px"
                 className="object-cover"
               />

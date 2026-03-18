@@ -1,13 +1,17 @@
-import React, { forwardRef } from "react";
+import React from "react";
 import ReactMD from "./reactMD";
 import { useWrite } from "@/app/write/writeClient";
 
-const Preview = forwardRef<HTMLDivElement>((props, ref) => {
+function Preview({
+  containerRef,
+}: {
+  containerRef?: React.RefObject<HTMLDivElement | null>;
+}) {
   const { state } = useWrite();
 
   return (
     <div
-      ref={ref} // 부모에서 전달한 ref 사용
+      ref={containerRef}
       className=" w-full overflow-auto flex flex-col h-[calc(100%-0px)] pt-8 px-8"
     >
       <h1
@@ -22,7 +26,5 @@ const Preview = forwardRef<HTMLDivElement>((props, ref) => {
       </div>
     </div>
   );
-});
-
-Preview.displayName = "Preview";
+}
 export default Preview;

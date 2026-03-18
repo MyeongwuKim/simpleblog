@@ -325,6 +325,8 @@ export default function ReactMD({ doc, images = [] }: ReactMDProps) {
               <img
                 src={safeSrc}
                 alt={alt ?? ""}
+                loading="lazy"
+                decoding="async"
                 className="mx-auto block h-auto max-w-full"
               />
             );
@@ -336,6 +338,7 @@ export default function ReactMD({ doc, images = [] }: ReactMDProps) {
               alt={alt ?? ""}
               width={meta.width}
               height={meta.height}
+              sizes="(max-width: 768px) 100vw, 768px"
               className="mx-auto block h-auto max-w-full"
               style={{
                 width: "100%",

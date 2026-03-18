@@ -38,7 +38,7 @@ export default function WriteModal({
   );
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [writeThumbnail, setWriteThumbnail] = useState<string | null>(
-    thumbnail && getDeliveryDomain(thumbnail, "public")
+    thumbnail && getDeliveryDomain(thumbnail, "thumbnail")
   );
 
   const extractThumbnail = () => {
@@ -213,7 +213,6 @@ export default function WriteModal({
                           fill
                           src={writeThumbnail}
                           alt={title}
-                          priority
                           sizes="(max-width: 768px) 100vw, 400px"
                           className="object-cover"
                         />

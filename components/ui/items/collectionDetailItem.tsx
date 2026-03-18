@@ -62,7 +62,6 @@ function CollectionDetailItem({
               alt="thumb"
               sizes="(max-width: 768px) 100vw, 192px"
               className="object-cover"
-              priority
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-text3">

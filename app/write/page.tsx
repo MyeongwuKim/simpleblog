@@ -42,7 +42,7 @@ export async function generateMetadata({
     },
   });
 
-  if (!post || !post.isTemp) {
+  if (!post) {
     return {
       title: "404",
     };

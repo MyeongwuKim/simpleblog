@@ -65,12 +65,11 @@ export function ProfileItem({ profile }: { profile: Profile | null }) {
             <div className="relative h-72 w-64 rounded-t-lg  max-sm:w-48 max-sm:h-48 max-sm:rounded-none rounded-l-lg max-sm:mt-4">
               {localProfile?.profileImg ? (
                 <Image
-                  src={getDeliveryDomain(localProfile?.profileImg, "public")}
+                  src={getDeliveryDomain(localProfile?.profileImg, "thumbnail")}
                   alt="profile"
                   sizes="100vw, 400px"
                   fill // 부모 크기에 맞춤
                   className="object-cover  rounded-t-lg  max-sm:rounded-none rounded-l-lg "
-                  priority
                 />
               ) : (
                 <div

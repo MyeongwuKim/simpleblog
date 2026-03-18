@@ -29,11 +29,10 @@ const Signin = () => {
           onClick={login}
         >
           <Image
-            priority
             alt="image"
             width={20}
             height={20}
-            sizes="100vw"
+            sizes="20px"
             src="https://storage.keepgrow.com/admin/campaign/20200611043456590.svg"
           />
           Sign in with KAKAO

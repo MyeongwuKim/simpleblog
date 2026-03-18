@@ -35,12 +35,11 @@ export default function DropdownProfile({ items, clickEvt, profileImg }: Profile
           <div className="relative w-[45px] h-[45px] rounded-full bg-background3 overflow-hidden">
             {profileImg ? (
               <Image
-                src={getDeliveryDomain(profileImg, "thumbnail")}
+                src={getDeliveryDomain(profileImg, "avatar")}
                 alt="profile"
                 fill
                 className="object-cover "
-                priority
-                sizes="100vw, 45px"
+                sizes="45px"
               />
             ) : (
               ""
