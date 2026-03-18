@@ -75,7 +75,7 @@ export default async function Write({ searchParams }: PageProps) {
   });
 
   // 없거나, 임시글이 아니면 수정 페이지 접근 불가
-  if (!post || !post.isTemp) {
+  if (!post) {
     notFound();
   }
 

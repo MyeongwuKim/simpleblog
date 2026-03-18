@@ -499,7 +499,7 @@ function PostSide({ headings, headRef }: PostSide) {
               return (
                 <li
                   key={i}
-                  style={{ marginLeft: (level - 1) * 10 }}
+                  style={{ paddingLeft: (level - 1) * 10 }}
                   className={`w-full h-auto overflow-hidden ease-in duration-100 hover:scale-[1.05]`}
                 >
                   <LabelButton

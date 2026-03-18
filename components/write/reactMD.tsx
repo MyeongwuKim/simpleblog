@@ -126,9 +126,16 @@ const ReactMD: NextPage<IReactMD> = ({ doc, images }) => {
           );
         },
 
-        a({ children, ...props }) {
+        a({ children, href, ...props }) {
+          const isExternal = href?.startsWith("http");
           return (
-            <a className="mb-[1em]" target="_blank" {...props}>
+            <a
+              href={href}
+              className="text-cyan-500 underline underline-offset-4 break-all transition-colors hover:text-cyan-400"
+              target={isExternal ? "_blank" : undefined}
+              rel={isExternal ? "noreferrer noopener" : undefined}
+              {...props}
+            >
               {children}
             </a>
           );
