@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Head from "./commonHead";
 import Postfilter from "./postFilter";
@@ -51,6 +51,7 @@ export default function MainLayout({ children }: MainLayoutType) {
       </div>
     );
   }
+
   return (
     <>
       {pathname.startsWith("/write") || pathname.startsWith("/auth") ? (
@@ -76,7 +77,11 @@ export default function MainLayout({ children }: MainLayoutType) {
               isWide && "min-md:px-16 max-md:px-8 px-4"
             }`}
           >
-            {pathname === "/" && <Postfilter />}
+            {pathname === "/" && (
+              <Suspense fallback={null}>
+                <Postfilter />
+              </Suspense>
+            )}
             <div className="relative"> {children}</div>
           </div>
         </>

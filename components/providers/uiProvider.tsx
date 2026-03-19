@@ -1,16 +1,29 @@
 // components/providers/UIProvider.tsx
 "use client";
 
-import React, { createContext, ReactNode, useContext } from "react";
+import React, { createContext, ReactNode, useContext, useEffect } from "react";
 import type { UIController } from "./useUIController";
 import useUIController from "./useUIController";
-import useGlobalToastBridge from "./useGlobalToastBridge";
+import { useQueryClient } from "@tanstack/react-query";
 
 const UIContext = createContext<UIController | undefined>(undefined);
 
 export const UIProvider = ({ children }: { children: ReactNode }) => {
   const value = useUIController();
-  useGlobalToastBridge(value.openToast);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      if (event.type === "updated") {
+        const error = event.query.state.error;
+        if (error) {
+          value.openToast(true, (error as Error).message, 3);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [queryClient, value]);
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
 };

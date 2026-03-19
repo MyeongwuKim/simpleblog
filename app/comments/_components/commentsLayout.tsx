@@ -5,15 +5,24 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import DefButton from "../ui/buttons/defButton";
-import InputField from "../ui/input/inputField";
-import { TextAreaField } from "../ui/input/textAreaField";
-import { useCallback, useEffect, useState } from "react";
-import { useUI } from "../providers/uiProvider";
+import DefButton from "@/components/ui/buttons/defButton";
+import InputField from "@/components/ui/input/inputField";
+import { TextAreaField } from "@/components/ui/input/textAreaField";
+import { useCallback, useState } from "react";
+import { useUI } from "@/components/providers/uiProvider";
 import { Comment } from "@prisma/client";
 import { useSession } from "next-auth/react";
-import Script from "next/script";
-import ReCAPTCHA from "react-google-recaptcha";
+import dynamic from "next/dynamic";
+
+const CommentsCaptcha = dynamic(() => import("./commentsCaptcha"), {
+  ssr: false,
+  loading: () => (
+    <div
+      aria-hidden="true"
+      className="h-[78px] w-[304px] max-[500px]:scale-90 origin-top-right rounded-md bg-background2 border border-border1"
+    />
+  ),
+});
 
 export default function CommentsLayout() {
   const queryClient = useQueryClient();
@@ -21,6 +30,8 @@ export default function CommentsLayout() {
   const { data: session } = useSession();
   const [name, setName] = useState<string>("");
   const [content, setContent] = useState<string>("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaKey, setCaptchaKey] = useState(0);
 
   const { mutate } = useMutation<
     QueryResponse<Comment>,
@@ -40,7 +51,8 @@ export default function CommentsLayout() {
     onSuccess: (res) => {
       setName("");
       setContent("");
-      window.grecaptcha.reset();
+      setCaptchaToken(null);
+      setCaptchaKey((prev) => prev + 1);
 
       queryClient.setQueryData<
         InfiniteData<{
@@ -86,7 +98,6 @@ export default function CommentsLayout() {
     []
   );
   const rules = [
-    // 로그인 안 했을 때만 이름 체크
     ...(!session
       ? [
           {
@@ -95,7 +106,6 @@ export default function CommentsLayout() {
           },
         ]
       : []),
-
     {
       check: content.trim().length > 0,
       message: "내용을 입력해주세요.",
@@ -115,75 +125,54 @@ export default function CommentsLayout() {
     }
     return true;
   };
-  useEffect(() => {
-    const renderCaptcha = () => {
-      if (window.grecaptcha && document.getElementById("recaptcha-container")) {
-        if (!document.querySelector("#recaptcha-container iframe")) {
-          window.grecaptcha.render("recaptcha-container", {
-            sitekey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!,
-          });
-        }
-      }
-    };
-
-    renderCaptcha();
-  }, []);
 
   return (
-    <>
-      <Script
-        src="https://www.google.com/recaptcha/api.js?hl=ko"
-        strategy="afterInteractive"
-      />
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!validate()) return;
-          const token = window.grecaptcha.getResponse();
-          if (!token) {
-            openToast(true, "로봇이 아님을 인증해주세요.", 1);
-            return;
-          }
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!validate()) return;
+        if (!captchaToken) {
+          openToast(true, "로봇이 아님을 인증해주세요.", 1);
+          return;
+        }
 
-          mutate({ content, name, isMe: session ? true : false, token });
-        }}
-        className="flex flex-col gap-4 mb-20"
-      >
-        {!session && (
-          <div className="flex flex-auto">
-            <InputField
-              value={name}
-              onChange={onChangeText}
-              size="md"
-              id="name"
-              placeholder="이름"
-              type="text"
-            />
-          </div>
-        )}
-        <div className="h-[98px]">
-          <TextAreaField
-            value={content}
-            maxLength={300}
-            id="content"
-            placeholder="댓글 입력"
+        mutate({ content, name, isMe: !!session, token: captchaToken });
+      }}
+      className="flex flex-col gap-4 mb-20"
+    >
+      {!session && (
+        <div className="flex flex-auto">
+          <InputField
+            value={name}
             onChange={onChangeText}
+            size="md"
+            id="name"
+            placeholder="이름"
+            type="text"
           />
         </div>
-        <div className="flex  gap-3 justify-between max-[500px]:flex-col  max-[500px]:place-items-end">
-          <ReCAPTCHA
-            className="max-[500px]:scale-90 origin-top-right"
-            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
-            onChange={(token) => console.log("Captcha value:", token)}
-          />
-          <DefButton
-            type="submit"
-            className="text-button1 w-[120px] h-[40px] "
-            btnColor="cyan"
-            innerItem="댓글 작성"
-          />
-        </div>
-      </form>
-    </>
+      )}
+      <div className="h-[98px]">
+        <TextAreaField
+          value={content}
+          maxLength={300}
+          id="content"
+          placeholder="댓글 입력"
+          onChange={onChangeText}
+        />
+      </div>
+      <div className="flex  gap-3 justify-between max-[500px]:flex-col  max-[500px]:place-items-end">
+        <CommentsCaptcha
+          captchaKey={captchaKey}
+          onTokenChange={setCaptchaToken}
+        />
+        <DefButton
+          type="submit"
+          className="text-button1 w-[120px] h-[40px] "
+          btnColor="cyan"
+          innerItem="댓글 작성"
+        />
+      </div>
+    </form>
   );
 }

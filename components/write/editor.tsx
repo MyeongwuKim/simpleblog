@@ -7,10 +7,16 @@ import useCodeMirror from "@/app/lib/use-codemirror";
 interface EditorProps {
   content: string;
   onChange: (content: string) => void;
+  onReady?: () => void;
   scrollRef: React.RefObject<HTMLDivElement | null>;
 }
 
-const Editor: React.FC<EditorProps> = ({ content, onChange, scrollRef }) => {
+const Editor: React.FC<EditorProps> = ({
+  content,
+  onChange,
+  onReady,
+  scrollRef,
+}) => {
   const { dispatch, state } = useWrite();
   const titleArea = useRef<HTMLTextAreaElement>(null);
   const [refContainer, editorViewRef] = useCodeMirror<HTMLDivElement>({
@@ -38,6 +44,12 @@ const Editor: React.FC<EditorProps> = ({ content, onChange, scrollRef }) => {
     current!.style.height = "auto";
     current!.style.height = current!.scrollHeight + "px";
   }, [state.title]);
+
+  useEffect(() => {
+    if (editorView) {
+      onReady?.();
+    }
+  }, [editorView, onReady]);
 
   return (
     <div className="h-[calc(100%-60px)]  relative w-full bg-bg-page2 dark:shadow-black shadow-md">

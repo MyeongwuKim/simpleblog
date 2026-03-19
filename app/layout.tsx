@@ -47,6 +47,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
+      suppressHydrationWarning
       className={`${pretendard.variable} ${jetbrainsMono.variable} w-full h-full`}
     >
       <head>
@@ -55,7 +56,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/favicon-180x180.png" />
       </head>
 
-      <body className={`ease-linear w-full h-full bg-bg-page2 }`}>
+      <body suppressHydrationWarning className={`ease-linear w-full h-full bg-bg-page2 }`}>
         <MyProvider>
           <UmamiScript />
           <HeaderVisibilityProvider>

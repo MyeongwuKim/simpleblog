@@ -6,6 +6,7 @@ import {
   useEffect,
   useReducer,
   useRef,
+  useState,
 } from "react";
 import DefButton from "@/components/ui/buttons/defButton";
 import { useUI } from "@/components/providers/uiProvider";
@@ -74,13 +75,14 @@ const toPostType = (
 };
 
 const WriteContext = createContext<ContextType | undefined>(undefined);
+
 const Editor = dynamic(() => import("@/components/write/editor"), {
   ssr: false,
-  loading: () => <div className="h-[calc(100%-60px)] w-full bg-bg-page2" />,
+  loading: () => null,
 });
 const Preview = dynamic(() => import("@/components/write/preview"), {
   ssr: false,
-  loading: () => <div className="h-full w-full bg-transparent" />,
+  loading: () => null,
 });
 
 export default function WriteClient({ postId }: { postId: string }) {
@@ -91,6 +93,8 @@ export default function WriteClient({ postId }: { postId: string }) {
   const previewRef = useRef<HTMLDivElement>(null);
   const { openToast, openModal } = useUI();
   const editorScrollRef = useRef<HTMLDivElement | null>(null);
+  const [editorReady, setEditorReady] = useState(false);
+  const [previewReady, setPreviewReady] = useState(false);
 
   const { data: result } = useQuery<
     QueryResponse<
@@ -602,11 +606,14 @@ export default function WriteClient({ postId }: { postId: string }) {
         <div className="relative w-full flex gap-8 h-full ">
           <div
             id="editorContainer"
-            className="flex w-full flex-col h-full relative"
+            className={`flex w-full flex-col h-full relative transition-opacity duration-500 ${
+              editorReady ? "opacity-100" : "opacity-0"
+            }`}
           >
             <Editor
               content={state.content}
               onChange={handleChange}
+              onReady={() => setEditorReady(true)}
               scrollRef={editorScrollRef}
             />
             <div
@@ -653,13 +660,18 @@ export default function WriteClient({ postId }: { postId: string }) {
           </div>
           <div
             id="previewWrapper"
-            className={`w-full h-full justify-center items-center max-md:hidden`}
+            className={`w-full h-full justify-center items-center max-md:hidden transition-opacity duration-700 ${
+              previewReady ? "opacity-100" : "opacity-0"
+            }`}
           >
             <div
               id="previewContainer"
               className={`w-full h-full bg-transparent`}
             >
-              <Preview containerRef={previewRef} />
+              <Preview
+                containerRef={previewRef}
+                onReady={() => setPreviewReady(true)}
+              />
             </div>
           </div>
         </div>

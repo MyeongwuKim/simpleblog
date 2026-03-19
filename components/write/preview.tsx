@@ -4,10 +4,16 @@ import { useWrite } from "@/app/write/writeClient";
 
 function Preview({
   containerRef,
+  onReady,
 }: {
   containerRef?: React.RefObject<HTMLDivElement | null>;
+  onReady?: () => void;
 }) {
   const { state } = useWrite();
+
+  React.useEffect(() => {
+    onReady?.();
+  }, [onReady]);
 
   return (
     <div

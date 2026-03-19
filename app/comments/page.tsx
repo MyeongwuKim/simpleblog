@@ -1,5 +1,5 @@
 import InfiniteScrollProvider from "@/components/layout/InfiniteScroll/infiniteScrollProvider";
-import CommentsLayout from "@/components/comments/commentsLayout";
+import CommentsLayout from "@/app/comments/_components/commentsLayout";
 
 export default async function Comments() {
   const queryKey = ["comments"];

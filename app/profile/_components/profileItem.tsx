@@ -5,8 +5,7 @@ import { FaGithub, FaInstagram } from "react-icons/fa6";
 import { RiNotionFill } from "react-icons/ri";
 import { getDeliveryDomain } from "@/app/hooks/useUtil";
 import Image from "next/image";
-
-import ReactMD from "@/components/write/reactMD";
+import dynamic from "next/dynamic";
 import DefButton from "../../../components/ui/buttons/defButton";
 import { useCallback, useState } from "react";
 import { TextAreaField } from "../../../components/ui/input/textAreaField";
@@ -15,6 +14,18 @@ import { useUI } from "@/components/providers/uiProvider";
 import { useSession } from "next-auth/react";
 import { useProfileMutate } from "../../../components/ui/profile/query";
 import { Profile } from "@prisma/client";
+
+const ProfileMarkdown = dynamic(() => import("@/components/write/reactMD"), {
+  ssr: false,
+  loading: () => (
+    <div aria-hidden="true" className="space-y-4">
+      <div className="h-4 w-full rounded bg-background2" />
+      <div className="h-4 w-11/12 rounded bg-background2" />
+      <div className="h-4 w-10/12 rounded bg-background2" />
+      <div className="h-4 w-8/12 rounded bg-background2" />
+    </div>
+  ),
+});
 
 const mainTheme = createTheme({
   card: {
@@ -169,7 +180,7 @@ function IntroContentForm({
           <TextAreaField value={introContent} onChange={onTextAreaChange} />
         </div>
       ) : (
-        <ReactMD doc={content} />
+        <ProfileMarkdown doc={content} />
       )}
     </div>
   );

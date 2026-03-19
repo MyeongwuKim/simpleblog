@@ -3,13 +3,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useRef, useState } from "react";
 import { getDeliveryDomain, timeStamp } from "@/app/hooks/useUtil";
-import { showGlobalToast } from "@/app/lib/toastManager";
 import { Collection, Image as ImageType } from "@prisma/client";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DefButton from "../ui/buttons/defButton";
 import UploadButton from "../ui/buttons/uploadButton";
 import Image from "next/image";
@@ -20,6 +15,7 @@ import { fetchAllCollections } from "@/app/lib/fetchers/collections";
 import LabelButton from "../ui/buttons/labelButton";
 import { IoMdSettings } from "react-icons/io";
 import type { ModalComponentProps } from "./modalRegistry";
+import { useUI } from "../providers/uiProvider";
 
 type WriteModalProps = ModalComponentProps<"WRITE">;
 
@@ -31,6 +27,7 @@ export default function WriteModal({
   collection,
   show = true,
 }: WriteModalProps) {
+  const { openToast } = useUI();
   const [uploading, setUploading] = useState(false);
   const [useCollectionModal, setUseCollectionModal] = useState<boolean>(false);
   const [collectionData, setCollectionData] = useState<string | null>(
@@ -136,7 +133,7 @@ export default function WriteModal({
         setUploading(false);
       } catch {
         setUploading(false);
-        showGlobalToast(true, "이미지 업로드중 실패하였습니다", 1);
+        openToast(true, "이미지 업로드중 실패하였습니다", 1);
       }
     }
   };
@@ -333,6 +330,7 @@ interface CollectionModalProps {
 }
 
 function CollectionModal({ onClose, defaultValue }: CollectionModalProps) {
+  const { openToast } = useUI();
   const queryClient = useQueryClient();
   const scrollBar = useRef<HTMLDivElement>(null);
   const [newCollection, setNewCollection] = useState("");
@@ -349,9 +347,19 @@ function CollectionModal({ onClose, defaultValue }: CollectionModalProps) {
     void,
     {
       previous?: QueryResponse<Collection[]>;
+      skippedOptimistic?: boolean;
     }
   >({
     mutationFn: async () => {
+      const normalized = newCollection.trim();
+      if (
+        resCollecitonData?.data.some(
+          (item) => item.slug.toLowerCase() === normalized.toLowerCase()
+        )
+      ) {
+        throw new Error("중복된 컬렉션 이름입니다.");
+      }
+
       const result = await (
         await fetch("/api/collections", {
           method: "POST",
@@ -375,8 +383,19 @@ function CollectionModal({ onClose, defaultValue }: CollectionModalProps) {
         "all",
       ]);
 
+      const normalized = newCollection.trim();
+      const duplicated = previous?.data.some(
+        (item) => item.slug.toLowerCase() === normalized.toLowerCase()
+      );
+
+      if (duplicated) {
+        return { previous, skippedOptimistic: true };
+      }
+
+      const optimisticId = `optimistic-${Date.now()}`;
+
       const optimisticCollection: Collection = {
-        id: `optimistic-${Date.now()}`,
+        id: optimisticId,
         slug: newCollection,
         title: newCollection,
         thumbnail: null,
@@ -405,20 +424,18 @@ function CollectionModal({ onClose, defaultValue }: CollectionModalProps) {
 
       requestAnimationFrame(scrollToBottom);
 
-      setCollecionData(`optimistic-${Date.now()}` + "," + newCollection);
+      setCollecionData(optimisticId + "," + newCollection);
 
       return { previous };
     },
     onError: (error, _vars, context) => {
-      if (context?.previous) {
+      if (context?.previous && !context.skippedOptimistic) {
         queryClient.setQueryData<QueryResponse<Collection[]>>(
           ["collections", "all"],
-          (old) => {
-            return context?.previous;
-          }
+          () => context.previous
         );
       }
-      showGlobalToast(true, error.message, 1);
+      openToast(true, error.message, 1);
     },
   });
 
@@ -455,7 +472,7 @@ function CollectionModal({ onClose, defaultValue }: CollectionModalProps) {
               onSubmit={(e) => {
                 e.preventDefault();
                 if (newCollection.length <= 0) {
-                  showGlobalToast(true, "컬렉션 이름을 입력해주세요.", 1);
+                  openToast(true, "컬렉션 이름을 입력해주세요.", 1);
                   return;
                 }
                 mutate();
@@ -488,7 +505,7 @@ function CollectionModal({ onClose, defaultValue }: CollectionModalProps) {
 
                 return (
                   <button
-                    key={item.slug}
+                    key={item.id}
                     type="button"
                     onClick={() => setCollecionData(item.id + "," + item.slug)}
                     className={`w-full text-left px-4 py-3
