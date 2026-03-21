@@ -74,8 +74,31 @@
 
 ------------------------------------------------------------------------
 
+## ✅ Test & Quality
+
+-   현재 테스트 상태: **9 suites / 33 tests 통과**
+-   `npm run lint` 기준 ESLint warning/error 없음
+-   1인 개발 특성상 전수 테스트보다 **회귀 위험이 큰 핵심 로직 우선**으로 테스트 작성
+-   커버한 핵심 유틸:
+    -   `getFormatImagesId` (markdown 이미지 ID 추출)
+    -   `formatRelativeTime` / `formateDate` (시간/날짜 표기)
+    -   `getDeliveryDomain` (Cloudflare URL 생성)
+    -   `setScrollValue` / `getScrollValue` (scroll state 저장/복원)
+
+------------------------------------------------------------------------
+
 ## ⚙️ Setup & Usage
 
 ``` bash
+# demo mode (in-memory db)
 npm run demo
+
+# local development
+npm run dev
+
+# test
+npm test -- --runInBand
+
+# production build
+npm run build
 ```

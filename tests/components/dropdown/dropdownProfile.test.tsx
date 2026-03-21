@@ -30,6 +30,6 @@ describe("DropdownProfile Test", () => {
     const img = screen.getByRole("img", { name: "profile" });
 
     expect(img).toBeInTheDocument();
-    expect(img).toHaveAttribute("src", getDeliveryDomain("testImg", "thumbnail"));
+    expect(img).toHaveAttribute("src", getDeliveryDomain("testImg", "avatar"));
   });
 });
