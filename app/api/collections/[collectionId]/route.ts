@@ -13,6 +13,8 @@ export const GET = async (
   { params }: CollectionRouteContext
 ) => {
   const { collectionId } = await params;
+  const mode = req.nextUrl.searchParams.get("mode");
+  const isPostMode = mode === "post";
 
   if (!ObjectId.isValid(collectionId)) {
     return NextResponse.json({ ok: false, data: null });
@@ -41,21 +43,34 @@ export const GET = async (
       .sort((a, b) => a.order - b.order);
 
     // 2️⃣ posts fetch
-    const postsRaw = await db.post.findMany({
-      where: {
-        id: {
-          in: items.map((item) => item.postId),
-        },
-      },
-      select: {
-        id: true,
-        title: true,
-        preview: true,
-        slug: true,
-        thumbnail: true,
-        createdAt: true,
-      },
-    });
+    const postsRaw = isPostMode
+      ? await db.post.findMany({
+          where: {
+            id: {
+              in: items.map((item) => item.postId),
+            },
+          },
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+          },
+        })
+      : await db.post.findMany({
+          where: {
+            id: {
+              in: items.map((item) => item.postId),
+            },
+          },
+          select: {
+            id: true,
+            title: true,
+            preview: true,
+            slug: true,
+            thumbnail: true,
+            createdAt: true,
+          },
+        });
 
     // 3️⃣ map으로 순서 맞추기
     const postMap = new Map(postsRaw.map((p) => [p.id, p]));

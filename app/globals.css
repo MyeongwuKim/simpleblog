@@ -5,7 +5,6 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --font-inter: "Inter", sans-serif;
   --font-pretendard: "Pretendard", sans-serif;
   --font-jetbrains-mono: "JetBrains Mono", monospace;
 }
@@ -18,14 +17,8 @@
   }
 }
 
-@theme {
-  --font-sans: var(--font-pretendard);
-  --font-inter: var(--font-inter);
-  --font-mono: var(--font-jetbrains-mono);
-}
-
 body {
-  font-family: var(--font-pretendard);
+  font-family: var(--font-pretendard), system-ui, sans-serif;
   background-color: var(--color-bg-page2);
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   InfiniteData,
@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-query";
 import { Image as ImageType, Post, Tag } from "@prisma/client";
 import { formateDate, getDeliveryDomain } from "@/app/hooks/useUtil";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 
 import {
@@ -22,7 +22,7 @@ import {
 import { useSession } from "next-auth/react";
 
 import Image from "next/image";
-import { fetchCollectionDetail } from "@/app/lib/fetchers/collections";
+import { fetchCollectionPostList } from "@/app/lib/fetchers/collections";
 import {
   IoChevronBack,
   IoChevronDown,
@@ -58,6 +58,7 @@ export default function CommonPost({ postId }: { postId: string }) {
   const queryClient = useQueryClient();
   const route = useRouter();
   const { openToast } = useUI();
+  const hasTrackedViewRef = useRef(false);
   //POST DELETE
   const { mutate, isPending } = useMutation<
     QueryResponse<{ post: Post; tag: Tag[] }>,
@@ -185,9 +186,10 @@ export default function CommonPost({ postId }: { postId: string }) {
   const headRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!postData?.ok || session) return;
+    if (!postData?.ok || session || hasTrackedViewRef.current) return;
+    hasTrackedViewRef.current = true;
     postStatsMutate();
-  }, [postData?.ok]);
+  }, [postData?.ok, postStatsMutate, session]);
 
   if (isPostLoading || !postData || isPending || postError) {
     return (
@@ -402,13 +404,16 @@ function CollectionListBox({
   slug: string;
   postId: string;
 }) {
+  type CollectionPostListItem = Pick<Post, "id" | "title" | "slug">;
   const {
     data: collectionData,
     isLoading,
     isError,
-  } = useQuery<QueryResponse<{ title: string; items: CollectionItemType[] }>>({
+  } = useQuery<
+    QueryResponse<{ title: string; items: CollectionPostListItem[] }>
+  >({
     queryKey: ["collections", collectionId],
-    queryFn: () => fetchCollectionDetail(collectionId),
+    queryFn: () => fetchCollectionPostList(collectionId),
     staleTime: 600 * 1000,
   });
   const { collectionOpen, setCollectionOpen } = usePostDetailContext();
@@ -416,7 +421,10 @@ function CollectionListBox({
   const route = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const items = collectionData?.data.items ?? [];
+  const items = useMemo(
+    () => collectionData?.data.items ?? [],
+    [collectionData?.data.items]
+  );
 
   const canPrev = activeIndex > 0;
   const canNext = activeIndex < items.length - 1;

@@ -1,10 +1,14 @@
 import PostDetailProvider from "@/components/providers/postDetailProvider";
-import { Metadata } from "next";
+import SessionBoundary from "@/components/providers/sessionBoundary";
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <PostDetailProvider>{children}</PostDetailProvider>;
+  return (
+    <SessionBoundary>
+      <PostDetailProvider>{children}</PostDetailProvider>
+    </SessionBoundary>
+  );
 }

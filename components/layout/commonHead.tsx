@@ -11,23 +11,50 @@ import DropdownProfile from "../ui/dropdown/dropdownProfile";
 import { FaBookBookmark } from "react-icons/fa6";
 import { FaSave } from "react-icons/fa";
 import { useProfileQuery } from "../ui/profile/query";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import DefButton from "../ui/buttons/defButton";
+import { Skeleton } from "../ui/skeleton";
 
 const showList = ["/", "/profile", "/comments", "/collections"];
 
 export default function Head() {
   const { setTheme, theme } = useTheme();
-  const { data: session } = useSession();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [myTheme, setMyTheme] = useState<string | undefined>(theme);
   const route = useRouter();
   const pathname = usePathname();
 
-  const { data } = useProfileQuery();
+  const { data, isLoading: isProfileLoading } = useProfileQuery({
+    enabled: isLoggedIn,
+  });
 
   useEffect(() => {
     setTheme(myTheme!);
-  }, [myTheme]);
+  }, [myTheme, setTheme]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const response = await fetch("/api/auth/session");
+        const result = await response.json();
+        if (mounted) {
+          setIsLoggedIn(!!result?.user);
+          setIsAuthChecking(false);
+        }
+      } catch {
+        if (mounted) {
+          setIsLoggedIn(false);
+          setIsAuthChecking(false);
+        }
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const loginBtnClick = useCallback(() => {
     signIn();
@@ -59,7 +86,9 @@ export default function Head() {
               unCheckIcon={<IoMoon className="w-[2rem] h-[2rem] relative" />}
             />
           </div>
-          {!session ? (
+          {isAuthChecking ? (
+            <Skeleton className="h-[35px] w-[90px]" rounded="rounded-md" />
+          ) : !isLoggedIn ? (
             <DefButton
               className="h-[35px] w-[90px] text-base"
               btnColor={"gray"}
@@ -67,6 +96,8 @@ export default function Head() {
               innerItem={"로그인"}
               onClickEvt={loginBtnClick}
             />
+          ) : isProfileLoading ? (
+            <Skeleton className="h-[35px] w-[35px]" rounded="rounded-full" />
           ) : (
             <div className="w-auto h-[45px]">
               <DropdownProfile

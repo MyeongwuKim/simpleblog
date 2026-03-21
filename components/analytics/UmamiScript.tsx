@@ -2,19 +2,35 @@
 
 import Script from "next/script";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 
 export default function UmamiScript() {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // 1️⃣ post 상세 페이지만 허용
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const response = await fetch("/api/auth/session");
+        const data = await response.json();
+        if (mounted) {
+          setIsLoggedIn(!!data?.user);
+        }
+      } catch {
+        if (mounted) {
+          setIsLoggedIn(false);
+        }
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const isPostPage = pathname.startsWith("/post/");
 
-  // 2️⃣ 로그인 유저는 제외 (원하면)
-  const isLoggedIn = !!session;
-
-  // 👉 조건 하나라도 안 맞으면 Umami 차단
   if (!isPostPage || isLoggedIn) {
     return null;
   }

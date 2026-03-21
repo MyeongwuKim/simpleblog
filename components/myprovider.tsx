@@ -8,7 +8,6 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools"; // 1. devto
 import getQueryClient from "@/app/hooks/useQueryClient";
 import { ReactQueryStreamedHydration } from "@tanstack/react-query-next-experimental";
 import { UIProvider } from "./providers/uiProvider";
-import { SessionProvider } from "next-auth/react";
 import { PopupContainer } from "./providers/popupContainer";
 
 export function MyProvider({ children }: { children: React.ReactNode }) {
@@ -16,28 +15,26 @@ export function MyProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ReduxProvider store={store()}>
-      <SessionProvider>
-        <ThemeProvider attribute="class">
-          <QueryClientProvider client={queryClient}>
-            <UIProvider>
-              <ReactQueryStreamedHydration>
-                {children}
-              </ReactQueryStreamedHydration>
-              <Suspense fallback={null}>
-                <PopupContainer />
-              </Suspense>
-              {process.env.NODE_ENV == "development" ? (
-                <ReactQueryDevtools
-                  initialIsOpen={false}
-                  buttonPosition="bottom-right"
-                />
-              ) : (
-                ""
-              )}
-            </UIProvider>
-          </QueryClientProvider>
-        </ThemeProvider>
-      </SessionProvider>
+      <ThemeProvider attribute="class">
+        <QueryClientProvider client={queryClient}>
+          <UIProvider>
+            <ReactQueryStreamedHydration>
+              {children}
+            </ReactQueryStreamedHydration>
+            <Suspense fallback={null}>
+              <PopupContainer />
+            </Suspense>
+            {process.env.NODE_ENV == "development" ? (
+              <ReactQueryDevtools
+                initialIsOpen={false}
+                buttonPosition="bottom-right"
+              />
+            ) : (
+              ""
+            )}
+          </UIProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </ReduxProvider>
   );
 }
