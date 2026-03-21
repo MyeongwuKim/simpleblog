@@ -36,6 +36,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/api/:path*", // API 요청도 검사
-    "/((?!_next/static|_next/image|favicon.ico|auth/signin).*)", // 나머지 페이지
+    "/((?!_next/static|_next/image|favicon.ico|auth/signin|robots.txt|sitemap.xml).*)", // 나머지 페이지
   ],
 };
