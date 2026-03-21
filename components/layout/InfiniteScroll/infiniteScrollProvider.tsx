@@ -16,7 +16,7 @@ import TempItem from "@/components/ui/items/tempItem";
 import { CardItemSkeleton, TempItemSkeleton } from "@/components/ui/skeleton";
 import { Collection, Comment, Image, Post } from "@prisma/client";
 import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useInView } from "react-intersection-observer";
 import CollectionCardItem from "@/components/ui/items/collectionCardItem";
 import { fetchFeedCollections } from "@/app/lib/fetchers/collections";
@@ -188,8 +188,10 @@ export default function InfiniteScrollProvider<T extends DataType>({
 
   const flatData: DataTypeMap[T][] =
     data?.pages.flatMap((page) => page.data) ?? [];
-  const pageErrors: InfiniteResponse<DataTypeMap[T]>[] =
-    data?.pages.filter((page) => page.ok === false) ?? [];
+  const pageErrors: InfiniteResponse<DataTypeMap[T]>[] = useMemo(
+    () => data?.pages.filter((page) => page.ok === false) ?? [],
+    [data?.pages]
+  );
   const failedPages = data?.pages
     .map((page, index) => (!page.ok ? index : null))
     .filter((i) => i !== null) as number[];
@@ -204,7 +206,7 @@ export default function InfiniteScrollProvider<T extends DataType>({
 
     if (!hasBodyOverflow()) return;
     fetchNextPage();
-  }, [inView, isLoading, isFetchingNextPage, hasNextPage, pageErrors]);
+  }, [inView, isLoading, isFetchingNextPage, hasNextPage, pageErrors, fetchNextPage]);
 
   return (
     <div ref={containerRef} className="relative">

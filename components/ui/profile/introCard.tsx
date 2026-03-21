@@ -75,7 +75,7 @@ export default function IntroCard({
       mutate({ form: "profileimg", profileImg: null });
       setProfileImg(null);
     }
-  }, [pImg]);
+  }, [mutate, pImg]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

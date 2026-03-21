@@ -322,12 +322,15 @@ export default function ReactMD({ doc, images = [] }: ReactMDProps) {
 
           if (!meta?.width || !meta?.height) {
             return (
-              <img
+              <Image
                 src={safeSrc}
                 alt={alt ?? ""}
-                loading="lazy"
-                decoding="async"
+                width={1200}
+                height={675}
+                sizes="(max-width: 768px) 100vw, 768px"
+                unoptimized
                 className="mx-auto block h-auto max-w-full"
+                style={{ width: "100%", height: "auto" }}
               />
             );
           }

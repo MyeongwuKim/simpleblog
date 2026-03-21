@@ -447,7 +447,7 @@ function CollectionModal({ onClose, defaultValue }: CollectionModalProps) {
       top: el.scrollHeight,
       behavior: "smooth",
     });
-  }, [resCollecitonData]);
+  }, []);
 
   return (
     <AnimatePresence>

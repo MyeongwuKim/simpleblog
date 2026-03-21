@@ -27,6 +27,11 @@ const useCodeMirror = <T extends Element>(
   const refContainer = useRef<T>(null); // 에디터 컨테이너 DOM
   const editorViewRef = useRef<EditorView | null>(null); // CodeMirror 인스턴스
   const { onChange, initialDoc } = props;
+  const onChangeRef = useRef(onChange);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   // ✅ 최초 1회만 EditorView 생성
   useEffect(() => {
@@ -62,7 +67,7 @@ const useCodeMirror = <T extends Element>(
         EditorView.lineWrapping,
         EditorView.updateListener.of((update) => {
           if (update.changes) {
-            onChange?.(update.state.doc.toString());
+            onChangeRef.current?.(update.state.doc.toString());
           }
         }),
       ],

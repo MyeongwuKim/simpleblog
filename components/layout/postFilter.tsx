@@ -53,7 +53,7 @@ export default function Postfilter() {
     if (paramValue !== dateType) {
       setDateType(paramValue);
     }
-  }, [searchParams]);
+  }, [searchParams, dateType]);
 
   // state 변경 시 URL 업데이트
   const changeDateType = (value: string) => {

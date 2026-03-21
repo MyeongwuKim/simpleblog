@@ -13,7 +13,7 @@ const Signin = () => {
       redirect: true,
       callbackUrl: "/",
     });
-  }, []);
+  }, [isDemo]);
   return (
     <div className="flex flex-col ">
       <div className="font-semibold text-2xl text-center mb-4"> 로그인 </div>

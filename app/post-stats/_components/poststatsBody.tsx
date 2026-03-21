@@ -21,7 +21,6 @@ export default function PostStatsBody({ postId }: { postId: string }) {
   const {
     data: statsData,
     isLoading,
-    isError,
   } = useQuery<QueryResponse<PostStatsType>>({
     queryKey: ["poststats", postId],
     queryFn: () => {

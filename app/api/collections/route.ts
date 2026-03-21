@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache";
 import { NextResponse, NextRequest } from "next/server";
 import { db } from "@/app/lib/db";
 import { Collection } from "@prisma/client";
@@ -110,7 +109,7 @@ export const POST = async (req: NextRequest) => {
 
 export const DELETE = async (req: NextRequest) => {
   try {
-    const id = req.nextUrl.searchParams.get("id");
+    req.nextUrl.searchParams.get("id");
   } catch (e: unknown) {
     if (e instanceof Error) {
       return NextResponse.json(

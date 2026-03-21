@@ -1,5 +1,3 @@
-import { FetchParams } from "./post";
-
 export const fetchFeedCollections = async (cursor: string | undefined) => {
   const baseUrl = process.env.NEXTAUTH_URL ?? ""; // undefined면 빈 문자열
   const search = new URLSearchParams();

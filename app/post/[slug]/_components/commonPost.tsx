@@ -208,7 +208,6 @@ export default function CommonPost({ postId }: { postId: string }) {
           tag={postData.data.tag}
           createdAt={postData.data.createdAt}
           postId={postData.data.id}
-          slug={postData?.data.slug}
           mutate={mutate}
         />
         <PostSide headRef={headRef} content={postData.data.content} />
@@ -308,11 +307,10 @@ interface HeadProps {
   tag: Tag[];
   createdAt: Date;
   postId: string;
-  slug: string;
   mutate: UseMutateFunction;
 }
 const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
-  ({ tag, title, createdAt, postId, mutate, slug }, ref) => {
+  ({ tag, title, createdAt, postId, mutate }, ref) => {
     const { data: session } = useSession();
     const route = useRouter();
     const { openModal } = useUI();
@@ -329,7 +327,7 @@ const PostHead = React.forwardRef<HTMLDivElement, HeadProps>(
 
     const tagItemClick = useCallback((body: string) => {
       route.push(`/?tag=${body}`);
-    }, []);
+    }, [route]);
     return (
       <div id="post-head" className="mt-20">
         <h1 ref={ref} className="font-bold text-5xl leading-[1.5] mb-8">

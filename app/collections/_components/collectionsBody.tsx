@@ -3,7 +3,7 @@ import { fetchCollectionDetail } from "@/app/lib/fetchers/collections";
 import DefButton from "@/components/ui/buttons/defButton";
 import InputField from "@/components/ui/input/inputField";
 import CollectionDetailItem from "@/components/ui/items/collectionDetailItem";
-import { Collection, CollectionItem } from "@prisma/client";
+import { Collection } from "@prisma/client";
 import {
   InfiniteData,
   useMutation,
@@ -47,8 +47,6 @@ export default function CollectionsBody({ collectionId }: CollectionBodyProps) {
 
   const {
     data: collectionData,
-    isLoading: isCollectionLoading,
-    isError: collectionError,
   } = useQuery<QueryResponse<{ title: string; items: CollectionItemType[] }>>({
     queryKey: ["collections", collectionId],
     queryFn: () => fetchCollectionDetail(collectionId),

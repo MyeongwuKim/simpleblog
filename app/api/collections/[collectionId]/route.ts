@@ -1,5 +1,5 @@
 import { db } from "@/app/lib/db";
-import { Collection, CollectionItem, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { ObjectId } from "mongodb";
 import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";

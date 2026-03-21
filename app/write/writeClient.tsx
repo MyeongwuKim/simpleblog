@@ -526,58 +526,48 @@ export default function WriteClient({ postId }: { postId: string }) {
 
   const createSlug = (title: string) => new Slugger().slug(title);
 
-  const onMutatProcess = useCallback(
-    async (postProcess: number) => {
-      const { isOk, msg } = validate();
-      if (!isOk) return openToast(true, msg, 1);
+  const onMutatProcess = async (postProcess: number) => {
+    const { isOk, msg } = validate();
+    if (!isOk) return openToast(true, msg, 1);
 
-      const preview = extractPreview();
-      const imageIds = getFormatImagesId(state.content);
-      let popupResult: WriteModalResult = {
-        thumbnail: null,
-        collection: null,
-      };
-      if (postProcess == 1) {
-        //컬렉션 id와 slug를 합쳐서 보냄, 오브젝트 만들기 귀차늠
-        const result = await openModal("WRITE", {
-          preview,
-          thumbnail:
-            state.thumbnail ??
-            (state.images.length > 0 ? state.images[0].imageId : null),
-          title: state.title,
-          collection: state.collection
-            ? state.collection.id + "," + state.collection.slug
-            : null,
-        });
-        if (result == 0) return;
-
-        popupResult = result;
-      }
-      const { thumbnail, collection } = popupResult;
-
-      const filteredImages = state.images.filter((img) =>
-        imageIds.includes(img.imageId)
-      );
-
-      const mutate = isValidPostId ? updateMuate : writeMutate;
-      const collecionData = collection ? collection.split(",") : null;
-
-      mutate.mutate({
-        ...state,
-        isTemp: postProcess === 2,
+    const preview = extractPreview();
+    const imageIds = getFormatImagesId(state.content);
+    let popupResult: WriteModalResult = {
+      thumbnail: null,
+      collection: null,
+    };
+    if (postProcess == 1) {
+      //컬렉션 id와 slug를 합쳐서 보냄, 오브젝트 만들기 귀차늠
+      const result = await openModal("WRITE", {
         preview,
-        thumbnail,
-        collection: collecionData
-          ? { id: collecionData[0], slug: collecionData[1] }
+        thumbnail:
+          state.thumbnail ?? (state.images.length > 0 ? state.images[0].imageId : null),
+        title: state.title,
+        collection: state.collection
+          ? state.collection.id + "," + state.collection.slug
           : null,
-        images: process.env.NEXT_PUBLIC_DEMO ? state.images : filteredImages,
-        ...(isValidPostId
-          ? { slug: state.slug }
-          : { slug: createSlug(state.title) }),
       });
-    },
-    [state]
-  );
+      if (result == 0) return;
+
+      popupResult = result;
+    }
+    const { thumbnail, collection } = popupResult;
+
+    const filteredImages = state.images.filter((img) => imageIds.includes(img.imageId));
+
+    const mutate = isValidPostId ? updateMuate : writeMutate;
+    const collecionData = collection ? collection.split(",") : null;
+
+    mutate.mutate({
+      ...state,
+      isTemp: postProcess === 2,
+      preview,
+      thumbnail,
+      collection: collecionData ? { id: collecionData[0], slug: collecionData[1] } : null,
+      images: process.env.NEXT_PUBLIC_DEMO ? state.images : filteredImages,
+      ...(isValidPostId ? { slug: state.slug } : { slug: createSlug(state.title) }),
+    });
+  };
 
   const handleChange = useCallback((content: string) => {
     dispatch({ type: "SET_FORM", payload: { content } });

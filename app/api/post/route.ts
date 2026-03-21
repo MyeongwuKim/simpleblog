@@ -49,20 +49,6 @@ async function getPostsPageRaw(args: {
   return { ok: true as const, data, nextCursor };
 }
 
-async function createUniqueSlug(base: string) {
-  let slug = "";
-  let isUnique = false;
-
-  while (!isUnique) {
-    const random = Math.random().toString(36).substring(2, 9); // 7자리 랜덤
-    slug = `${base}-${random}`;
-    const existing = await db.post.findUnique({ where: { slug } });
-    if (!existing) isUnique = true;
-  }
-
-  return slug;
-}
-
 // 2) 캐시 팩토리 함수
 function getPostsPageCached(
   tag: string,

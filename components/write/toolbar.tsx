@@ -150,7 +150,7 @@ const ToolBar: NextPage<IToolBar> = (props) => {
         openToast(true, "이미지 업로드중 실패하였습니다", 1);
       }
     },
-    [editorView]
+    [editorView, imageMutate, openToast]
   );
 
   useEffect(() => {
@@ -160,7 +160,7 @@ const ToolBar: NextPage<IToolBar> = (props) => {
       setValue("image", "");
       //URL.revokeObjectURL(url);
     }
-  }, [imageFile, onUploadImgEvt]);
+  }, [imageFile, onUploadImgEvt, setValue]);
 
   const isDragging = useGlobalDragDrop(onUploadImgEvt);
 

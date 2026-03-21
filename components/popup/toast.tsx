@@ -1,6 +1,6 @@
 "use client";
 import { NextPage } from "next";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { HiOutlineExclamationCircle } from "react-icons/hi2";
 import { motion } from "framer-motion";
 
@@ -24,17 +24,7 @@ const Toast: NextPage<ToastProps> = ({
 }) => {
   const [fixedTime] = useState<number>(time);
 
-  useEffect(() => {
-    timeoutLogic();
-    return () => {
-      if (timerStorage[id]) {
-        clearInterval(timerStorage[id]);
-        delete timerStorage[id];
-      }
-    };
-  }, []);
-
-  const timeoutLogic = () => {
+  const timeoutLogic = useCallback(() => {
     const toastEl = document.getElementById(`_toastView${id}`);
     const timeBarEl = document.getElementById(`_toastTime${id}`);
 
@@ -60,7 +50,17 @@ const Toast: NextPage<ToastProps> = ({
     }, 100);
 
     timerStorage[id] = _timer;
-  };
+  }, [fixedTime, id, toastArrHandler]);
+
+  useEffect(() => {
+    timeoutLogic();
+    return () => {
+      if (timerStorage[id]) {
+        clearInterval(timerStorage[id]);
+        delete timerStorage[id];
+      }
+    };
+  }, [id, timeoutLogic]);
 
   return (
     <motion.div

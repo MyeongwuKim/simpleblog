@@ -69,7 +69,7 @@ export default function TagForm() {
     if (result) {
       mutate({ id });
     }
-  }, []);
+  }, [mutate, openModal]);
 
   return (
     <div className="rounded-xl shadow  space-y-4">

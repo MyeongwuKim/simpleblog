@@ -55,7 +55,7 @@ export default function TempItem({ preview, title, updatedAt, id }: Post) {
       btnMsg: ["취소", "확인"],
     });
     if (result) mutate();
-  }, []);
+  }, [mutate, openModal]);
   return (
     <div className="w-full h-full  flex flex-col py-4 gap-4 border-b border-border1">
       <Link href={`/write?id=${id}`}>
