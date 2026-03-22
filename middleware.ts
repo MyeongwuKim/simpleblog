@@ -2,21 +2,20 @@ import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  const { pathname, origin, href } = request.nextUrl;
-  const token = await getToken({ req: request, secret: process.env.SECRET });
+  const { pathname } = request.nextUrl;
 
-  // 로그인 필요 페이지들
-  const protectedPages = ["/write", "/setting", "/temp"];
-
-  // 1) 페이지 접근 차단
-  if (protectedPages.some((page) => pathname.startsWith(page)) && !token) {
-    return NextResponse.redirect(new URL("/auth/signin", request.url));
+  if (request.method !== "POST" && request.method !== "DELETE") {
+    return NextResponse.next();
   }
+
+  if (pathname.startsWith("/api/auth")) {
+    return NextResponse.next();
+  }
+
+  const token = await getToken({ req: request, secret: process.env.SECRET });
 
   if (
     !token &&
-    (request.method === "POST" || request.method === "DELETE") &&
-    !pathname.startsWith("/api/auth") &&
     !(request.method === "POST" && pathname.startsWith("/api/comments")) &&
     !(
       request.method === "POST" &&
@@ -34,8 +33,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/api/:path*", // API 요청도 검사
-    "/((?!_next/static|_next/image|favicon.ico|auth/signin|robots.txt|sitemap.xml).*)", // 나머지 페이지
-  ],
+  matcher: ["/api/:path*"],
 };
