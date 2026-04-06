@@ -243,7 +243,11 @@ const ToolBar: NextPage<IToolBar> = (props) => {
         }
 
         const form = new FormData();
-        form.append("file", file, `${process.env.NODE_ENV}_simpleblog_video`);
+        form.append(
+          "file",
+          file,
+          `${process.env.NODE_ENV}_simpleblog_video_${timeStamp()}`
+        );
 
         const uploadRes = await fetch(streamMeta.uploadURL, {
           method: "POST",
