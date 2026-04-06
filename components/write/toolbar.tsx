@@ -4,17 +4,25 @@ import { EditorView } from "@codemirror/view";
 import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { SearchCursor } from "@codemirror/search";
-import { getDeliveryDomain, timeStamp } from "@/app/hooks/useUtil";
+import {
+  getCloudflareImageErrorMessage,
+  getDeliveryDomain,
+  timeStamp,
+} from "@/app/hooks/useUtil";
 import { useUI } from "../providers/uiProvider";
 import { useMutation } from "@tanstack/react-query";
-import { Image } from "@prisma/client";
+import { Image, Video } from "@prisma/client";
 import { useWrite } from "@/app/write/writeClient";
-import { useGlobalDragDrop } from "@/app/hooks/useDnD";
+import { DragFileType, useGlobalDragDrop } from "@/app/hooks/useDnD";
 
 interface IToolBar {
   theme: string | undefined;
   editorView: EditorView;
 }
+
+const MAX_IMAGE_FILE_BYTES = 10 * 1024 * 1024;
+const STREAM_READY_MAX_RETRY = 15;
+const STREAM_READY_INTERVAL_MS = 2000;
 
 const ToolBar: NextPage<IToolBar> = (props) => {
   const { editorView } = props;
@@ -22,6 +30,7 @@ const ToolBar: NextPage<IToolBar> = (props) => {
   const { openToast } = useUI();
   const { watch, register, setValue } = useForm();
   const imageFile = watch("image");
+  const videoFile = watch("video");
 
   const imageMutate = useMutation<
     QueryResponse<Image>,
@@ -43,6 +52,31 @@ const ToolBar: NextPage<IToolBar> = (props) => {
         type: "SET_FORM",
         payload: {
           images: [...state.images, res.data],
+        },
+      });
+    },
+    onError: (error) => openToast(true, error.message, 1),
+  });
+
+  const videoMutate = useMutation<QueryResponse<Video>, Error, { streamId: string }>({
+    mutationFn: async (formData) => {
+      const result = await (
+        await fetch("/api/video", {
+          method: "POST",
+          body: JSON.stringify({ ...formData }),
+        })
+      ).json();
+      if (!result.ok) throw new Error(result.error);
+      return result;
+    },
+    onSuccess: (res) => {
+      const exists = state.videos.some((video) => video.streamId === res.data.streamId);
+      if (exists) return;
+
+      dispatch({
+        type: "SET_FORM",
+        payload: {
+          videos: [...state.videos, res.data],
         },
       });
     },
@@ -76,6 +110,14 @@ const ToolBar: NextPage<IToolBar> = (props) => {
         });
 
       if (!editorView) return;
+      if (file.size > MAX_IMAGE_FILE_BYTES) {
+        openToast(
+          true,
+          "파일 용량이 너무 큽니다. 10MB 이하 이미지로 업로드해주세요.",
+          1
+        );
+        return;
+      }
       editorView?.focus();
       const imgURL = URL.createObjectURL(file);
 
@@ -115,9 +157,12 @@ const ToolBar: NextPage<IToolBar> = (props) => {
         //원본 이미지의 넓이 높이 추출
         const { width, height } = await getImageSize(file);
 
-        const { uploadURL } = await (
+        const uploadMeta = await (
           await fetch(`/api/upload`, { method: "POST" })
         ).json();
+        if (!uploadMeta?.ok || !uploadMeta?.uploadURL) {
+          throw new Error(uploadMeta?.error ?? "이미지 업로드 URL 생성에 실패하였습니다.");
+        }
 
         const form = new FormData();
 
@@ -126,14 +171,18 @@ const ToolBar: NextPage<IToolBar> = (props) => {
           file as File,
           `${process.env.NODE_ENV}_simpleblog_${timeStamp()}`
         );
-        const {
-          result: { id },
-        } = await (
-          await fetch(uploadURL, {
-            method: "POST",
-            body: form,
-          })
-        ).json();
+        const uploadRes = await fetch(uploadMeta.uploadURL, {
+          method: "POST",
+          body: form,
+        });
+        const uploadJson = await uploadRes.json();
+        const id = uploadJson?.result?.id as string | undefined;
+        if (!uploadRes.ok || !id) {
+          throw new Error(
+            uploadJson?.errors?.[0]?.message ??
+              "Cloudflare 이미지 업로드에 실패하였습니다."
+          );
+        }
 
         imageMutate.mutate({ imageId: id, width, height });
         const cursor = new SearchCursor(editorView.state.doc, link);
@@ -146,8 +195,8 @@ const ToolBar: NextPage<IToolBar> = (props) => {
             insert: `![](${getDeliveryDomain(id, "public")})`,
           },
         });
-      } catch {
-        openToast(true, "이미지 업로드중 실패하였습니다", 1);
+      } catch (e: unknown) {
+        openToast(true, getCloudflareImageErrorMessage(e), 1);
       }
     },
     [editorView, imageMutate, openToast]
@@ -162,7 +211,138 @@ const ToolBar: NextPage<IToolBar> = (props) => {
     }
   }, [imageFile, onUploadImgEvt, setValue]);
 
-  const isDragging = useGlobalDragDrop(onUploadImgEvt);
+  const onUploadVideoEvt = useCallback(
+    async (file: File) => {
+      if (!editorView) return;
+
+      const line = editorView.state.doc.lineAt(
+        editorView.state.selection.main.from
+      )!;
+      const startCaret = editorView.state.selection.ranges[0].from - line.from;
+      const endCaret =
+        editorView.state.selection.ranges[0].to -
+        editorView.state.selection.ranges[0].from;
+      const cutStr = line?.text.substring(startCaret, startCaret + endCaret);
+
+      const pendingToken = `업로드중-비디오-${Date.now()}`;
+      const pendingText = `[${cutStr!.length > 0 ? cutStr : "업로드중 비디오"}](${pendingToken})`;
+      const tr = editorView.state.update(
+        editorView.state.replaceSelection(pendingText)
+      );
+      editorView.dispatch(tr);
+
+      try {
+        const streamMeta = await (
+          await fetch("/api/stream-upload", { method: "POST" })
+        ).json();
+
+        if (!streamMeta?.ok || !streamMeta?.uploadURL || !streamMeta?.uid) {
+          throw new Error(
+            streamMeta?.error ?? "비디오 업로드 URL 생성에 실패하였습니다."
+          );
+        }
+
+        const form = new FormData();
+        form.append("file", file, `${process.env.NODE_ENV}_simpleblog_video`);
+
+        const uploadRes = await fetch(streamMeta.uploadURL, {
+          method: "POST",
+          body: form,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error("비디오 업로드에 실패하였습니다.");
+        }
+
+        let ready = false;
+        for (let i = 0; i < STREAM_READY_MAX_RETRY; i += 1) {
+          const status = await (
+            await fetch(`/api/stream-upload?uid=${streamMeta.uid}`, {
+              method: "GET",
+              cache: "no-store",
+            })
+          ).json();
+
+          if (status?.ok && status?.readyToStream) {
+            ready = true;
+            break;
+          }
+
+          await new Promise((resolve) =>
+            setTimeout(resolve, STREAM_READY_INTERVAL_MS)
+          );
+        }
+
+        if (!ready) {
+          throw new Error(
+            "비디오 인코딩중입니다. 잠시 후 다시 시도해주세요."
+          );
+        }
+
+        await videoMutate.mutateAsync({ streamId: streamMeta.uid });
+
+        const streamUrl = `https://iframe.videodelivery.net/${streamMeta.uid}`;
+        const cursor = new SearchCursor(editorView.state.doc, pendingText);
+        cursor.next();
+
+        editorView.dispatch({
+          changes: {
+            from: cursor.value.from,
+            to: cursor.value.to,
+            insert: `![video](${streamUrl})`,
+          },
+        });
+      } catch (e: unknown) {
+        const cursor = new SearchCursor(editorView.state.doc, pendingText);
+        cursor.next();
+        editorView.dispatch({
+          changes: {
+            from: cursor.value.from,
+            to: cursor.value.to,
+            insert: "",
+          },
+        });
+
+        const message =
+          e instanceof Error
+            ? e.message
+            : "비디오 업로드중 실패하였습니다";
+        openToast(true, message, 1);
+      }
+    },
+    [editorView, openToast, videoMutate]
+  );
+
+  useEffect(() => {
+    if (videoFile && videoFile.length > 0) {
+      const file: File = videoFile[0];
+      onUploadVideoEvt(file);
+      setValue("video", "");
+    }
+  }, [onUploadVideoEvt, setValue, videoFile]);
+
+  const onDropFile = useCallback(
+    (file: File) => {
+      if (file.type.startsWith("image/")) {
+        onUploadImgEvt(file);
+        return;
+      }
+      if (file.type.startsWith("video/")) {
+        onUploadVideoEvt(file);
+        return;
+      }
+      openToast(true, "이미지 또는 비디오 파일만 업로드 가능합니다.", 1);
+    },
+    [onUploadImgEvt, onUploadVideoEvt, openToast]
+  );
+
+  const { isDragging, dragType } = useGlobalDragDrop(onDropFile);
+
+  const getDragLabel = (type: DragFileType) => {
+    if (type === "image") return "이미지 파일 드롭하여 업로드";
+    if (type === "video") return "비디오 파일 드롭하여 업로드";
+    return "파일을 드롭하여 업로드";
+  };
 
   const onLinkEvt = () => {
     if (!editorView) return;
@@ -472,12 +652,63 @@ const ToolBar: NextPage<IToolBar> = (props) => {
             accept="image/*"
           />
         </label>
+        <label
+          htmlFor="video"
+          className="cursor-pointer flex items-center w-8 h-8 relative hover:dark:bg-zinc-800 hover:bg-slate-200"
+        >
+          <svg
+            stroke="currentColor"
+            fill="currentColor"
+            strokeWidth="0"
+            viewBox="0 0 24 24"
+            className="m-auto w-12 h-8"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M17 10.5V6c0-1.1-.9-2-2-2H5C3.9 4 3 4.9 3 6v12c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4.5l4 4v-11l-4 4z" />
+          </svg>
+          <input
+            {...register("video")}
+            id="video"
+            type="file"
+            className="hidden"
+            accept="video/mp4,video/webm,video/quicktime"
+          />
+        </label>
       </div>
       <div
         className={`fixed w-full h-full dark:bg-[rgba(0,0,0,0.4)] invisible
           ${isDragging && "visible"}
            bg-[rgba(249,249,249,0.4)] top-0 left-0 z-[9999]`}
-      />
+      >
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="opacity-70 rounded-xl border border-border1 bg-background1 px-8 py-6 flex flex-col items-center gap-3">
+            {dragType === "video" ? (
+              <svg
+                stroke="currentColor"
+                fill="currentColor"
+                strokeWidth="0"
+                viewBox="0 0 24 24"
+                className="w-14 h-14 text-text3"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M17 10.5V6c0-1.1-.9-2-2-2H5C3.9 4 3 4.9 3 6v12c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-4.5l4 4v-11l-4 4z" />
+              </svg>
+            ) : (
+              <svg
+                stroke="currentColor"
+                fill="currentColor"
+                strokeWidth="0"
+                viewBox="0 0 24 24"
+                className="w-14 h-14 text-text3"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"></path>
+              </svg>
+            )}
+            <span className="text-text2 text-sm">{getDragLabel(dragType)}</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -3,15 +3,22 @@ import { NextRequest, NextResponse } from "next/server";
 export const POST = async (req: NextRequest) => {
   try {
     const fetchUrl = `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/images/v1/direct_upload`;
-    const response = await (
-      await fetch(fetchUrl, {
-        method: req.method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.CF_TOKEN}`,
-        },
-      })
-    ).json();
+    const cfRes = await fetch(fetchUrl, {
+      method: req.method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.CF_TOKEN}`,
+      },
+    });
+    const response = await cfRes.json();
+
+    if (!cfRes.ok || !response?.success || !response?.result?.uploadURL) {
+      const message =
+        response?.errors?.[0]?.message ??
+        "이미지 업로드 URL 생성에 실패하였습니다.";
+      return NextResponse.json({ ok: false, error: message }, { status: 502 });
+    }
+
     return NextResponse.json({
       ok: true,
       ...response.result,

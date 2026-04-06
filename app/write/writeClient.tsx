@@ -19,13 +19,13 @@ import {
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Slugger from "github-slugger";
-import { Collection, Image, Post, Tag } from "@prisma/client";
+import { Collection, Image, Post, Tag, Video } from "@prisma/client";
 import { fetchPostContentByPostId } from "../lib/fetchers/post";
 
-import { getFormatImagesId } from "../hooks/useUtil";
+import { getFormatImagesId, getFormatVideosId } from "../hooks/useUtil";
 import type { WriteModalResult } from "@/redux/reducer/modalReducer";
 
-type PostPayload = PostType & { images: Image[] };
+type PostPayload = PostType & { images: Image[]; videos: Video[] };
 type Action = { type: "SET_FORM"; payload: Partial<PostPayload> };
 
 const initialState: PostPayload = {
@@ -33,6 +33,7 @@ const initialState: PostPayload = {
   tag: [],
   content: "",
   images: [],
+  videos: [],
   isTemp: false,
   preview: null,
   slug: "",
@@ -58,6 +59,7 @@ const toPostType = (
   data: Post & {
     tag: Tag[];
     images: Image[];
+    videos: Video[];
     collection: { id: string; slug: string } | null;
   }
 ): PostPayload => {
@@ -70,6 +72,7 @@ const toPostType = (
     slug: data.slug ?? "",
     thumbnail: data.thumbnail ?? null,
     images: data.images,
+    videos: data.videos,
     collection: data.collection ?? null,
   };
 };
@@ -101,6 +104,7 @@ export default function WriteClient({ postId }: { postId: string }) {
       Post & {
         tag: Tag[];
         images: Image[];
+        videos: Video[];
         collection: { id: string; slug: string } | null;
       }
     >
@@ -532,6 +536,7 @@ export default function WriteClient({ postId }: { postId: string }) {
 
     const preview = extractPreview();
     const imageIds = getFormatImagesId(state.content);
+    const videoIds = getFormatVideosId(state.content);
     let popupResult: WriteModalResult = {
       thumbnail: null,
       collection: null,
@@ -554,6 +559,9 @@ export default function WriteClient({ postId }: { postId: string }) {
     const { thumbnail, collection } = popupResult;
 
     const filteredImages = state.images.filter((img) => imageIds.includes(img.imageId));
+    const filteredVideos = state.videos.filter((video) =>
+      videoIds.includes(video.streamId)
+    );
 
     const mutate = isValidPostId ? updateMuate : writeMutate;
     const collecionData = collection ? collection.split(",") : null;
@@ -565,6 +573,7 @@ export default function WriteClient({ postId }: { postId: string }) {
       thumbnail,
       collection: collecionData ? { id: collecionData[0], slug: collecionData[1] } : null,
       images: process.env.NEXT_PUBLIC_DEMO ? state.images : filteredImages,
+      videos: process.env.NEXT_PUBLIC_DEMO ? state.videos : filteredVideos,
       ...(isValidPostId ? { slug: state.slug } : { slug: createSlug(state.title) }),
     });
   };

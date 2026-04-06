@@ -1,7 +1,7 @@
 import { db } from "@/app/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag, unstable_cache } from "next/cache";
-import { CollectionItem, Image, Prisma } from "@prisma/client";
+import { CollectionItem, Image, Prisma, Video } from "@prisma/client";
 
 // 1) 공통 RAW 쿼리 (id 기준으로 단순·안전 페이징)
 async function getPostsPageRaw(args: {
@@ -192,12 +192,13 @@ export const POST = async (req: NextRequest) => {
     tag,
     title,
     images,
+    videos = [],
     preview,
     thumbnail,
     isTemp,
     slug,
     collection,
-  } = jsonData as PostType & { images: Image[] };
+  } = jsonData as PostType & { images: Image[]; videos: Video[] };
 
   try {
     // ✅ slug 유니크 처리: 트랜잭션 밖
@@ -215,6 +216,9 @@ export const POST = async (req: NextRequest) => {
             slug: finalSlug,
             images: {
               connect: images.map((img) => ({ id: img.id })),
+            },
+            videos: {
+              connect: videos.map((video) => ({ streamId: video.streamId })),
             },
           },
         });

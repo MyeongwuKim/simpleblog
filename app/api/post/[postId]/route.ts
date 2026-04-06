@@ -1,5 +1,5 @@
 import { db } from "@/app/lib/db";
-import { CollectionItem, Image, Prisma, Tag } from "@prisma/client";
+import { CollectionItem, Image, Prisma, Tag, Video } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 import { ObjectId } from "mongodb";
 import { revalidateTag } from "next/cache";
@@ -160,6 +160,7 @@ export const GET = async (
         createdAt: true,
         slug: true,
         images: true,
+        videos: true,
         collectionId: true,
         collection: {
           select: { id: true, slug: true },
@@ -210,6 +211,7 @@ export const POST = async (
     tag,
     title,
     images,
+    videos = [],
     preview,
     thumbnail,
     isTemp,
@@ -218,6 +220,7 @@ export const POST = async (
   } = jsonData as PostType & {
     createdAt: Date;
     images: Image[];
+    videos: Video[];
   };
 
   try {
@@ -237,6 +240,10 @@ export const POST = async (
             images: {
               set: [],
               connect: incomingIds.map((imageId) => ({ imageId })),
+            },
+            videos: {
+              set: [],
+              connect: videos.map((video) => ({ streamId: video.streamId })),
             },
           },
           include: { images: true },
@@ -345,7 +352,7 @@ export const DELETE = async (
       // 1. 삭제할 post와 관련 태그들 가져오기
       const deletedPost = await tx.post.delete({
         where: { id: postId },
-        select: { id: true, tagIds: true, images: true },
+        select: { id: true, tagIds: true, images: true, videos: true },
       });
 
       const tags: Tag[] = [];
@@ -386,6 +393,19 @@ export const DELETE = async (
             },
           }
         ).catch((err) => console.error("삭제 실패:", err));
+      });
+
+    if (!process.env.NEXT_PUBLIC_DEMO)
+      result.deletedPost.videos.forEach((video) => {
+        fetch(
+          `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/stream/${video.streamId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${process.env.CF_VIDEO_TOKEN}`,
+            },
+          }
+        ).catch((err) => console.error("비디오 삭제 실패:", err));
       });
 
     revalidateTag(`posts`);

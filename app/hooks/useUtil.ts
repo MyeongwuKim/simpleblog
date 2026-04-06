@@ -79,6 +79,54 @@ export const getFormatImagesId = (content: string): string[] => {
   return imagesIdArr;
 };
 
+export const getFormatVideosId = (content: string): string[] => {
+  const videoIdArr: string[] = [];
+  if (process.env.NEXT_PUBLIC_DEMO) return videoIdArr;
+
+  const iframeRegex = /!\[[^\]]*\]\(https:\/\/iframe\.videodelivery\.net\/([^)\/\s]+)\)/g;
+  let iframeMatch: RegExpExecArray | null;
+  while ((iframeMatch = iframeRegex.exec(content)) !== null) {
+    videoIdArr.push(iframeMatch[1]);
+  }
+
+  const streamRegex =
+    /!\[[^\]]*\]\(https:\/\/[^)\s]*cloudflarestream\.com\/([^)\/\s]+)(?:\/iframe)?\)/g;
+  let streamMatch: RegExpExecArray | null;
+  while ((streamMatch = streamRegex.exec(content)) !== null) {
+    videoIdArr.push(streamMatch[1]);
+  }
+
+  return [...new Set(videoIdArr)];
+};
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "";
+};
+
+export const getCloudflareImageErrorMessage = (error: unknown): string => {
+  const message = getErrorMessage(error).toLowerCase();
+
+  if (
+    message.includes("too large") ||
+    message.includes("maximum upload size") ||
+    message.includes("10485760")
+  ) {
+    return "파일 용량이 너무 큽니다. 10MB 이하 이미지로 업로드해주세요.";
+  }
+
+  if (
+    message.includes("pixel") ||
+    message.includes("frame") ||
+    message.includes("dimension")
+  ) {
+    return "GIF 크기가 너무 큽니다. 길이 또는 해상도를 줄여주세요.";
+  }
+
+  return "이미지 업로드중 실패하였습니다.";
+};
+
 export function formatRelativeTime(date: Date) {
   const now = new Date();
   const past = new Date(date);

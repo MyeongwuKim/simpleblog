@@ -3,10 +3,16 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import DefButton from "../buttons/defButton";
 import LabelButton from "../buttons/labelButton";
-import { getDeliveryDomain, timeStamp } from "@/app/hooks/useUtil";
+import {
+  getCloudflareImageErrorMessage,
+  getDeliveryDomain,
+  timeStamp,
+} from "@/app/hooks/useUtil";
 import { useUI } from "@/components/providers/uiProvider";
 import InputField from "../input/inputField";
 import { useProfileMutate } from "./query";
+
+const MAX_IMAGE_FILE_BYTES = 10 * 1024 * 1024;
 
 export default function IntroCard({
   title,
@@ -80,6 +86,14 @@ export default function IntroCard({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > MAX_IMAGE_FILE_BYTES) {
+        openToast(
+          true,
+          "파일 용량이 너무 큽니다. 10MB 이하 이미지로 업로드해주세요.",
+          1
+        );
+        return;
+      }
       // ✅ 미리보기
       const previewUrl = URL.createObjectURL(file);
       setProfileImg(previewUrl);
@@ -92,9 +106,12 @@ export default function IntroCard({
         return;
       }
       try {
-        const { uploadURL } = await (
+        const uploadMeta = await (
           await fetch(`/api/upload`, { method: "POST" })
         ).json();
+        if (!uploadMeta?.ok || !uploadMeta?.uploadURL) {
+          throw new Error(uploadMeta?.error ?? "이미지 업로드 URL 생성에 실패하였습니다.");
+        }
 
         const form = new FormData();
         form.append(
@@ -103,14 +120,18 @@ export default function IntroCard({
           `${process.env.NODE_ENV}_simpleblog_profile_${timeStamp()}`
         );
 
-        const {
-          result: { id },
-        } = await (
-          await fetch(uploadURL, {
-            method: "POST",
-            body: form,
-          })
-        ).json();
+        const uploadRes = await fetch(uploadMeta.uploadURL, {
+          method: "POST",
+          body: form,
+        });
+        const uploadJson = await uploadRes.json();
+        const id = uploadJson?.result?.id as string | undefined;
+        if (!uploadRes.ok || !id) {
+          throw new Error(
+            uploadJson?.errors?.[0]?.message ??
+              "Cloudflare 이미지 업로드에 실패하였습니다."
+          );
+        }
 
         if (pImg)
           fetch(`/api/upload?id=${pImg}`, {
@@ -118,9 +139,9 @@ export default function IntroCard({
           });
 
         mutate({ profileImg: id, form: "profileimg" });
-      } catch {
+      } catch (e: unknown) {
         setUploading(false);
-        openToast(true, "이미지 업로드중 실패하였습니다", 1);
+        openToast(true, getCloudflareImageErrorMessage(e), 1);
       }
     }
   };

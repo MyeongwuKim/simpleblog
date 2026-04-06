@@ -2,7 +2,11 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useRef, useState } from "react";
-import { getDeliveryDomain, timeStamp } from "@/app/hooks/useUtil";
+import {
+  getCloudflareImageErrorMessage,
+  getDeliveryDomain,
+  timeStamp,
+} from "@/app/hooks/useUtil";
 import { Collection, Image as ImageType } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DefButton from "../ui/buttons/defButton";
@@ -18,6 +22,7 @@ import type { ModalComponentProps } from "./modalRegistry";
 import { useUI } from "../providers/uiProvider";
 
 type WriteModalProps = ModalComponentProps<"WRITE">;
+const MAX_IMAGE_FILE_BYTES = 10 * 1024 * 1024;
 
 export default function WriteModal({
   onClose,
@@ -96,6 +101,14 @@ export default function WriteModal({
       });
 
     if (file) {
+      if (file.size > MAX_IMAGE_FILE_BYTES) {
+        openToast(
+          true,
+          "파일 용량이 너무 큽니다. 10MB 이하 이미지로 업로드해주세요.",
+          1
+        );
+        return;
+      }
       setUploading(true);
       const previewUrl = URL.createObjectURL(file);
       setWriteThumbnail(previewUrl);
@@ -111,9 +124,12 @@ export default function WriteModal({
         //원본 이미지의 넓이 높이 추출
         const { width, height } = await getImageSize(file);
 
-        const { uploadURL } = await (
+        const uploadMeta = await (
           await fetch(`/api/upload`, { method: "POST" })
         ).json();
+        if (!uploadMeta?.ok || !uploadMeta?.uploadURL) {
+          throw new Error(uploadMeta?.error ?? "이미지 업로드 URL 생성에 실패하였습니다.");
+        }
 
         const form = new FormData();
         form.append(
@@ -122,18 +138,25 @@ export default function WriteModal({
           `${process.env.NODE_ENV}_simpleblog_${timeStamp()}`
         );
 
-        const {
-          result: { id },
-        } = await (
-          await fetch(uploadURL, { method: "POST", body: form })
-        ).json();
+        const uploadRes = await fetch(uploadMeta.uploadURL, {
+          method: "POST",
+          body: form,
+        });
+        const uploadJson = await uploadRes.json();
+        const id = uploadJson?.result?.id as string | undefined;
+        if (!uploadRes.ok || !id) {
+          throw new Error(
+            uploadJson?.errors?.[0]?.message ??
+              "Cloudflare 이미지 업로드에 실패하였습니다."
+          );
+        }
 
         await imageMutate.mutateAsync({ imageId: id, width, height });
         setWriteThumbnail(getDeliveryDomain(id, "public"));
         setUploading(false);
-      } catch {
+      } catch (e: unknown) {
         setUploading(false);
-        openToast(true, "이미지 업로드중 실패하였습니다", 1);
+        openToast(true, getCloudflareImageErrorMessage(e), 1);
       }
     }
   };

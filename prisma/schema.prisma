@@ -19,11 +19,20 @@ model Post {
   tag          Tag[]       @relation(fields: [tagIds], references: [id])
   isTemp       Boolean     @default(false)
   images       Image[] // ✅ 1:N 관계
+  videos       Video[]
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   // ✅ 하나의 컬렉션만
   collectionId String?     @db.ObjectId
   collection   Collection? @relation(fields: [collectionId], references: [id])
+}
+
+model Video {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  streamId  String   @unique
+  postId    String?  @db.ObjectId
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
 
 model Image {

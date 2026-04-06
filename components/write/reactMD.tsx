@@ -32,6 +32,87 @@ const extractImageIdFromDeliveryUrl = (url: string) => {
   return match?.[1] ?? null;
 };
 
+const isStreamSource = (url: string) =>
+  url.includes("iframe.videodelivery.net/") ||
+  url.includes("cloudflarestream.com/");
+
+const normalizeStreamEmbedUrl = (url: string) => {
+  if (url.includes("iframe.videodelivery.net/")) return url;
+  if (!url.includes("cloudflarestream.com/")) return url;
+
+  try {
+    const parsed = new URL(url);
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    if (parts.length === 0) return url;
+
+    const uid =
+      parts[parts.length - 1] === "iframe"
+        ? parts[parts.length - 2]
+        : parts[parts.length - 1];
+
+    if (!uid) return url;
+    return `https://iframe.videodelivery.net/${uid}`;
+  } catch {
+    return url;
+  }
+};
+
+const StreamVideo = React.memo(function StreamVideo({
+  src,
+  title,
+}: {
+  src: string;
+  title: string;
+}) {
+  return (
+    <div className="mx-auto my-6 w-full max-w-[768px]">
+      <div className="relative w-full overflow-hidden rounded-md pt-[56.25%]">
+        <iframe
+          src={src}
+          title={title}
+          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+          allowFullScreen
+          className="absolute inset-0 h-full w-full"
+        />
+      </div>
+    </div>
+  );
+});
+
+const StreamVideoPlaceholder = React.memo(function StreamVideoPlaceholder({
+  src,
+}: {
+  src: string;
+}) {
+  const [hovered, setHovered] = React.useState(false);
+
+  return (
+    <div
+      className="mx-auto my-6 w-full max-w-[768px]"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div className="relative rounded-md border border-border1 bg-background2 p-4 text-sm text-text3">
+        비디오 미리보기 카드. 마우스를 올리면 재생 미리보기가 표시됩니다.
+
+        {hovered && (
+          <div className="absolute left-0 top-full z-20 mt-2 w-full overflow-hidden rounded-md border border-border1 bg-black shadow-lg">
+            <div className="relative w-full pt-[56.25%]">
+              <iframe
+                src={src}
+                title="video-preview-hover"
+                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                allowFullScreen
+                className="absolute inset-0 h-full w-full"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
 const baseComponents: Record<
   string,
   (props: MarkdownComponentProps) => React.ReactNode
@@ -133,7 +214,9 @@ const baseComponents: Record<
     );
   },
   ol({ children }: MarkdownComponentProps) {
-    return <ol className="mb-[1em] list-decimal list-outside pl-6">{children}</ol>;
+    return (
+      <ol className="mb-[1em] list-decimal list-outside pl-6">{children}</ol>
+    );
   },
   hr() {
     return <hr className="border-border1" />;
@@ -151,33 +234,38 @@ const baseComponents: Record<
 
 export default function ReactMD({ doc, images = [] }: ReactMDProps) {
   const pathname = usePathname();
-  const imageMap = new Map(images.map((img) => [img.imageId, img]));
-  const customSanitizedSchema = {
-    ...defaultSchema,
-    tagNames:
-      pathname === "/comments"
-        ? ["br"]
-        : [...(defaultSchema.tagNames ?? []), "div", "span"],
-    attributes: {
-      ...defaultSchema.attributes,
-      div: ["className", "style"],
-      span: ["className", "style"],
-      img: ["src", "alt", "title", "width", "height", "sizes", "srcset"],
-      h1: ["className"],
-      h2: ["className"],
-      h3: ["className"],
-      table: ["className"],
-    },
-    protocols: {
-      ...defaultSchema.protocols,
-      src: ["http", "https", "data", "blob"],
-    },
-  };
+  const imageMap = React.useMemo(
+    () => new Map(images.map((img) => [img.imageId, img])),
+    [images]
+  );
+  const customSanitizedSchema = React.useMemo(
+    () => ({
+      ...defaultSchema,
+      tagNames:
+        pathname === "/comments"
+          ? ["br"]
+          : [...(defaultSchema.tagNames ?? []), "div", "span"],
+      attributes: {
+        ...defaultSchema.attributes,
+        div: ["className", "style"],
+        span: ["className", "style"],
+        img: ["src", "alt", "title", "width", "height", "sizes", "srcset"],
+        h1: ["className"],
+        h2: ["className"],
+        h3: ["className"],
+        table: ["className"],
+      },
+      protocols: {
+        ...defaultSchema.protocols,
+        src: ["http", "https", "data", "blob"],
+      },
+    }),
+    [pathname]
+  );
 
-  return (
-    <ReactMarkDown
-      className="leading-relaxed text-text1"
-      components={{
+  const markdownComponents = React.useMemo(
+    () =>
+      ({
         ...(baseComponents as Record<string, unknown>),
         table({ children, ...props }) {
           return (
@@ -191,7 +279,6 @@ export default function ReactMD({ doc, images = [] }: ReactMDProps) {
             </div>
           );
         },
-
         thead({ children }) {
           return (
             <thead className="bg-gradient-to-b from-gray-50 to-gray-100 dark:from-zinc-800 dark:to-zinc-900">
@@ -199,56 +286,32 @@ export default function ReactMD({ doc, images = [] }: ReactMDProps) {
             </thead>
           );
         },
-
         th({ children }) {
           return (
-            <th
-              className="
-                px-5 py-3
-                text-left text-xs font-semibold uppercase tracking-wide
-                text-gray-600 dark:text-gray-300
-                border-b border-gray-200 dark:border-zinc-700
-              "
-            >
+            <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-zinc-700">
               {children}
             </th>
           );
         },
-
         tbody({ children }) {
           return (
             <tbody className="bg-white dark:bg-zinc-950">{children}</tbody>
           );
         },
-
         tr({ children }) {
           return (
-            <tr
-              className="
-                transition-colors
-                hover:bg-gray-50 dark:hover:bg-zinc-900
-              "
-            >
+            <tr className="transition-colors hover:bg-gray-50 dark:hover:bg-zinc-900">
               {children}
             </tr>
           );
         },
-
         td({ children }) {
           return (
-            <td
-              className="
-                px-5 py-4
-                align-top
-                text-gray-800 dark:text-gray-200
-                border-b border-gray-100 dark:border-zinc-800
-              "
-            >
+            <td className="px-5 py-4 align-top text-gray-800 dark:text-gray-200 border-b border-gray-100 dark:border-zinc-800">
               {children}
             </td>
           );
         },
-
         a({ children, href, ...props }) {
           const safeHref = typeof href === "string" ? href : undefined;
           const isExternal = safeHref?.startsWith("http");
@@ -264,7 +327,6 @@ export default function ReactMD({ doc, images = [] }: ReactMDProps) {
             </a>
           );
         },
-
         h1({ children, ...props }) {
           return (
             <h1
@@ -276,47 +338,58 @@ export default function ReactMD({ doc, images = [] }: ReactMDProps) {
             </h1>
           );
         },
-
         h2: ({ children, ...props }) => (
           <h2 id={props.id} className="mt-8 mb-4 text-[2rem] font-bold">
             {children}
           </h2>
         ),
-
         h3: ({ children, ...props }) => (
           <h3 id={props.id} className="mt-6 mb-2 text-[1.5rem] font-semibold">
             {children}
           </h3>
         ),
-
         blockquote({ children, ...props }) {
           const { type, content } = parseCallout(children);
-
-          if (type) {
-            return <Callout type={type}>{content}</Callout>;
-          }
-
+          if (type) return <Callout type={type}>{content}</Callout>;
           return (
             <blockquote
-              className="mb-[1em] border-l-4 border-emerald-500 bg-background5 
-              py-4 pr-4 pl-8 text-text1 leading-[1.7]"
+              className="mb-[1em] border-l-4 border-emerald-500 bg-background5 py-4 pr-4 pl-8 text-text1 leading-[1.7]"
               {...props}
             >
               {children}
             </blockquote>
           );
         },
+        p({ children, node, ...props }) {
+          const hasImgChild = Array.isArray(
+            (node as { children?: unknown[] })?.children
+          )
+            ? (node as { children: Array<{ tagName?: string }> }).children.some(
+                (child) => child?.tagName === "img"
+              )
+            : false;
 
-        p({ children, ...props }) {
+          if (hasImgChild)
+            return <div className="text-base my-4">{children}</div>;
+
           return (
             <p className="text-base my-4" {...props}>
               {children}
             </p>
           );
         },
-
         img({ src, alt }: MarkdownComponentProps) {
           const safeSrc = typeof src === "string" ? src : "";
+          const isStreamVideo = isStreamSource(safeSrc);
+
+          if (isStreamVideo) {
+            const embedSrc = normalizeStreamEmbedUrl(safeSrc);
+            if (pathname === "/write") {
+              return <StreamVideoPlaceholder src={embedSrc} />;
+            }
+            return <StreamVideo src={embedSrc} title={alt ?? "video"} />;
+          }
+
           const imageId = extractImageIdFromDeliveryUrl(safeSrc);
           const meta = imageId ? imageMap.get(imageId) : null;
 
@@ -351,7 +424,14 @@ export default function ReactMD({ doc, images = [] }: ReactMDProps) {
             />
           );
         },
-      } as Record<string, (props: MarkdownComponentProps) => React.ReactNode>}
+      } as Record<string, (props: MarkdownComponentProps) => React.ReactNode>),
+    [imageMap, pathname]
+  );
+
+  return (
+    <ReactMarkDown
+      className="leading-relaxed text-text1"
+      components={markdownComponents}
       rehypePlugins={[
         [rehypeSanitize, customSanitizedSchema],
         rehypeSlug,
