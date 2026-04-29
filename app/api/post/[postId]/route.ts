@@ -173,7 +173,7 @@ export const GET = async (
     if (!postData) {
       return NextResponse.json(
         { ok: false, data: null, error: "존재하지 않는 글입니다" },
-        { status: 200 }
+        { status: 404 }
       );
     }
     let thumbData = null;

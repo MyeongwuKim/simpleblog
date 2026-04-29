@@ -37,7 +37,6 @@ import FooterItem from "@/components/ui/items/postFooterItem";
 import { usePostDetailContext } from "@/components/providers/postDetailProvider";
 
 const PostMarkdown = dynamic(() => import("@/components/write/reactMD"), {
-  ssr: false,
   loading: () => (
     <div aria-hidden="true" className="space-y-4">
       <div className="h-4 w-full rounded bg-background2" />
